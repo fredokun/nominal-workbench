@@ -1,0 +1,9 @@
+constant True: Bool
+constant zero : Nat
+
+operator Nat: Bool -> Bool
+operator And: Bool * Bool -> Bool
+
+kind Nat : type
+kind List : type => type
+kind Var : atom
