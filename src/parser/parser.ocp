@@ -1,0 +1,11 @@
+begin library "parser"
+    sort = true
+    files = [ "lexer.mll" "parser.mly" ]
+    requires = []
+end
+
+begin program "parser-test"
+    has_asm = false
+    files = [ "test.ml" ]
+    requires = [ "parser" ]
+end

@@ -21,8 +21,12 @@ parser.mli: parser.mly
 %.ml: %.mll
 	$(OCAMLLEX) $<
 
-main: parser.cmo lexer.cmo test.cmo
-	$(OCAMLCC) $^ -o main
+# main: parser.cmo lexer.cmo test.cmo
+# 	$(OCAMLCC) $^ -o main
+
+main: 
+	ocp-build parser-test
+	cp ../../_obuild/parser-test/parser-test.byte main
 
 test: main
 	./main test1.grm

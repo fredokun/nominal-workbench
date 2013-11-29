@@ -1,0 +1,5 @@
+begin program "main"
+    sort = true
+    files = []
+    requires = [ "parser" ]
+end
