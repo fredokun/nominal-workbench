@@ -32,7 +32,8 @@ let qmark = "?"
 let star = "*"
 let comma = ","
 
-let space = ['\t' ' ' '\n']*
+let space = ['\t' ' ']*
+let newline = "\n"
 
   rule token = parse
     | space
@@ -58,7 +59,10 @@ let space = ['\t' ' ' '\n']*
     | qmark { QMARK }
     | star { STAR }
     | comma { COMMA }
-
+    | newline
+	{ Lexing.new_line lexbuf;
+	  NEWLINE
+	}
     | eof { EOF }
     | _
 	{ failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }

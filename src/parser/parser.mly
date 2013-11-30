@@ -1,5 +1,7 @@
 %{
   open Hashtbl
+  open Parsing
+  open Lexing
 
   let operator_tbl = Hashtbl.create 10
   let constant_tbl = Hashtbl.create 10
@@ -18,7 +20,7 @@
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
-%token DARROW STAR COMMA QMARK
+%token DARROW STAR COMMA QMARK NEWLINE
 
 %token EOF
 
@@ -45,6 +47,7 @@ decl:
 | operator_decl {}
 | constant_decl {}
 | rule_decl {}
+| decl NEWLINE {}
 
 
 /* kinds */
@@ -55,7 +58,10 @@ kind_decl:
 	prerr_endline (Hashtbl.find kind_tbl $2);
 	result := 1
       with Not_found ->
-	Hashtbl.add kind_tbl $2 ("Kind " ^ $2 ^ "already defined")
+	let pos = Parsing.symbol_start_pos () in
+	Hashtbl.add kind_tbl $2 ("Kind " ^ $2 ^ "already defined \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 
 kind_lfth:
@@ -76,7 +82,10 @@ constant_decl:
 	prerr_endline (Hashtbl.find constant_tbl $2);
 	result := 1
       with Not_found ->
-	Hashtbl.add constant_tbl $2 ("Constant \"" ^ $2 ^ "\" already defined")
+	let pos = Parsing.symbol_start_pos () in
+	Hashtbl.add constant_tbl $2 ("Constant \"" ^ $2 ^ "\" already defined \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 
 
@@ -88,7 +97,10 @@ operator_decl:
 	prerr_endline (Hashtbl.find operator_tbl $2);
 	result := 1
       with Not_found ->
-	Hashtbl.add operator_tbl $2 ("Operator \"" ^ $2 ^ "\" already defined")
+	let pos = Parsing.symbol_start_pos () in
+	Hashtbl.add operator_tbl $2 ("Operator \"" ^ $2 ^ "\" already defined \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 
 operator_type:
@@ -96,15 +108,21 @@ operator_type:
     { try
 	ignore (Hashtbl.find kind_tbl $1)
       with Not_found ->
+	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Kind \"" ^ $1 ^ "\" unknown")
+	prerr_endline ("Kind \"" ^ $1 ^ "\" unknown \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 | LBRACKET WORD RBRACKET
     { try
 	ignore (Hashtbl.find kind_tbl $2)
       with Not_found ->
+	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Kind \"" ^ $2 ^ "\" unknown")
+	prerr_endline ("Kind \"" ^ $2 ^ "\" unknown \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 | operator_type STAR operator_type {}
 | operator_type ARROW operator_type {}
@@ -114,6 +132,7 @@ operator_type:
 
 rule_decl:
 | rule_head rule_body {}
+| rule_head NEWLINE rule_body {}
 
 rule_head:
 | RULE LBRACKET WORD RBRACKET COLON
@@ -121,7 +140,10 @@ rule_head:
 	prerr_endline (Hashtbl.find rule_tbl $3);
 	result := 1
       with Not_found ->
-	Hashtbl.add rule_tbl $3 ("Rule \"" ^ $3 ^ "\" already defined")
+	let pos = Parsing.symbol_start_pos () in
+	Hashtbl.add rule_tbl $3 ("Rule \"" ^ $3 ^ "\" already defined \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 
 rule_body:
@@ -132,20 +154,30 @@ rule_side:
     { try
 	ignore (Hashtbl.find operator_tbl $1)
       with Not_found ->
+	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Operator \"" ^ $1 ^ "\" unknown")
+	prerr_endline ("Operator \"" ^ $1 ^ "\" unknown \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 | WORD LPAREN rule_side_list RPAREN
     { try
 	ignore (Hashtbl.find operator_tbl $1)
       with Not_found ->
+	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Operator \"" ^ $1 ^ "\" unknown")
+	prerr_endline ("Operator \"" ^ $1 ^ "\" unknown \
+line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
     }
 | QMARK WORD {}
 
 rule_side_list:
 | rule_side COMMA rule_side_list {}
 | rule_side {}
+
+
+newline:
+| NEWLINE {}
 
 %%

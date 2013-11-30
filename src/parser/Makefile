@@ -24,7 +24,7 @@ parser.mli: parser.mly
 # main: parser.cmo lexer.cmo test.cmo
 # 	$(OCAMLCC) $^ -o main
 
-main: 
+main:
 	ocp-build parser-test
 	cp ../../_obuild/parser-test/parser-test.byte main
 
@@ -33,4 +33,4 @@ test: main
 	./main test2.grm
 
 clean:
-	rm -rf *.cmo *.cmi main
+	rm -rf *.cmo *.cmi main parser.ml lexer.ml
