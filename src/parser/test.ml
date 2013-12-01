@@ -1,9 +1,10 @@
 let _ =
-  let filename = Sys.argv.(1) in
-  let file_p = open_in filename in
-  (* let l = in_channel_length file_p in *)
-  (* let s = String.create l in *)
-  (* really_input file_p s 0 l; *)
-  let lexbuf = Lexing.from_channel file_p in
+  let chan =
+    if Array.length Sys.argv > 1 then
+      open_in (Sys.argv.(1))
+    else
+      stdin
+  in
+  let lexbuf = Lexing.from_channel chan in
   Parser.start Lexer.token lexbuf;
-  close_in file_p;
+  close_in chan;

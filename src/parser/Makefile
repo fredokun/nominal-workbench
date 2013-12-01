@@ -29,8 +29,11 @@ main:
 	cp ../../_obuild/parser-test/parser-test.byte main
 
 test: main
-	./main test1.grm
-	./main test2.grm
+	@for f in `ls test*.grm`; do \
+		echo Test \"$$f\"\:; \
+		./main $$f; \
+		echo ; \
+	done
 
 clean:
 	rm -rf *.cmo *.cmi main parser.ml lexer.ml

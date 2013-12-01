@@ -9,6 +9,15 @@
   let rule_tbl = Hashtbl.create 10
   let result = ref 0
 
+  let err_msg = fun kwd name msg ->
+    let pos = Parsing.symbol_start_pos () in
+    kwd ^ " \"" ^ name ^"\" " ^ msg ^ " line \
+    " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+    " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol))
+
+  let already_def = "already defined"
+  let unk = "unknown"
+
 %}
 
 /* values */
@@ -58,10 +67,7 @@ kind_decl:
 	prerr_endline (Hashtbl.find kind_tbl $2);
 	result := 1
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
-	Hashtbl.add kind_tbl $2 ("Kind " ^ $2 ^ "already defined \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	Hashtbl.add kind_tbl $2 (err_msg "Kind" $2 already_def)
     }
 
 kind_lfth:
@@ -78,14 +84,20 @@ kind_type:
 
 constant_decl:
 | CONSTANT WORD COLON WORD
-    { try
+    { begin
+      try
 	prerr_endline (Hashtbl.find constant_tbl $2);
 	result := 1
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
-	Hashtbl.add constant_tbl $2 ("Constant \"" ^ $2 ^ "\" already defined \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	Hashtbl.add constant_tbl $2 (err_msg "Constant" $2 already_def)
+      end;
+      begin
+      try
+	ignore (Hashtbl.find kind_tbl $4);
+	result := 1
+      with Not_found ->
+	prerr_endline (err_msg "Kind" $4 unk)
+      end
     }
 
 
@@ -97,10 +109,7 @@ operator_decl:
 	prerr_endline (Hashtbl.find operator_tbl $2);
 	result := 1
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
-	Hashtbl.add operator_tbl $2 ("Operator \"" ^ $2 ^ "\" already defined \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	Hashtbl.add operator_tbl $2 (err_msg "Operator" $2 already_def)
     }
 
 operator_type:
@@ -108,21 +117,15 @@ operator_type:
     { try
 	ignore (Hashtbl.find kind_tbl $1)
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Kind \"" ^ $1 ^ "\" unknown \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	prerr_endline (err_msg "Kind" $1 unk)
     }
 | LBRACKET WORD RBRACKET
     { try
 	ignore (Hashtbl.find kind_tbl $2)
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Kind \"" ^ $2 ^ "\" unknown \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	prerr_endline (err_msg "Kind" $2 unk)
     }
 | operator_type STAR operator_type {}
 | operator_type ARROW operator_type {}
@@ -140,10 +143,7 @@ rule_head:
 	prerr_endline (Hashtbl.find rule_tbl $3);
 	result := 1
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
-	Hashtbl.add rule_tbl $3 ("Rule \"" ^ $3 ^ "\" already defined \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	Hashtbl.add rule_tbl $3 (err_msg "Rule" $3 already_def)
     }
 
 rule_body:
@@ -154,21 +154,15 @@ rule_side:
     { try
 	ignore (Hashtbl.find operator_tbl $1)
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Operator \"" ^ $1 ^ "\" unknown \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	prerr_endline (err_msg "Operator" $1 unk)
     }
 | WORD LPAREN rule_side_list RPAREN
     { try
 	ignore (Hashtbl.find operator_tbl $1)
       with Not_found ->
-	let pos = Parsing.symbol_start_pos () in
 	result := 1;
-	prerr_endline ("Operator \"" ^ $1 ^ "\" unknown \
-line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-" ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)))
+	prerr_endline (err_msg "Operator" $1 unk)
     }
 | QMARK WORD {}
 
