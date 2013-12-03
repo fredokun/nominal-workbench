@@ -171,7 +171,4 @@ rule_side_list:
 | rule_side {}
 
 
-newline:
-| NEWLINE {}
-
 %%
