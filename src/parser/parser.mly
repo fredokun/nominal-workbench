@@ -37,6 +37,9 @@
 %type <unit> start
 %type <unit> kind_decl
 
+%start toplevel_phrase
+%type <unit> toplevel_phrase
+
 %%
 
 start:
@@ -47,11 +50,16 @@ start:
 	print_endline "Fail !"
     }
 
+toplevel_phrase:
+| decls SEMICOL SEMICOL { () }
+| EOF { raise End_of_file }
+;
+
 decls :
 | decl decls {}
 | decl {}
 
-decl:
+    decl:
 | kind_decl {}
 | operator_decl {}
 | constant_decl {}
@@ -59,114 +67,114 @@ decl:
 | decl NEWLINE {}
 
 
-/* kinds */
+  /* kinds */
 
-kind_decl:
+    kind_decl:
 | KIND WORD COLON kind_lfth
-    { try
-	prerr_endline (Hashtbl.find kind_tbl $2);
-	result := 1
-      with Not_found ->
-	Hashtbl.add kind_tbl $2 (err_msg "Kind" $2 already_def)
-    }
+	{ try
+	    prerr_endline (Hashtbl.find kind_tbl $2);
+	    result := 1
+	  with Not_found ->
+	    Hashtbl.add kind_tbl $2 (err_msg "Kind" $2 already_def)
+	}
 
-kind_lfth:
+	kind_lfth:
 | kind_type {}
 | ATOM {}
 
-kind_type:
+    kind_type:
 | kind_type STAR kind_type {}
 | kind_type DARROW kind_type {}
 | TYPE {}
 
 
-/* constants */
+  /* constants */
 
-constant_decl:
+    constant_decl:
 | CONSTANT WORD COLON WORD
-    { begin
-      try
-	prerr_endline (Hashtbl.find constant_tbl $2);
-	result := 1
-      with Not_found ->
-	Hashtbl.add constant_tbl $2 (err_msg "Constant" $2 already_def)
-      end;
-      begin
-      try
-	ignore (Hashtbl.find kind_tbl $4);
-	result := 1
-      with Not_found ->
-	prerr_endline (err_msg "Kind" $4 unk)
-      end
-    }
+	{ begin
+	  try
+	    prerr_endline (Hashtbl.find constant_tbl $2);
+	    result := 1
+	  with Not_found ->
+	    Hashtbl.add constant_tbl $2 (err_msg "Constant" $2 already_def)
+	end;
+	  begin
+	    try
+	      ignore (Hashtbl.find kind_tbl $4);
+	      result := 1
+	    with Not_found ->
+	      prerr_endline (err_msg "Kind" $4 unk)
+	  end
+	}
 
 
-/* operators */
+      /* operators */
 
-operator_decl:
+	operator_decl:
 | OPERATOR WORD COLON operator_type
-    { try
-	prerr_endline (Hashtbl.find operator_tbl $2);
-	result := 1
-      with Not_found ->
-	Hashtbl.add operator_tbl $2 (err_msg "Operator" $2 already_def)
-    }
+	    { try
+		prerr_endline (Hashtbl.find operator_tbl $2);
+		result := 1
+	      with Not_found ->
+		Hashtbl.add operator_tbl $2 (err_msg "Operator" $2 already_def)
+	    }
 
-operator_type:
+	    operator_type:
 | WORD
-    { try
-	ignore (Hashtbl.find kind_tbl $1)
-      with Not_found ->
-	result := 1;
-	prerr_endline (err_msg "Kind" $1 unk)
-    }
+		{ try
+		    ignore (Hashtbl.find kind_tbl $1)
+		  with Not_found ->
+		    result := 1;
+		    prerr_endline (err_msg "Kind" $1 unk)
+		}
 | LBRACKET WORD RBRACKET
-    { try
-	ignore (Hashtbl.find kind_tbl $2)
-      with Not_found ->
-	result := 1;
-	prerr_endline (err_msg "Kind" $2 unk)
-    }
+		    { try
+			ignore (Hashtbl.find kind_tbl $2)
+		      with Not_found ->
+			result := 1;
+			prerr_endline (err_msg "Kind" $2 unk)
+		    }
 | operator_type STAR operator_type {}
 | operator_type ARROW operator_type {}
 
 
-/* rules */
+  /* rules */
 
-rule_decl:
+    rule_decl:
 | rule_head rule_body {}
 | rule_head NEWLINE rule_body {}
 
-rule_head:
+    rule_head:
 | RULE LBRACKET WORD RBRACKET COLON
-    { try
-	prerr_endline (Hashtbl.find rule_tbl $3);
-	result := 1
-      with Not_found ->
-	Hashtbl.add rule_tbl $3 (err_msg "Rule" $3 already_def)
-    }
+	{ try
+	    prerr_endline (Hashtbl.find rule_tbl $3);
+	    result := 1
+	  with Not_found ->
+	    Hashtbl.add rule_tbl $3 (err_msg "Rule" $3 already_def)
+	}
 
-rule_body:
+	rule_body:
 | rule_side DARROW rule_side {}
 
-rule_side:
+	    rule_side:
 | WORD LPAREN RPAREN
-    { try
-	ignore (Hashtbl.find operator_tbl $1)
-      with Not_found ->
-	result := 1;
-	prerr_endline (err_msg "Operator" $1 unk)
-    }
+		{ try
+		    ignore (Hashtbl.find operator_tbl $1)
+		  with Not_found ->
+		    result := 1;
+		    prerr_endline (err_msg "Operator" $1 unk)
+		}
 | WORD LPAREN rule_side_list RPAREN
-    { try
-	ignore (Hashtbl.find operator_tbl $1)
-      with Not_found ->
-	result := 1;
-	prerr_endline (err_msg "Operator" $1 unk)
-    }
+		    { try
+			ignore (Hashtbl.find operator_tbl $1)
+		      with Not_found ->
+			result := 1;
+			prerr_endline (err_msg "Operator" $1 unk)
+		    }
 | QMARK WORD {}
 
-rule_side_list:
+			rule_side_list:
 | rule_side COMMA rule_side_list {}
 | rule_side {}
 
