@@ -1,0 +1,5 @@
+begin program "toplevel"
+    sort = true
+    files = [ "topmain.ml" "toploop.ml" ]
+    requires = [ "parser" ]
+end
