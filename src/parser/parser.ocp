@@ -3,9 +3,3 @@ begin library "parser"
     files = [ "lexer.mll" "parser.mly" ]
     requires = []
 end
-
-begin program "parser-test"
-    has_asm = false
-    files = [ "test.ml" ]
-    requires = [ "parser" ]
-end

@@ -1,0 +1,5 @@
+begin test "parser-test"
+    has_asm = false
+    files = [ "parser-test.ml" ]
+    requires = [ "parser" ]
+end

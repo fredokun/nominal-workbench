@@ -68,6 +68,7 @@ project_external_dirs = [
 
 (* List of configuration files for this project *)
 files = [
+  "/home/trademark/Documents/M2/PP1/nominal-workbench/test/test.ocp";
   "/home/trademark/Documents/M2/PP1/nominal-workbench/src/main.ocp";
   "/home/trademark/Documents/M2/PP1/nominal-workbench/src/toplevel/toplevel.ocp";
   "/home/trademark/Documents/M2/PP1/nominal-workbench/src/parser/parser.ocp";
