@@ -1,0 +1,162 @@
+\documentclass{article}
+
+\usepackage{verbatim}
+\usepackage[utf8]{inputenc}
+
+\title{Nominal Workshop : \\
+  Coding style conventions}
+
+\begin{document}
+
+\maketitle
+
+\section{Lexical Conventions}
+
+\subsection{Naming}
+
+\medskip
+
+\begin{itemize}
+\item \textbf{Function and variable names}: Lower cases, with underscore to 
+  separate the words (e.g. open\_file).
+\item \textbf{Object name}: Use the camel case (e.g. FileOpener).
+\item \textbf{File names}: The name of any files (e.g. .ml or .mli) must be in
+  lower case.
+\item \textbf{Module name}: same as functions and variables, with first letter
+  in capital. 
+\item \textbf{Sum types and exceptions}: should be written as module's names.
+\end{itemize}
+
+\subsection{General}
+
+\medskip 
+
+\begin{itemize}
+\item \textbf{Indentation}: With two-spaces (don't use tabulation, set your
+  editor to use spaces.)
+\item \textbf{Line width}: in general, avoid more than 80 characters. It is
+  easier to read.
+\item \textbf{Tuples}: the comma should always be followed by a space, to ease
+  reading. For example, \textsf{(a, b)}, not \textsf{(a,b)}.
+\item \textbf{Lists}: the list constructor \textsf{::} is always preceded and
+  followed by a space.
+\item \textbf{Parenthesis}: avoid unnecessary parenthesis, even for tuples when
+  it is not needed. To enclose a imperative-style sequence, prefer \textsf{begin
+    .. end}.
+\end{itemize}
+
+\section{Indentation conventions}
+
+To avoid indentation problems, simply use a good editor (Tuareg for emacs, for
+example). However, here are some conventions to respect:
+
+\subsection*{Pattern-matching}
+
+In the \textsf{match .. with} case, cases should be aligned with the
+\textsf{match}:
+
+\begin{verbatim}
+let eval ast =
+  match ast with
+  | Int i -> ...
+...
+\end{verbatim}
+
+The vertical bar for the first case can be avoided, but the beginning of the
+case must be indented once.
+
+In case \textsf{function} is used over \textsf{match .. with}, the cases must be
+indented once. For example:
+
+\begin{verbatim}
+let eval ast = function
+  | Int i -> ...
+...
+\end{verbatim}
+
+And not:
+
+
+\begin{verbatim}
+let eval ast = function
+               | Int i -> ...
+...
+\end{verbatim}
+
+\subsubsection*{Pattern-matching in a pattern-matching}
+
+\medskip
+
+Use \textsf{begin .. end} around the inner pattern-matching. The use of
+parenthesis should be avoided.
+
+\subsection*{The \textsf{let .. in} clause}
+
+The \textsf{in} should be placed at the end of the expression, even in case of
+long expressions. For instance:
+
+\begin{verbatim}
+...
+let r = fun_call
+  arg1
+  arg2 in
+...
+\end{verbatim}
+
+Consecutive \textsf{let .. in} share the same indentation:
+
+\begin{verbatim}
+...
+let a = ... in
+let b = ... in
+...
+\end{verbatim}
+
+And not:
+
+\begin{verbatim}
+...
+let a = ... in
+  let b = ... in
+    ...
+\end{verbatim}
+
+Actually, any expression after the \textsf{in} should be indented as its
+\textsf{let}.
+
+\section{Comments}
+
+Don't comment everything, only tricky parts. Each function in the .mli must be
+commented using the ocamldoc format. Here is an example from the standard
+library:
+
+\begin{verbatim}
+val rev_append : 'a list -> 'a list -> 'a list
+(** [List.rev_append l1 l2] reverses [l1] and concatenates it to [l2].
+   This is equivalent to {!List.rev}[ l1 @ l2], but [rev_append] is
+   tail-recursive and more efficient. *)
+\end{verbatim}
+
+Once parsed by the doc generator, the expressions between brackets are
+emphasized. This kind of comments shows how to use the function, even if it is
+obvious with only the type it can be really useful sometimes. Comments
+``à-la-ocamldoc'' are placed after the signature in .mli.
+
+\section{Coding conventions}
+
+\begin{itemize}
+\item \textbf{Global variables}: The usage of mutable global variables is
+  prohibited.
+\item \textbf{Duplication}: There shouldn't be two parts of code doing the same
+  things, factorize.
+\item \textbf{Interface}: Every .ml file must have the corresponding interface
+  file. Its content must be limited to values which are used by other
+  modules. 
+\item \textbf{Type annotations}: Type inference is really strong in ML, so
+  annotations are not useful. They should only be used to help the compiler if
+  needed, or for coercion with objects.
+\item \textbf{Obj.magic} doesn't exists. If you think you need the module
+  \textsf{Obj}, then your solution is wrong.
+\end{itemize}
+
+\end{document}
