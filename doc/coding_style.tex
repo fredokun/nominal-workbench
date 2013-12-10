@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[12pt,a4paper]{article}
 
 \usepackage{verbatim}
 \usepackage[utf8]{inputenc}
@@ -32,23 +32,33 @@
 \medskip 
 
 \begin{itemize}
-\item \textbf{Indentation}: With two-spaces (don't use tabulation, set your
-  editor to use spaces.)
 \item \textbf{Line width}: in general, avoid more than 80 characters. It is
   easier to read.
 \item \textbf{Tuples}: the comma should always be followed by a space, to ease
   reading. For example, \textsf{(a, b)}, not \textsf{(a,b)}.
-\item \textbf{Lists}: the list constructor \textsf{::} is always preceded and
-  followed by a space.
+\item \textbf{Lists and binary operators}: the list constructor \textsf{::} is
+  always preceded and followed by a space. Binary operators follow the same
+  rule.
 \item \textbf{Parenthesis}: avoid unnecessary parenthesis, even for tuples when
   it is not needed. To enclose a imperative-style sequence, prefer \textsf{begin
     .. end}.
 \end{itemize}
 
-\section{Indentation conventions}
+\section{Indentation and syntactic conventions}
 
 To avoid indentation problems, simply use a good editor (Tuareg for emacs, for
 example). However, here are some conventions to respect:
+
+\begin{itemize}
+\item \textbf{Indentation}: With two-spaces (don't use tabulation, set your
+  editor to use spaces.)
+\item \textbf{Function application}: in case of multiline call of a function,
+  the arguments are indented once from the normal indentation. For example:
+  \begin{verbatim}
+    let r = apply
+        args in
+  \end{verbatim}.
+\end{itemize}
 
 \subsection*{Pattern-matching}
 
@@ -122,7 +132,24 @@ let a = ... in
 \end{verbatim}
 
 Actually, any expression after the \textsf{in} should be indented as its
-\textsf{let}.
+\textsf{let}. Finally, there can't be two \textsf{let} on the same line.
+
+
+\subsection*{\textsf{If .. then .. else}}
+
+There are multiple cases. If the \textsf{if} expression can take on one line, it
+should remain like this. On the other hand, the expression should have the form:
+
+\begin{verbatim}
+if cond then
+  expr1
+else
+  expr2
+\end{verbatim} 
+
+It is admitted that \textsf{expr1} can be on the same line as the \textsf{if} if
+it fits, and respectively with \textsf{else} and \textsf{expr2} if they can fit
+on one line, but it can lead to inconsistencies.
 
 \section{Comments}
 
@@ -152,11 +179,13 @@ obvious with only the type it can be really useful sometimes. Comments
 \item \textbf{Interface}: Every .ml file must have the corresponding interface
   file. Its content must be limited to values which are used by other
   modules. 
+\item \textbf{Multiline operations}: When an expression must be declared on
+  multiple lines, decompose it into \textsf{let .. in} constructions.
 \item \textbf{Type annotations}: Type inference is really strong in ML, so
   annotations are not useful. They should only be used to help the compiler if
   needed, or for coercion with objects.
-\item \textbf{Obj.magic} doesn't exists. If you think you need the module
-  \textsf{Obj}, then your solution is wrong.
+\item \textbf{Obj.magic} doesn't exists. If you think you need \textsf{Obj},
+  then your solution is wrong.
 \end{itemize}
 
 \end{document}
