@@ -1,0 +1,127 @@
+\documentclass{article}
+
+\include{verbatim}
+
+\title{Nominal Workshop : \\
+  Coding style conventions}
+
+\begin{document}
+
+\maketitle
+
+\section{Lexical Conventions}
+
+\subsection{Naming}
+
+\medskip
+
+\begin{itemize}
+\item \textbf{Function and variable names}: Lower cases, with underscore to 
+  separate the words (e.g. open\_file).
+\item \textbf{Object name}: Use the camel case (e.g. FileOpener).
+\item \textbf{File names}: The name of any files (e.g. .ml or .mli) must be in
+  lower case.
+\item \textbf{Module name}: same as functions and variables, with first letter
+  in capital. 
+\item \textbf{Sum types and exceptions}: should be written as module's names.
+\end{itemize}
+
+\subsection{General}
+
+\medskip 
+
+\begin{itemize}
+\item \textbf{Indentation}: With two-spaces (don't use tabulation, set your
+  editor to use spaces.)
+\item \textbf{Line width}: in general, avoid more than 80 characters. It is
+  easier to read.
+\item \textbf{Tuples}: the comma should always be followed by a space, to ease
+  reading. For example, \textsf{(a, b)}, not \textsf{(a,b)}.
+\item \textbf{Lists}: the list constructor \textsf{::} is always preceded and
+  followed by a space.
+\item \textbf{Parenthesis}: avoid unnecessary parenthesis, even for tuples when
+  it is not needed. To enclose a imperative-style sequence, prefer \textsf{begin
+    .. end}.
+\end{itemize}
+
+\section{Indentation conventions}
+
+To avoid indentation problems, simply use a good editor (Tuareg for emacs, for
+example). However, here are some conventions to respect:
+
+\subsection*{Pattern-matching}
+
+In the \textsf{match .. with} case, cases should be aligned with the
+\textsf{match}:
+
+\begin{verbatim}
+let eval ast =
+  match ast with
+  | Int i -> ...
+...
+\end{verbatim}
+
+The vertical bar for the first case can be avoided, but the beginning of the
+case must be indented once.
+
+In case \textsf{function} is used over \textsf{match .. with}, the cases must be
+indented once. For example:
+
+\begin{verbatim}
+let eval ast = function
+  | Int i -> ...
+...
+\end{verbatim}
+
+And not:
+
+
+\begin{verbatim}
+let eval ast = function
+               | Int i -> ...
+...
+\end{verbatim}
+
+\subsubsection*{Pattern-matching in a pattern-matching}
+
+\medskip
+
+Use \textsf{begin .. end} around the inner pattern-matching. The use of
+parenthesis should be avoided.
+
+\subsection*{The \textsf{let .. in} clause}
+
+The \textsf{in} should be placed at the end of the expression, even in case of
+long expressions. For instance:
+
+\begin{verbatim}
+...
+let r = fun_call
+  arg1
+  arg2 in
+...
+\end{verbatim}
+
+Consecutive \textsf{let .. in} share the same indentation:
+
+\begin{verbatim}
+...
+let a = ... in
+let b = ... in
+...
+\end{verbatim}
+
+And not:
+
+\begin{verbatim}
+...
+let a = ... in
+  let b = ... in
+    ...
+\end{verbatim}
+
+Actually, any expression after the \textsf{in} should be indented as its
+\textsf{let}.
+
+
+\end{document}
