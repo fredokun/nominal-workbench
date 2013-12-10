@@ -18,6 +18,13 @@
   let already_def = "already defined"
   let unk = "unknown"
 
+  let clear_tables = fun x ->
+    print_endline "ca clean";
+    Hashtbl.clear operator_tbl;
+    Hashtbl.clear constant_tbl;
+    Hashtbl.clear kind_tbl;
+    Hashtbl.clear rule_tbl
+
 %}
 
 /* values */
@@ -34,7 +41,7 @@
 %token EOF
 
 %start start
-%type <unit> start
+%type <int> start
 %type <unit> kind_decl
 
 %start toplevel_phrase
@@ -44,10 +51,12 @@
 
 start:
 | decls EOF
-    { if !result = 0 then
+    { (if !result = 0 then
 	print_endline "Success !"
       else
-	print_endline "Fail !"
+	print_endline "Fail !");
+      clear_tables ();
+      !result
     }
 
 toplevel_phrase:
@@ -59,17 +68,17 @@ decls :
 | decl decls {}
 | decl {}
 
-    decl:
+decl:
 | kind_decl {}
 | operator_decl {}
 | constant_decl {}
 | rule_decl {}
-| decl NEWLINE {}
+| NEWLINE {}
 
 
-  /* kinds */
+/* kinds */
 
-    kind_decl:
+kind_decl:
 | KIND WORD COLON kind_lfth
 	{ try
 	    prerr_endline (Hashtbl.find kind_tbl $2);
@@ -90,7 +99,7 @@ decls :
 
   /* constants */
 
-    constant_decl:
+constant_decl:
 | CONSTANT WORD COLON WORD
 	{ begin
 	  try
