@@ -6,12 +6,10 @@ A prototype tool for experimenting nominal rewrite systems
 Compilation
 -----------
 
-The first compilation:
-
 ./configure.sh
+
 ocp-build
 
-Just run ocp-build for the others.
 
 Informations
 ------------
