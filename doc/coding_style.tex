@@ -2,6 +2,23 @@
 
 \usepackage{verbatim}
 \usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+
+\lstnewenvironment{OCaml}
+                  {\lstset{
+                      language=[Objective]Caml,
+                      breaklines=true,
+                      commentstyle=\color{purple},
+                      stringstyle=\color{red},
+                      identifierstyle=\ttfamily,
+                      keywordstyle=\color{blue},
+                      basicstyle=\footnotesize
+                    }
+                  }
+                  {}
 
 \title{Nominal Workshop : \\
   Coding style conventions}
@@ -54,10 +71,12 @@ example). However, here are some conventions to respect:
   editor to use spaces.)
 \item \textbf{Function application}: in case of multiline call of a function,
   the arguments are indented once from the normal indentation. For example:
-  \begin{verbatim}
+  \begin{OCaml}
+    ...
     let r = apply
         args in
-  \end{verbatim}.
+    ...
+  \end{OCaml}.
 \end{itemize}
 
 \subsection*{Pattern-matching}
@@ -65,33 +84,59 @@ example). However, here are some conventions to respect:
 In the \textsf{match .. with} case, cases should be aligned with the
 \textsf{match}:
 
-\begin{verbatim}
+\begin{OCaml}
 let eval ast =
   match ast with
   | Int i -> ...
-...
-\end{verbatim}
+  | Float f -> ...
+  ...
+\end{OCaml}
 
-The vertical bar for the first case can be avoided, but the beginning of the
-case must be indented once.
+The first case vertical bar is mandatory for more clarity.
+
+The beginning of the case must be indented once.
+\newline
+
+If a case treatment goes over a single line, it should begins under its associated pattern :
+
+\begin{OCaml}
+let eval ast =
+  match ast with
+  | Int i -> ............
+    .......
+  | Float f -> ...
+  ...
+\end{OCaml}
+
+becomes
+
+\begin{OCaml}
+let eval ast =
+  match ast with
+  | Int i ->
+    ..............
+    .....
+  | Float f -> ...
+  ...
+\end{OCaml}
 
 In case \textsf{function} is used over \textsf{match .. with}, the cases must be
 indented once. For example:
 
-\begin{verbatim}
+\begin{OCaml}
 let eval ast = function
   | Int i -> ...
 ...
-\end{verbatim}
+\end{OCaml}
 
 And not:
 
 
-\begin{verbatim}
+\begin{OCaml}
 let eval ast = function
                | Int i -> ...
 ...
-\end{verbatim}
+\end{OCaml}
 
 \subsubsection*{Pattern-matching in a pattern-matching}
 
@@ -105,31 +150,31 @@ parenthesis should be avoided.
 The \textsf{in} should be placed at the end of the expression, even in case of
 long expressions. For instance:
 
-\begin{verbatim}
+\begin{OCaml}
 ...
 let r = fun_call
   arg1
   arg2 in
 ...
-\end{verbatim}
+\end{OCaml}
 
 Consecutive \textsf{let .. in} share the same indentation:
 
-\begin{verbatim}
+\begin{OCaml}
 ...
 let a = ... in
 let b = ... in
 ...
-\end{verbatim}
+\end{OCaml}
 
 And not:
 
-\begin{verbatim}
+\begin{OCaml}
 ...
 let a = ... in
   let b = ... in
     ...
-\end{verbatim}
+\end{OCaml}
 
 Actually, any expression after the \textsf{in} should be indented as its
 \textsf{let}. Finally, there can't be two \textsf{let} on the same line.
@@ -140,12 +185,12 @@ Actually, any expression after the \textsf{in} should be indented as its
 There are multiple cases. If the \textsf{if} expression can take on one line, it
 should remain like this. On the other hand, the expression should have the form:
 
-\begin{verbatim}
+\begin{OCaml}
 if cond then
   expr1
 else
   expr2
-\end{verbatim} 
+\end{OCaml} 
 
 It is admitted that \textsf{expr1} can be on the same line as the \textsf{if} if
 it fits, and respectively with \textsf{else} and \textsf{expr2} if they can fit
@@ -157,12 +202,12 @@ Don't comment everything, only tricky parts. Each function in the .mli must be
 commented using the ocamldoc format. Here is an example from the standard
 library:
 
-\begin{verbatim}
+\begin{OCaml}
 val rev_append : 'a list -> 'a list -> 'a list
 (** [List.rev_append l1 l2] reverses [l1] and concatenates it to [l2].
    This is equivalent to {!List.rev}[ l1 @ l2], but [rev_append] is
    tail-recursive and more efficient. *)
-\end{verbatim}
+\end{OCaml}
 
 Once parsed by the doc generator, the expressions between brackets are
 emphasized. This kind of comments shows how to use the function, even if it is
