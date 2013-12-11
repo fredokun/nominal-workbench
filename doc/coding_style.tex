@@ -1,5 +1,5 @@
 \documentclass[12pt,a4paper]{article}
-
+\usepackage[american]{babel}
 \usepackage{verbatim}
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
@@ -20,14 +20,15 @@
                   }
                   {}
 
-\title{Nominal Workshop : \\
-  Coding style conventions}
+\title{Nominal Workbench \\
+  Coding style}
+\author{NoWork development team}
 
 \begin{document}
 
 \maketitle
 
-\section{Lexical Conventions}
+\section{Lexical conventions}
 
 \subsection{Naming}
 
@@ -39,9 +40,8 @@
 \item \textbf{Object name}: Use the camel case (e.g. FileOpener).
 \item \textbf{File names}: The name of any files (e.g. .ml or .mli) must be in
   lower case.
-\item \textbf{Module name}: same as functions and variables, with first letter
-  in capital. 
-\item \textbf{Sum types and exceptions}: should be written as module's names.
+\item \textbf{Module name}: Use the camel case.
+\item \textbf{Sum types and exceptions}: They should be written as module's names.
 \end{itemize}
 
 \subsection{General}
@@ -49,14 +49,14 @@
 \medskip 
 
 \begin{itemize}
-\item \textbf{Line width}: in general, avoid more than 80 characters. It is
+\item \textbf{Line width}: In general, avoid more than 80 characters. It is
   easier to read.
-\item \textbf{Tuples}: the comma should always be followed by a space, to ease
+\item \textbf{Tuples}: The comma should always be followed by a space, to ease
   reading. For example, \textsf{(a, b)}, not \textsf{(a,b)}.
-\item \textbf{Lists and binary operators}: the list constructor \textsf{::} is
+\item \textbf{Lists and binary operators}: The list constructor \textsf{::} is
   always preceded and followed by a space. Binary operators follow the same
   rule.
-\item \textbf{Parenthesis}: avoid unnecessary parenthesis, even for tuples when
+\item \textbf{Parenthesis}: Avoid unnecessary parenthesizing, even for tuples when
   it is not needed. To enclose a imperative-style sequence, prefer \textsf{begin
     .. end}.
 \end{itemize}
@@ -69,12 +69,12 @@ example). However, here are some conventions to respect:
 \begin{itemize}
 \item \textbf{Indentation}: With two-spaces (don't use tabulation, set your
   editor to use spaces.)
-\item \textbf{Function application}: in case of multiline call of a function,
+\item \textbf{Function application}: In case of multi-line call of a function,
   the arguments are indented once from the normal indentation. For example:
   \begin{OCaml}
     ...
     let r = apply
-        args in
+      args in
     ...
   \end{OCaml}.
 \end{itemize}
@@ -87,25 +87,25 @@ In the \textsf{match .. with} case, cases should be aligned with the
 \begin{OCaml}
 let eval ast =
   match ast with
-  | Int i -> ...
-  | Float f -> ...
+  | Int i -> (* code *)
+  | Float f -> (* code *)
   ...
 \end{OCaml}
 
-The first case vertical bar is mandatory for more clarity.
-
-The beginning of the case must be indented once.
+\noindent
+The first case vertical bar is mandatory for more clarity and the case statements must be aligned with the match statement.
 \newline
 
-If a case treatment goes over a single line, it should begins under its associated pattern :
+\noindent
+If a case treatment goes over a single line, it should begins under its associated pattern:
 
 \begin{OCaml}
 let eval ast =
   match ast with
-  | Int i -> ............
-    .......
-  | Float f -> ...
-  ...
+  | Int i -> (* a very long
+    statement *)
+  | Float f -> (* another very
+    long statement *)
 \end{OCaml}
 
 becomes
@@ -114,36 +114,48 @@ becomes
 let eval ast =
   match ast with
   | Int i ->
-    ..............
-    .....
-  | Float f -> ...
-  ...
+    (* a very long
+    statement *)
+  | Float f ->
+    (* another very
+    long statement *)
 \end{OCaml}
 
+\noindent
 In case \textsf{function} is used over \textsf{match .. with}, the cases must be
 indented once. For example:
 
 \begin{OCaml}
-let eval ast = function
-  | Int i -> ...
+let eval = function
+  | Int i -> (* code *)
 ...
 \end{OCaml}
 
+\noindent
 And not:
 
+\begin{OCaml}
+let eval = function
+           | Int i -> (* code *)
+...
+\end{OCaml}
+
+\subsubsection*{Conditional Pattern-matching}
+
+You should use the when conditional whenever you can instead of the if-then-else statement:
 
 \begin{OCaml}
-let eval ast = function
-               | Int i -> ...
-...
+let string_of_sign value =
+  match value with
+  | i when i < 0 -> "-"
+  | _ -> "+"
 \end{OCaml}
 
 \subsubsection*{Pattern-matching in a pattern-matching}
 
 \medskip
 
-Use \textsf{begin .. end} around the inner pattern-matching. The use of
-parenthesis should be avoided.
+Use \textsf{begin .. end} around the inner pattern-matching. The use of parenthesis should be avoided. However, it might be better to extract the inner pattern-matching inside a function.
 
 \subsection*{The \textsf{let .. in} clause}
 
@@ -158,6 +170,7 @@ let r = fun_call
 ...
 \end{OCaml}
 
+\noindent
 Consecutive \textsf{let .. in} share the same indentation:
 
 \begin{OCaml}
@@ -176,6 +189,7 @@ let a = ... in
     ...
 \end{OCaml}
 
+\noindent
 Actually, any expression after the \textsf{in} should be indented as its
 \textsf{let}. Finally, there can't be two \textsf{let} on the same line.
 
@@ -192,6 +206,7 @@ else
   expr2
 \end{OCaml} 
 
+\noindent
 It is admitted that \textsf{expr1} can be on the same line as the \textsf{if} if
 it fits, and respectively with \textsf{else} and \textsf{expr2} if they can fit
 on one line, but it can lead to inconsistencies.
@@ -203,10 +218,9 @@ commented using the ocamldoc format. Here is an example from the standard
 library:
 
 \begin{OCaml}
-val rev_append : 'a list -> 'a list -> 'a list
+val rev_append: 'a list -> 'a list -> 'a list
 (** [List.rev_append l1 l2] reverses [l1] and concatenates it to [l2].
-   This is equivalent to {!List.rev}[ l1 @ l2], but [rev_append] is
-   tail-recursive and more efficient. *)
+    This is equivalent to {!List.rev}[ l1 @ l2], but [rev_append] is tail-recursive and more efficient. *)
 \end{OCaml}
 
 Once parsed by the doc generator, the expressions between brackets are
@@ -214,7 +228,7 @@ emphasized. This kind of comments shows how to use the function, even if it is
 obvious with only the type it can be really useful sometimes. Comments
 ``à-la-ocamldoc'' are placed after the signature in .mli.
 
-\section{Coding conventions}
+\section{Miscellaneous}
 
 \begin{itemize}
 \item \textbf{Global variables}: The usage of mutable global variables is
@@ -224,11 +238,12 @@ obvious with only the type it can be really useful sometimes. Comments
 \item \textbf{Interface}: Every .ml file must have the corresponding interface
   file. Its content must be limited to values which are used by other
   modules. 
-\item \textbf{Multiline operations}: When an expression must be declared on
+\item \textbf{Multi-line operations}: When an expression must be declared on
   multiple lines, decompose it into \textsf{let .. in} constructions.
 \item \textbf{Type annotations}: Type inference is really strong in ML, so
   annotations are not useful. They should only be used to help the compiler if
   needed, or for coercion with objects.
+\item \textbf{Module opening}: Try to minimize the dependencies, if you are using a module in one function, use the let open.
 \item \textbf{Obj.magic} doesn't exists. If you think you need \textsf{Obj},
   then your solution is wrong.
 \end{itemize}
