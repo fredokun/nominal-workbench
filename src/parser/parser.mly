@@ -1,10 +1,10 @@
+%{
 (* Distributed under the MIT License.
   (See accompanying file LICENSE.txt)
   (C) Copyright Matthieu Dien
   (C) Copyright Vincent Botbol
 *)
 
-%{
   open Hashtbl
   open Parsing
   open Lexing
