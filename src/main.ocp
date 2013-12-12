@@ -3,3 +3,9 @@ begin program "main"
     files = []
     requires = [ "parser" ]
 end
+
+begin program "error_gen"
+    sort = true
+    files = []
+    requires = ["error_code_generator"]
+end
