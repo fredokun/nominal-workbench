@@ -1,5 +1,5 @@
-begin library "error_code_generator"
+begin library "error_gen"
     sort = true
-    files = [ "gen_error_code.ml" ]
+    files = [ "error_gen.ml" ]
     requires = [str]
 end

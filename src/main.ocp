@@ -1,11 +1,5 @@
 begin program "main"
     sort = true
     files = []
-    requires = [ "parser" ]
-end
-
-begin program "error_gen"
-    sort = true
-    files = []
-    requires = ["error_code_generator"]
+    requires = ["error_code" "parser"]
 end
