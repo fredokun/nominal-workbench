@@ -1,0 +1,10 @@
+begin library "error_code"
+    sort = true
+    files = [
+      "error_code.ml" (
+        pp = [ "./_obuild/error_gen/error_gen.byte" ]
+        pp_requires = [ "error_gen:byte" ]
+      )
+    ]
+    requires = ["error_gen"]
+end
