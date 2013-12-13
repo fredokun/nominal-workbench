@@ -22,11 +22,14 @@ let make_description_map properties error_file =
 let make_error_code error_conf error_filename =
   let error_file = open_out error_filename in
   let properties = read_property_file error_conf in
-  make_error_types properties error_file;
-  fprintf error_file "\n";
-  make_error_map_name properties error_file;
-  fprintf error_file "\n";
-  make_description_map properties error_file;
+  let make_construct f = 
+    f properties error_file;
+    fprintf error_file "\n" in
+  let construct_makers = 
+    [ make_error_types; 
+      make_error_map_name; 
+      make_description_map] in
+  List.iter make_construct construct_makers;
   close_out error_file
 
 let main () =
