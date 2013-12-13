@@ -1,0 +1,12 @@
+kind Nat : type
+kind List : type => type
+kind Var : atom
+kind Bool : type
+
+constant True: Bool
+constant zero : Nat
+constant Pi : Float
+
+operator Nat: Bool -> Bool
+operator Nat: Bool -> Bool
+operator And: Bool * Bool -> Bool

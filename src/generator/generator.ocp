@@ -1,0 +1,11 @@
+begin library "property"
+  sort = true
+  files = ["property.ml"]
+  requires = [str]
+end
+
+begin program "error_gen"
+  sort = true
+  files = [ "error_gen.ml" ]
+  requires = ["property"]
+end
