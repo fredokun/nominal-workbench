@@ -9,7 +9,7 @@ generator:
 launch_gen: generator
 	./_obuild/error_gen/error_gen.byte
 
-main:
+main: launch_gen
 	ocp-build main
 
 clean:

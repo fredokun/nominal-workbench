@@ -1,42 +1,35 @@
-open String
 open Printf
+open Property
 
-let rec iter_lines f channel = 
-  try
-    f (input_line channel)
-  with End_of_file -> ()
+let make_error_types properties error_file =
+  let make_error_type (name,_) =
+    fprintf error_file "  | %s\n" name in
+  fprintf error_file "type error_code =\n";
+  List.iter make_error_type properties
 
-let iter_file_lines f filename = 
-  let file_channel = open_in filename in
-  try
-    iter_lines f file_channel;
-    close_in file_channel
-  with
-  | e ->
-      close_in_noerr file_channel;
-      raise e
+let make_error_map_name properties error_file =
+  let map_name (name,_) =
+    fprintf error_file "  | %s -> \"%s\"\n" name name in
+  fprintf error_file "let string_of_error_code = function\n";
+  List.iter map_name properties
 
-let read_property line =
-  let open Str in
-  let sep_index = index line ':' in
-  let property f = trim (f line sep_index) in
-  ((property string_before), (property string_after))
+let make_description_map properties error_file =
+  let make_description (name, desc) =
+    fprintf error_file "  | %s -> \"%s\"\n" name desc in
+  fprintf error_file "let description_of_error_code = function\n";
+  List.iter make_description properties
 
-let make_error_types error_conf error_file =
-  let make_error_type line =
-    let (error_code_name, _) = read_property line in
-    fprintf error_file "  | %s\n" error_code_name in
-  begin
-    fprintf error_file "type error_code =\n";
-    iter_file_lines make_error_type error_conf
-  end
-
-let make_error_code error_conf error_ml =
-  let error_file = open_out error_ml in
-  make_error_types error_conf error_file;
+let make_error_code error_conf error_filename =
+  let error_file = open_out error_filename in
+  let properties = read_property_file error_conf in
+  make_error_types properties error_file;
+  fprintf error_file "\n";
+  make_error_map_name properties error_file;
+  fprintf error_file "\n";
+  make_description_map properties error_file;
   close_out error_file
 
 let main () =
-  make_error_code "data/error.conf" "src/generated/error_code.ml"
+  make_error_code "data/error.conf" "src/auto_gen/error_code.ml"
 
 let () = main ()
