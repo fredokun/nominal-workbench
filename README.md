@@ -7,8 +7,7 @@ Compilation
 -----------
 
 ./configure.sh
-
-ocp-build
+make
 
 
 Informations
