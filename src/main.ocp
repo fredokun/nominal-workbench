@@ -1,5 +1,5 @@
 begin program "main"
     sort = true
     files = []
-    requires = [ "parser" ]
+    requires = ["error_code" "parser"]
 end
