@@ -1,4 +1,4 @@
-begin library "error_gen"
+begin program "error_gen"
     sort = true
     files = [ "error_gen.ml" ]
     requires = [str]
