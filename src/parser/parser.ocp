@@ -1,5 +1,5 @@
 begin library "parser"
     sort = true
-    files = [ "def_ast.mli" "lexer.mll" "parser.mly" ]
+    files = [ "lexer.mll" "parser.mly" ]
     requires = [ "term_system" ]
 end

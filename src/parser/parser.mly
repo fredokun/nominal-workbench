@@ -7,7 +7,7 @@
 
   open Parsing
   open Lexing
-  open Def_ast
+  open Ast
 
   let err_msg = fun kwd name msg ->
     let pos = Parsing.symbol_start_pos () in
@@ -35,10 +35,10 @@
 %token EOF
 
 %start start
-%type <Lexing.position Def_ast.definitions> start
+%type <Lexing.position Ast.definitions> start
 
 %start toplevel_phrase
-%type <Lexing.position Def_ast.definitions> toplevel_phrase
+%type <Lexing.position Ast.definitions> toplevel_phrase
 
 %%
 
