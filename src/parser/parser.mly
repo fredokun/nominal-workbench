@@ -5,15 +5,9 @@
   (C) Copyright Vincent Botbol
 *)
 
-  open Hashtbl
   open Parsing
   open Lexing
-
-  let operator_tbl = Hashtbl.create 10
-  let constant_tbl = Hashtbl.create 10
-  let kind_tbl = Hashtbl.create 10
-  let rule_tbl = Hashtbl.create 10
-  let result = ref 0
+  open Def_ast
 
   let err_msg = fun kwd name msg ->
     let pos = Parsing.symbol_start_pos () in
@@ -21,15 +15,9 @@
     " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
     " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol))
 
-  let already_def = "already defined"
-  let unk = "unknown"
-
-  let clear_tables = fun x ->
-    print_endline "ca clean";
-    Hashtbl.clear operator_tbl;
-    Hashtbl.clear constant_tbl;
-    Hashtbl.clear kind_tbl;
-    Hashtbl.clear rule_tbl
+  let annote_pos item = 
+    let pos = Parsing.symbol_start_pos () in
+    { value = item ; info = pos }
 
 %}
 
@@ -47,151 +35,93 @@
 %token EOF
 
 %start start
-%type <int> start
-%type <unit> kind_decl
+%type <Lexing.position Def_ast.definitions> start
 
 %start toplevel_phrase
-%type <unit> toplevel_phrase
+%type <Lexing.position Def_ast.definitions> toplevel_phrase
 
 %%
 
 start:
-| decls EOF
-    { (if !result = 0 then
-	print_endline "Success !"
-      else
-	print_endline "Fail !");
-      clear_tables ();
-      !result
-    }
+| decls EOF { $1 }
 
 toplevel_phrase:
-| decls SEMICOL SEMICOL { () }
+| decls SEMICOL SEMICOL { $1 }
 | EOF { raise End_of_file }
 ;
 
 decls :
-| decl decls {}
-| decl {}
+| decl decls 
+    {
+        let kind, const, operator, rule = $1 in
+        let kinds, consts, operators, rules = $2 in
+        (kind@kinds, const@consts, operator@operators, rule@rules) 
+    }
+| decl { $1 }
 
 decl:
-| kind_decl {}
-| operator_decl {}
-| constant_decl {}
-| rule_decl {}
-| NEWLINE {}
+| kind_decl NEWLINE { ([$1], [], [], []) }
+| constant_decl NEWLINE { ([], [$1], [], []) }
+| operator_decl NEWLINE { ([], [], [$1], []) }
+| rule_decl NEWLINE { ([], [], [], [$1]) }
 
 
 /* kinds */
 
 kind_decl:
-| KIND WORD COLON kind_lfth
-	{ try
-	    prerr_endline (Hashtbl.find kind_tbl $2);
-	    result := 1
-	  with Not_found ->
-	    Hashtbl.add kind_tbl $2 (err_msg "Kind" $2 already_def)
-	}
+| KIND WORD COLON kind_lfth { annote_pos ($2, $4) }
 
-	kind_lfth:
-| kind_type {}
-| ATOM {}
+kind_lfth:
+| kind_type { $1 }
+| ATOM { Atom }
 
-    kind_type:
-| kind_type STAR kind_type {}
-| kind_type DARROW kind_type {}
-| TYPE {}
+kind_type:
+| kind_type STAR kind_type { assert false }     /* is this even possible ? */
+| kind_type DARROW kind_type { assert false }
+| TYPE { Type }
 
 
   /* constants */
 
 constant_decl:
-| CONSTANT WORD COLON WORD
-	{ begin
-	  try
-	    prerr_endline (Hashtbl.find constant_tbl $2);
-	    result := 1
-	  with Not_found ->
-	    Hashtbl.add constant_tbl $2 (err_msg "Constant" $2 already_def)
-	end;
-	  begin
-	    try
-	      ignore (Hashtbl.find kind_tbl $4);
-	      result := 1
-	    with Not_found ->
-	      prerr_endline (err_msg "Kind" $4 unk)
-	  end
-	}
+| CONSTANT WORD COLON WORD { annote_pos ($2, annote_pos @@ Kind(annote_pos $4)) }
 
+  /* operators */
 
-      /* operators */
+operator_decl:
+| OPERATOR WORD COLON operator_type ARROW operator_type { annote_pos ($2, ($4, $6)) }
 
-	operator_decl:
-| OPERATOR WORD COLON operator_type
-	    { try
-		prerr_endline (Hashtbl.find operator_tbl $2);
-		result := 1
-	      with Not_found ->
-		Hashtbl.add operator_tbl $2 (err_msg "Operator" $2 already_def)
-	    }
+operator_type:
+| WORD { annote_pos @@ Kind(annote_pos $1) }
+| LBRACKET WORD RBRACKET { annote_pos @@ Abs(annote_pos $2) }
+| operator_type operator_prod_tail { annote_pos @@ Prod($1::$2) }
 
-	    operator_type:
-| WORD
-		{ try
-		    ignore (Hashtbl.find kind_tbl $1)
-		  with Not_found ->
-		    result := 1;
-		    prerr_endline (err_msg "Kind" $1 unk)
-		}
-| LBRACKET WORD RBRACKET
-		    { try
-			ignore (Hashtbl.find kind_tbl $2)
-		      with Not_found ->
-			result := 1;
-			prerr_endline (err_msg "Kind" $2 unk)
-		    }
-| operator_type STAR operator_type {}
-| operator_type ARROW operator_type {}
+operator_prod_tail:
+| STAR operator_type { [$2] }
+| STAR operator_type operator_prod_tail { $2::$3 }
 
 
   /* rules */
 
-    rule_decl:
-| rule_head rule_body {}
-| rule_head NEWLINE rule_body {}
+rule_decl:
+| rule_head rule_body { annote_pos ($1, $2) }
+| rule_head NEWLINE rule_body { annote_pos ($1, $3) }
 
-    rule_head:
-| RULE LBRACKET WORD RBRACKET COLON
-	{ try
-	    prerr_endline (Hashtbl.find rule_tbl $3);
-	    result := 1
-	  with Not_found ->
-	    Hashtbl.add rule_tbl $3 (err_msg "Rule" $3 already_def)
-	}
+rule_head:
+| RULE LBRACKET WORD RBRACKET COLON { $3 }
 
-	rule_body:
-| rule_side DARROW rule_side {}
+rule_body:
+| rule_side DARROW rule_side { ($1, $3) }
 
-	    rule_side:
-| WORD LPAREN RPAREN
-		{ try
-		    ignore (Hashtbl.find operator_tbl $1)
-		  with Not_found ->
-		    result := 1;
-		    prerr_endline (err_msg "Operator" $1 unk)
-		}
-| WORD LPAREN rule_side_list RPAREN
-		    { try
-			ignore (Hashtbl.find operator_tbl $1)
-		      with Not_found ->
-			result := 1;
-			prerr_endline (err_msg "Operator" $1 unk)
-		    }
-| QMARK WORD {}
+rule_side:
+| WORD { annote_pos @@ Constant(annote_pos $1) } /* obvious case of ambiguity */
+| WORD LPAREN RPAREN { annote_pos @@ Operator(annote_pos $1, []) }
+| WORD LPAREN rule_side_list RPAREN { annote_pos @@ Operator(annote_pos $1, $3) }
+| QMARK WORD { annote_pos @@ Placeholder( annote_pos $2) }
 
-			rule_side_list:
-| rule_side COMMA rule_side_list {}
-| rule_side {}
+rule_side_list:
+| rule_side COMMA rule_side_list { $1::$3 }
+| rule_side { [$1] }
 
 
 %%
