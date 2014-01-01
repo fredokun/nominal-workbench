@@ -123,5 +123,4 @@ rule_side_list:
 | rule_side COMMA rule_side_list { $1::$3 }
 | rule_side { [$1] }
 
-
 %%

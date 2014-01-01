@@ -17,7 +17,6 @@ let print_vnum () =
   Printf.printf "%s\n" "0.00.1" (* Config.version *);
   exit 0
 
-
 let options_list = 
   let open Arg in
       [ "version", Unit print_version, "Print version and exits"

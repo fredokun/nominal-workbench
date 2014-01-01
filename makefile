@@ -4,13 +4,17 @@ AUTO_GEN_DIR=src/auto_gen
 all: main
 
 generator:
-	ocp-build error_gen
+	ocp-build build error_gen
 
 launch_gen: generator
-	./_obuild/error_gen/error_gen.byte
+	./$(TEMPORARY_DIR)/error_gen/error_gen.byte
 
 main: launch_gen
-	ocp-build main
+	ocp-build build main
+
+test: launch_gen
+	ocp-build build test
+	./$(TEMPORARY_DIR)/test/test.byte
 
 clean:
 	rm -r $(TEMPORARY_DIR)
