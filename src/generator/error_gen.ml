@@ -32,7 +32,20 @@ let make_error_code error_conf error_filename =
   List.iter make_construct construct_makers;
   close_out error_file
 
+let usage = "Usage: error_gen <options>\n"
+
 let main () =
-  make_error_code "data/error.conf" "src/auto_gen/error_code.ml"
+  let error_conf = ref "" in
+  let output_file = ref "" in
+  let set_error_conf f = error_conf := f in
+  let set_output_file f = output_file := f in
+  let options_list =
+    [ ("-c", Arg.String (set_error_conf), "Error configuration file.")
+    ; ("-o", Arg.String (set_output_file), "OCaml output file.")
+    ] in
+  begin
+    Arg.parse options_list print_endline usage;
+    make_error_code !error_conf !output_file
+  end
 
 let () = main ()

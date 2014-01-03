@@ -5,4 +5,4 @@
 
 type info = String
 
-exception TermSystemError of Error_code.error_code * info
+exception TermSystemError of Term_system_error_code.error_code * info

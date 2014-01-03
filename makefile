@@ -1,5 +1,6 @@
 TEMPORARY_DIR=_obuild
 AUTO_GEN_DIR=src/auto_gen
+ERROR_GEN_EXE=./$(TEMPORARY_DIR)/error_gen/error_gen.byte
 
 all: main
 
@@ -7,7 +8,7 @@ generator:
 	ocp-build build error_gen
 
 launch_gen: generator
-	./$(TEMPORARY_DIR)/error_gen/error_gen.byte
+	$(ERROR_GEN_EXE) -c data/term_system_error.conf -o src/auto_gen/term_system_error_code.ml
 
 main: launch_gen
 	ocp-build build main
