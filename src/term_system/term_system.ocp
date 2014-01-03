@@ -1,5 +1,5 @@
 begin library "term_system"
   sort = true
-  files = [ "ast.mli" ]
+  files = [ "ast.ml" ]
   requires = []
 end
