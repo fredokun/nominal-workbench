@@ -4,6 +4,7 @@
 *)
 
 open Printf
+open Display_test
 
 type term_test = TermTest of string
 
@@ -55,15 +56,6 @@ let test_of_xml xtest =
   Xml.map system_test_of_xml xtest
 
 (* Test framework. *)
-let print_system_error e =
-  printf "System error: %s\n" e
-
-let print_failure s =
-  printf "%s\n" s
-
-let print_success s =
-  printf "%s\n" s
-
 let test_expectation channel expectation =
   let open Term_system_error in
   let open Term_system_error_code in
@@ -79,11 +71,14 @@ let test_expectation channel expectation =
   try
     let term_system = parse_channel channel in
     match_result_expectation Passed
-  with TermSystemError(e, _) ->
+  with 
+  | TermSystemError(e, _) ->
     match_result_expectation (Failed(string_of_error_code e))
+  | e -> 
+    print_failure (sprintf "Unexpected exception: %s" (Printexc.to_string e))
 
 let launch_test no (SystemTest(name, file, expectation)) =
-  printf "Test %d: %s (%s).\n" no name file;
+  print_test no name file;
   try
     if Sys.is_directory file then
       print_system_error (sprintf "%s: is a directory" file)

@@ -3,3 +3,4 @@ _obuild
 *.log
 doc/*.pdf
 ocp-build.root*
+src/auto_gen/*.ml
