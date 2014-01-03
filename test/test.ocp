@@ -1,5 +1,5 @@
 begin program "test"
   sort = true
   files = [ "test.ml" ]
-  requires = [ "xml-light" "parser" "error" ]
+  requires = [ "xml-light" "parser" "term_system" ]
 end

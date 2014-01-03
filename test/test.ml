@@ -66,7 +66,7 @@ let print_success s =
   printf "%s\n" s
 
 let test_expectation channel expectation =
-  let open Error in
+  let open Term_system_error in
   let match_result_expectation result =
     match (expectation, result) with
     | (MustPass(_), Failed(s)) -> print_failure (sprintf "Failure with error %s." s)
@@ -79,7 +79,7 @@ let test_expectation channel expectation =
   try
     let term_system = parse_channel channel in
     match_result_expectation Passed
-  with Error(e, _) ->
+  with TermSystemError(e, _) ->
     match_result_expectation (Failed(string_of_error_code e))
 
 let launch_test no (SystemTest(name, file, expectation)) =

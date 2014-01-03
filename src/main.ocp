@@ -1,9 +1,3 @@
-begin library "error"
-  sort = true
-  files = [ "error.ml" ]
-  requires = [ "error_code" ]
-end
-
 begin program "main"
   sort = true
   files = []
