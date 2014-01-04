@@ -2,6 +2,6 @@
   <systemtest>
     <name>Constant</name>
     <file>data/test/run-fail/constants.nw</file>
-    <error>AlreadyDefined</error>
+    <error>KindAlreadyDefined</error>
   </systemtest>
 </test>
