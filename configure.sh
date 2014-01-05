@@ -1,2 +1,3 @@
 #!/bin/sh
-ocp-build -init
+opam install xml-light
+ocp-build -init -configure

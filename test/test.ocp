@@ -1,17 +1,5 @@
-begin test "parser-test-success"
-    has_asm = false
-    files = [ "parser-test.ml" ]
-    requires = [ "parser" ]
-
-    test_args = ["data/test/run-pass"]
-end
-
-begin test "parser-test-fail"
-    has_asm = false
-    files = [ "parser-test.ml" ]
-    requires = [ "parser" ]
-
-    test_args = ["data/test/run-fail"]
-
-    tests = [ "" (test_exit = 1) ]
+begin program "test"
+  sort = true
+  files = [ "display_test.ml" "test.ml" ]
+  requires = [ "xml-light" "parser" "term_system" ]
 end

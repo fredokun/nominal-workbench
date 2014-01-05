@@ -1,0 +1,7 @@
+<!ELEMENT test (systemtest*)>
+<!ELEMENT systemtest (name, file, (error|(termtest*)))>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT file (#PCDATA)>
+<!ELEMENT error (#PCDATA)>
+<!ELEMENT termtest (term)>
+<!ELEMENT term (#PCDATA)>
