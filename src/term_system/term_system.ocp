@@ -1,5 +1,5 @@
 begin library "term_system"
   sort = true
-  files = [ "ast.mli" "term_system_error.ml" ]
+  files = [ "ast.mli" "term_system_error.ml" "matching.ml" ]
   requires = [ "error_code" ]
 end
