@@ -3,13 +3,7 @@
   (C) Copyright Pierrick Couderc
 *)
 
-type atom = string
-type dummy_term =
-  | D_Const of string
-  | D_Atom of atom
-  | D_Abs of string * atom * dummy_term list
-  | D_App of string * dummy_term list
+type 'info placeholders
 
-type placeholders
-
-val matching : dummy_term -> 'info Ast.term_pattern -> bool * placeholders
+val matching : 'info Term_ast.expression -> 'info Ast.term_pattern
+  -> bool * 'info placeholders

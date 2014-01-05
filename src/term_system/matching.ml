@@ -4,25 +4,19 @@
 *)
 
 open Ast
-
-type atom = string
-type dummy_term =
-  | D_Const of string
-  | D_Atom of atom
-  | D_Abs of string * atom * dummy_term list
-  | D_App of string * dummy_term list
+open Term_ast
 
 (* Placeholders bindings *)
 module SMap = Map.Make(String)
 
-type placeholders = dummy_term SMap.t
+type 'info placeholders = 'info expression SMap.t
 
 let matching term pattern =
   let rec step term pattern placeholders =
-    match term, pattern.value with
-    | D_Abs (t_id, _, t_terms), Operator (p_id, p_terms)
-    | D_App (t_id, t_terms), Operator (p_id, p_terms) ->
-      if t_id = p_id.value then
+    match term.value, pattern.value with
+    | Abstraction (t_id, _, t_terms), Operator (p_id, p_terms)
+    | Call (t_id, t_terms), Operator (p_id, p_terms) ->
+      if t_id.value = p_id.value then
         List.fold_left
           (fun (matches, placeholders) (term, pattern) ->
              if matches then step term pattern placeholders
@@ -31,7 +25,7 @@ let matching term pattern =
         @@ List.combine t_terms p_terms
       else false, placeholders
 
-    | D_Const t_id, Constant p_id -> (t_id = p_id.value, placeholders)
+    | Const t_id, Constant p_id -> (t_id.value = p_id.value, placeholders)
 
     | _, Placeholder id -> (true, SMap.add id.value term placeholders)
 
