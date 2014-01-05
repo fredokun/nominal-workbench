@@ -48,8 +48,8 @@ let comment = '#' [^ '\n' '\r' ] *
 	{token lexbuf}
     | comment 
 	{ token lexbuf }
-    | number as n
-	{ NUM(n >> float_of_string) }
+(*    | number as n
+	{ NUM(n >> float_of_string) } *)
     | word as s
 	{ try
 	    Hashtbl.find keyword_table s
