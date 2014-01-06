@@ -1,5 +1,6 @@
 open Printf
 open Property
+open String
 
 let make_error_types properties error_file =
   let make_error_type (name,_) =
@@ -9,13 +10,13 @@ let make_error_types properties error_file =
 
 let make_error_map_name properties error_file =
   let map_name (name,_) =
-    fprintf error_file "  | %s -> \"%s\"\n" name name in
+    fprintf error_file "  | %s -> \"%s\"\n" name (String.escaped name) in
   fprintf error_file "let string_of_error_code = function\n";
   List.iter map_name properties
 
 let make_description_map properties error_file =
   let make_description (name, desc) =
-    fprintf error_file "  | %s -> \"%s\"\n" name desc in
+    fprintf error_file "  | %s -> \"%s\"\n" name (String.escaped desc) in
   fprintf error_file "let description_of_error_code = function\n";
   List.iter make_description properties
 
