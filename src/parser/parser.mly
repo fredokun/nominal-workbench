@@ -60,10 +60,11 @@ decls :
 | decl { $1 }
 
 decl:
-| kind_decl NEWLINE { ([$1], [], [], []) }
-| constant_decl NEWLINE { ([], [$1], [], []) }
-| operator_decl NEWLINE { ([], [], [$1], []) }
-| rule_decl NEWLINE { ([], [], [], [$1]) }
+| kind_decl { ([$1], [], [], []) }
+| constant_decl { ([], [$1], [], []) }
+| operator_decl { ([], [], [$1], []) }
+| rule_decl { ([], [], [], [$1]) }
+| NEWLINE { ([], [], [], []) }
 
 
 /* kinds */
@@ -76,8 +77,9 @@ kind_lfth:
 | ATOM { Atom }
 
 kind_type:
-| kind_type STAR kind_type { assert false }     /* is this even possible ? */
-| kind_type DARROW kind_type { assert false }
+| kind_type STAR kind_type 
+    { Type } /* just to compile */ /* is this even possible ? */
+| kind_type DARROW kind_type { Type } /* just to compile */
 | TYPE { Type }
 
 

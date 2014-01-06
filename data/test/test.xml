@@ -4,4 +4,22 @@
     <file>data/test/run-fail/constants.nw</file>
     <error>KindAlreadyDefined</error>
   </systemtest>
+  
+  <systemtest>
+    <name>With Comments (Pass)</name>
+    <file>data/test/run-pass/with_comment.nw</file>
+  </systemtest>
+
+  <systemtest>
+    <name>With Comment not closed (Fail)</name>
+    <file>data/test/run-fail/comment_fail_not_closed.nw</file>
+  </systemtest>
+
+  <systemtest>
+    <name>With Comment already closed (Fail)</name>
+    <file>data/test/run-fail/comment_fail_already_closed.nw</file>
+  </systemtest>
+
+
+
 </test>
