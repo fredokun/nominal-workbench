@@ -46,7 +46,7 @@ let refill_lexbuf buffer len =
       len
   end
 
-let parse_toplevel_phrase phr = 
+let parse_toplevel_phrase phr =
   let ast = Parser.toplevel_phrase Lexer.token phr in
   Parsing.clear_parser ();
   ast
@@ -65,8 +65,7 @@ let loop ppf =
     with
     | End_of_file -> exit 0
     | Sys.Break -> Format.fprintf ppf "Interrupted.@."
-    | x -> 
+    | x ->
       Format.fprintf ppf "%s.@." (Printexc.to_string x)
       (* Todo : handle errors *)
-      
   done

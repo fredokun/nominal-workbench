@@ -1,5 +1,5 @@
 begin library "parser"
     sort = true
-    files = [ "lexer.mll" "parser.mly" ]
+    files = [ "lexer.mll" "parser.mly" "include.ml" ]
     requires = [ "rewrite_system" ]
 end
