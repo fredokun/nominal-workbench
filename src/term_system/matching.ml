@@ -9,6 +9,8 @@ open Term_ast
 (* Placeholders bindings *)
 module SMap = Map.Make(String)
 
+exception PlaceholderAlreadyDefined of string
+
 type 'info placeholders = 'info expression SMap.t
 
 let matching term pattern =
@@ -27,7 +29,10 @@ let matching term pattern =
 
     | Const t_id, Constant p_id -> (t_id.value = p_id.value, placeholders)
 
-    | _, Placeholder id -> (true, SMap.add id.value term placeholders)
+    | _, Placeholder id ->
+      (* Testing placeholder unicity at typing phase ? *)
+      if SMap.mem id.value placeholders then raise (PlaceholderAlreadyDefined id.value)
+      else (true, SMap.add id.value term placeholders)
 
     | _, _ -> (false, placeholders)
   in
