@@ -36,16 +36,20 @@ let get_absolute_path name =
 	  let abspath = relative_to_absolute_name (path ^ "/" ^ name) in
 	  if Sys.file_exists abspath then
 	    raise (Found abspath)
+	  else if Sys.file_exists (abspath ^ ".nw") then
+	    raise (Found (abspath ^ ".nw"))
 	)
 	!include_paths;
       raise Not_Found
-    with 
+    with
     | Found(abspath) -> abspath
     | Not_Found -> failwith ("Error : '" ^ name ^ "' doesn't exit")
   else
     let absname = (relative_to_absolute_name name) in
     if Sys.file_exists absname then
       absname
+    else if Sys.file_exists (absname ^ ".nw") then
+      (absname ^ ".nw")
     else
       failwith ("Error : '" ^ name ^ "' doesn't exit")
 
@@ -60,7 +64,7 @@ let add_file filename =
     else
       Hashtbl.add files_included bname filename
 
-let add_path pathname = 
+let add_path pathname =
   if not (List.mem pathname !include_paths) then
     if (Sys.file_exists pathname) && (Sys.is_directory pathname) then
       include_paths := [pathname] @ !include_paths
@@ -70,14 +74,14 @@ let add_path pathname =
     ()
 
 let nw_include name =
-  if Filename.check_suffix name ".nw" then
+  let fname = (get_absolute_path name) in
+  if Filename.check_suffix fname ".nw" then
     begin
-      let fname = (get_absolute_path name) in
       add_file fname;
       Some(fname)
     end
   else
     begin
-      add_path (get_absolute_path name);
+      add_path fname;
       None
     end

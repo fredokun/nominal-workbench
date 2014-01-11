@@ -4,7 +4,7 @@
     <file>data/test/run-fail/constants.nw</file>
     <error>KindAlreadyDefined</error>
   </systemtest>
-  
+
   <systemtest>
     <name>With Comments (Pass)</name>
     <file>data/test/run-pass/with_comment.nw</file>
@@ -20,6 +20,9 @@
     <file>data/test/run-fail/comment_fail_already_closed.nw</file>
   </systemtest>
 
-
+  <systemtest>
+    <name>With include</name>
+    <file>data/test/run-pass/with_include.nw</file>
+  </systemtest>
 
 </test>

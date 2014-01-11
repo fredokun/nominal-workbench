@@ -36,10 +36,10 @@
 %token EOF
 
 %start start
-%type <Lexing.position Ast.definitions> start
+%type <Lexing.position Ast.definitions *string list> start
 
 %start toplevel_phrase
-%type <Lexing.position Ast.definitions> toplevel_phrase
+%type <Lexing.position Ast.definitions * string list> toplevel_phrase
 
 %right STAR DARROW ARROW
 
@@ -56,19 +56,26 @@ toplevel_phrase:
 decls :
 | decl decls
     {
-        let kind, const, operator, rule = $1 in
-        let kinds, consts, operators, rules = $2 in
-        (kind@kinds, const@consts, operator@operators, rule@rules)
-    }
+      let decl, included_file = $1 in
+      let decls, included_files = $2 in
+      let kind, const, operator, rule = decl in
+      let kinds, consts, operators, rules = decls in
+      ((kind@kinds, const@consts, operator@operators, rule@rules),
+       included_file @ included_files)
+      }
 | decl { $1 }
 
 decl:
-| kind_decl { ([$1], [], [], []) }
-| constant_decl { ([], [$1], [], []) }
-| operator_decl { ([], [], [$1], []) }
-| rule_decl { ([], [], [], [$1]) }
-| INCLUDE FILENAME { ([], [], [], []) }
-| NEWLINE { ([], [], [], []) }
+| kind_decl { (([$1], [], [], []),[]) }
+| constant_decl { (([], [$1], [], []),[]) }
+| operator_decl { (([], [], [$1], []),[]) }
+| rule_decl { (([], [], [], [$1]),[]) }
+| INCLUDE FILENAME
+    { match (Include.nw_include $2) with
+        | None -> (([], [], [], []),[])
+	| Some(name) -> (([], [], [], []),[name])
+    }
+| NEWLINE { (([], [], [], []),[]) }
 
 
 /* kinds */

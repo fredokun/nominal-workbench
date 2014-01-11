@@ -5,6 +5,7 @@
 
 open Printf
 open Display_test
+open Parser_include
 
 type term_test = TermTest of string
 
@@ -21,11 +22,13 @@ type result =
   | Failed of string
 
 (* Parsing utility function *)
-let parse_channel channel =
-  let lexbuf = Lexing.from_channel channel in
-  let res = Parser.start Lexer.token lexbuf in
-  close_in channel;
-  res
+(* let parse_channel channel = *)
+(*   let lexbuf = Lexing.from_channel channel in *)
+(*   let res = Parser.start Lexer.token lexbuf in *)
+(*   close_in channel; *)
+(*   res *)
+
+let parse_channel = Parser_include.parse_channel
 
 (* Transform XML data to test type. *)
 let filter_children xdata name =
@@ -38,15 +41,15 @@ let filter_children xdata name =
 let first_child xdata =
   (List.hd (Xml.children xdata))
 
-let child_data xdata name = 
+let child_data xdata name =
   Xml.pcdata (first_child (List.hd (filter_children xdata name)))
-  
+
 let rec term_tests_of_xml = function
   | [] -> []
   | hd::tl -> TermTest(child_data hd "term") :: (term_tests_of_xml tl)
 
 let expectation_of_xml xtest =
-  try MustFail(child_data xtest "error") 
+  try MustFail(child_data xtest "error")
   with Failure(_) -> MustPass(term_tests_of_xml (filter_children xtest "termtest"))
 
 let system_test_of_xml xtest =
@@ -71,10 +74,10 @@ let test_expectation channel expectation =
   try
     let term_system = parse_channel channel in
     match_result_expectation Passed
-  with 
+  with
   | TermSystemError(e, _) ->
     match_result_expectation (Failed(string_of_error_code e))
-  | e -> 
+  | e ->
     print_failure (sprintf "Unexpected exception: %s" (Printexc.to_string e))
 
 let launch_test no (SystemTest(name, file, expectation)) =
@@ -99,13 +102,13 @@ let rec launch_tests_impl no tests =
 let launch_tests tests =
   launch_tests_impl 1 tests
 
-let () = 
+let () =
 try
   let xtest = Xml.parse_file "data/test/test.xml" in
   let dtd = Dtd.parse_file "data/test/test.dtd" in
   let valid_xtest = Dtd.prove (Dtd.check dtd) "test" xtest in
   launch_tests (test_of_xml valid_xtest)
-with 
+with
 | Dtd.Check_error(e) -> print_endline (Dtd.check_error e)
 | Dtd.Prove_error(e) -> print_endline (Dtd.prove_error e)
 | Dtd.Parse_error(e) -> print_endline (Dtd.parse_error e)
