@@ -53,7 +53,7 @@ let end_comment = "*)"
 	{token lexbuf}
     | begin_comment
 	{ comments_level := 1 ;
-	  comment lexbuf ;
+	  ignore(comment lexbuf) ;
 	  token lexbuf }
     | end_comment { failwith "Comment already closed"; }
     | comment

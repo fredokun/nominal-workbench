@@ -41,6 +41,8 @@
 %start toplevel_phrase
 %type <Lexing.position Ast.definitions> toplevel_phrase
 
+%right STAR DARROW ARROW
+
 %%
 
 start:
@@ -79,8 +81,8 @@ kind_lfth:
 
 kind_type:
 | kind_type STAR kind_type
-    { Type } /* just to compile */
-| kind_type DARROW kind_type { Type } /* just to compile */
+    { Type } /* TODO just to compile */
+| kind_type DARROW kind_type { Type } /* TODO just to compile */
 | TYPE { Type }
 | ATOM { Atom }
 
@@ -100,11 +102,13 @@ operator_decl:
 operator_type:
 | WORD { annote_pos @@ Kind(annote_pos $1) }
 | LBRACKET WORD RBRACKET { annote_pos @@ Abs(annote_pos $2) }
-| operator_type operator_prod_tail { annote_pos @@ Prod($1::$2) }
+| operator_type STAR operator_type { annote_pos @@ Kind(annote_pos "toto") }
+  /* Only to compile, don't try do find a meaning.
+     For more information : trebuchet-style-coding.com */
 
-operator_prod_tail:
-| STAR operator_type { [$2] }
-| STAR operator_type operator_prod_tail { $2::$3 }
+
+/* | operator_type operator_prod_tail { annote_pos @@ Prod($1::$2) } */
+/* | STAR operator_type operator_prod_tail { $2::$3 } */
 
 
   /* rules */

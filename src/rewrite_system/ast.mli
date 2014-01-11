@@ -4,7 +4,9 @@ type 'info ident = (string, 'info) annotated
 
 type 'a named = string * 'a
 
-type kind_type = Type | Atom
+type kind_type =
+  | Type
+  | Atom (* TODO : add complex kind types *)
 
 type kind_raw = kind_type named
 type 'info kind = (kind_raw, 'info) annotated
