@@ -3,15 +3,14 @@
    (C) Copyright Matthieu Dien
 *)
 
-(* Behaviour :
-   -
-*)
-
 open Hashtbl
 open Sys
 open Filename
 open Str
 open List
+
+exception Found of string
+exception Not_Found
 
 let files_included = Hashtbl.create 10
 let include_paths = ref [(Sys.getcwd ())]
@@ -28,18 +27,27 @@ let relative_to_absolute_name name =
   let to_concat = reduce_path_list (List.rev path_list) in
   "/" ^ (String.concat "/" (List.rev to_concat))
 
+(* Give an absolute path within include_paths *)
 let get_absolute_path name =
-  let absname =
-    if Filename.is_relative name then
-      let curr_dir = Sys.getcwd () in
-      relative_to_absolute_name (curr_dir ^ "/" ^ (Filename.basename name))
-    else
-      name
-  in
-  if Sys.file_exists absname then
-    absname
+  if Filename.is_relative name then
+    try
+      List.iter
+	(fun path ->
+	  let abspath = relative_to_absolute_name (path ^ "/" ^ name) in
+	  if Sys.file_exists abspath then
+	    raise (Found abspath)
+	)
+	!include_paths;
+      raise Not_Found
+    with 
+    | Found(abspath) -> abspath
+    | Not_Found -> failwith ("Error : '" ^ name ^ "' doesn't exit")
   else
-    failwith ("Error : the file or directory '" ^ name ^ "' doesn't exist")
+    let absname = (relative_to_absolute_name name) in
+    if Sys.file_exists absname then
+      absname
+    else
+      failwith ("Error : '" ^ name ^ "' doesn't exit")
 
 let add_file filename =
   let bname = Filename.basename filename in
@@ -47,26 +55,29 @@ let add_file filename =
     (* For the moment, we don't allow include of two files with same names *)
     failwith ("Error : a file named '" ^ bname ^ "' is already included")
   else
-    if not (Filename.is_relative filename) then
-      let absname = get_absolute_path filename in
-      if Sys.file_exists absname then
-	Hashtbl.add files_included bname absname
-      else
-	let absname = List.fold_left
-	  (fun s p ->
-	    let abspath =  (p ^ "/" ^ filename) in
-	    if Sys.file_exists abspath
-	    then abspath
-	    else s)
-	  ""
-	  (!include_paths)
-	  in
-	  if absname = "" then
-	    failwith ("Error : file '" ^ filename ^ "' not found")
-	  else
-	    if Sys.is_directory absname then
-	      failwith ("Error : '" ^ filename ^ "' is a directory")
-	    else
-	      Hashtbl.add files_included bname absname
+    if Sys.is_directory filename then
+      failwith("Error : '" ^ filename ^ "' is not a file")
+    else
+      Hashtbl.add files_included bname filename
 
-(* let add_path pathname = *)
+let add_path pathname = 
+  if not (List.mem pathname !include_paths) then
+    if (Sys.file_exists pathname) && (Sys.is_directory pathname) then
+      include_paths := [pathname] @ !include_paths
+    else
+      failwith ("Error : '" ^ pathname ^ "' is not a valid path name")
+  else
+    ()
+
+let nw_include name =
+  if Filename.check_suffix name ".nw" then
+    begin
+      let fname = (get_absolute_path name) in
+      add_file fname;
+      Some(fname)
+    end
+  else
+    begin
+      add_path (get_absolute_path name);
+      None
+    end
