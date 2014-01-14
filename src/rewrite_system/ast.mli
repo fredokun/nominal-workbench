@@ -5,20 +5,16 @@ type type_binders = type_name list
 (* Kind definition *)
 
 (* An atom cannot be parametrized by types. *)
-(* kind List[A]: type *)
-(* kind Bool: type is equivalent to kind Bool[]: type *)
+(* kind List: type -> type *)
+(* kind Variable: atom *)
 type kind =
   | Type of type_binders
   | Atom
 
 (* Type application *)
-
-type polymorphic_arg =
-  | RawType of type_name
-  | AnyType (* Underscore representation for any type (e.g. List[_]) *)
-
 (* A type application is the process to apply a type to another. *)
-type type_application = type_name * polymorphic_arg list
+(* Example: forall(A).List<A> *)
+type type_application = type_name * type_name list
 
 (* Constant definition *)
 
@@ -26,8 +22,8 @@ type constant = type_binders * type_application
 
 (* Operator definition *)
 
-(* A binder is: "Variable" in Variable . Term * Term -> Term.
- (Note the '.' that delimitate the binder). *)
+(* A binder is: "Variable" in [Variable].Term * Term -> Term.
+ (Note the '.' that delimitates the binder). *)
 type binder = type_name option
 type operator_args = type_application list
 type operator_result = type_name
