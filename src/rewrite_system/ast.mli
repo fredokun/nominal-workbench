@@ -1,38 +1,52 @@
-type ('a, 'b) annotated = { value : 'a; info : 'b }
+(* Auxiliary types *)
+type type_name = string
+type type_binders = type_name list
 
-type 'info ident = (string, 'info) annotated
+(* Kind definition *)
 
-type 'a named = string * 'a
+(* An atom cannot be parametrized by types. *)
+(* kind List[A]: type *)
+(* kind Bool: type is equivalent to kind Bool[]: type *)
+type kind =
+  | Type of type_binders
+  | Atom
 
-type kind_type =
-  | Type
-  | Atom (* TODO : add complex kind types *)
+(* Type application *)
 
-type kind_raw = kind_type named
-type 'info kind = (kind_raw, 'info) annotated
+type polymorphic_arg =
+  | RawType of type_name
+  | AnyType (* Underscore representation for any type (e.g. List[_]) *)
 
-type 'info term_type_raw =
-  | Kind of 'info ident
-  | Prod of 'info term_type list
-  | Abs of 'info ident
-and 'info term_type = ('info term_type_raw, 'info) annotated
+(* A type application is the process to apply a type to another. *)
+type type_application = type_name * polymorphic_arg list
 
-type 'info const_raw = 'info term_type named
-type 'info const = ('info const_raw, 'info) annotated
+(* Constant definition *)
 
-type 'info operator_raw  = ('info term_type * 'info term_type) named
-type 'info operator = ('info operator_raw, 'info) annotated
+type constant = type_binders * type_application
 
-type 'info term_pattern_raw =
-  | Constant of 'info ident (* True *)
-  | Placeholder of 'info ident (* ?x *)
-  | Operator of 'info ident * 'info term_pattern list
-and 'info term_pattern = ('info term_pattern_raw, 'info) annotated
+(* Operator definition *)
 
-type 'info rule_raw = ('info term_pattern * 'info term_pattern) named
+(* A binder is: "Variable" in Variable . Term * Term -> Term.
+ (Note the '.' that delimitate the binder). *)
+type binder = type_name option
+type operator_args = type_application list
+type operator_result = type_name
 
-type 'info rule = ('info rule_raw, 'info) annotated
+type operator = type_binders * binder * operator_args * operator_result
 
-(* The rewrite system is essentially four environments that depend on each other *)
-type 'info definitions =
-  'info kind list * 'info const list * 'info operator list * 'info rule list
+(* Rule definition *)
+
+type pattern = 
+  | POperator of string * pattern list
+  | PPlaceholder of string
+  | PConstant of string
+
+type effect = 
+  | EOperator of string * effect list
+  | EPlaceholder of string
+  | EConstant of string
+
+type rule = pattern * effect
+
+(* rewriting system *)
+type rewriting_system = kind list * constant list * operator list * rule list (* maybe + the symbol table ? *)
