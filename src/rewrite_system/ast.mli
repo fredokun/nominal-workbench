@@ -18,7 +18,7 @@ type type_application = type_name * type_name list
 
 (* Constant definition *)
 
-type constant = type_binders * type_application
+type constant = Constant of type_binders * type_application
 
 (* Operator definition *)
 
@@ -28,7 +28,7 @@ type binder = type_name option
 type operator_args = type_application list
 type operator_result = type_name
 
-type operator = type_binders * binder * operator_args * operator_result
+type operator = Operator of type_binders * binder * operator_args * operator_result
 
 (* Rule definition *)
 
@@ -43,7 +43,7 @@ type effect =
   | EPlaceholder of string
   | EConstant of string
 
-type rule = pattern * effect
+type rule = Rule of pattern * effect
 
 (* rewriting system *)
 type info = Lexing.position
