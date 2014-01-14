@@ -40,6 +40,7 @@ type pattern =
   | POperator of string * pattern list
   | PPlaceholder of string
   | PConstant of string
+  | PAny
 
 type effect = 
   | EOperator of string * effect list
@@ -49,4 +50,10 @@ type effect =
 type rule = pattern * effect
 
 (* rewriting system *)
-type rewriting_system = kind list * constant list * operator list * rule list (* maybe + the symbol table ? *)
+type info = Lexing.position
+type 'a symbol_table = (string, 'a * info) Hashtbl.t
+type rewriting_system = 
+  kind symbol_table * 
+  constant symbol_table * 
+  operator symbol_table *
+  rule symbol_table
