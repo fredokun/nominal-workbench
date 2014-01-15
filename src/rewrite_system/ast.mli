@@ -24,11 +24,12 @@ type constant = Constant of type_binders * type_application
 
 (* A binder is: "Variable" in [Variable].Term * Term -> Term.
  (Note the '.' that delimitates the binder). *)
-type binder = type_name option
-type operator_args = type_application list
 type operator_result = type_name
+type operator_arg = 
+  | OpTypeArg of type_application
+  | OpBinderArg of type_name (* A binder must be of kind atom and thus, cannot be applied to types (List<A>). *)
 
-type operator = Operator of type_binders * binder * operator_args * operator_result
+type operator = Operator of type_binders * operator_arg list * operator_result
 
 (* Rule definition *)
 
