@@ -3,7 +3,6 @@
   (C) Copyright Pierrick Couderc
 *)
 
-open Ast
 open Term_ast
 
 (* Placeholders bindings *)
@@ -15,9 +14,9 @@ type 'info placeholders = 'info expression SMap.t
 
 let matching term pattern =
   let rec step term pattern placeholders =
-    match term.value, pattern.value with
-    | Abstraction (t_id, _, t_terms), Operator (p_id, p_terms)
-    | Call (t_id, t_terms), Operator (p_id, p_terms) ->
+    match term.value, pattern with
+    | Abstraction (t_id, _, t_terms), POperator (p_id, p_terms)
+    | Call (t_id, t_terms), POperator (p_id, p_terms) ->
       if t_id.value = p_id.value then
         List.fold_left
           (fun (matches, placeholders) (term, pattern) ->
@@ -27,13 +26,15 @@ let matching term pattern =
         @@ List.combine t_terms p_terms
       else false, placeholders
 
-    | Const t_id, Constant p_id -> (t_id.value = p_id.value, placeholders)
+    | Const t_id, PConstant p_id -> (t_id.value = p_id.value, placeholders)
 
-    | _, Placeholder id ->
+    | _, PPlaceholder id ->
       (* Testing placeholder unicity at typing phase ? *)
       if SMap.mem id.value placeholders then raise (PlaceholderAlreadyDefined id.value)
       else (true, SMap.add id.value term placeholders)
 
+    | _, PAny -> (true, placeholer)
     | _, _ -> (false, placeholders)
   in
-  step term pattern SMap.empty
+  let matches, pl = step term pattern SMap.empty in
+  (matches, if matches then pl else SMap.empty)

@@ -10,5 +10,4 @@ type 'info placeholders
     We suppose that the term and the pattern are well-constructed since there is
   a typing phase.
 *)
-val matching : 'info Term_ast.expression -> 'info Ast.term_pattern
-  -> bool * 'info placeholders
+val matching : 'info Term_ast.expression -> Ast.pattern -> bool * 'info placeholders
