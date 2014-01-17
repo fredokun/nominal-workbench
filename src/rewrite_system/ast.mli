@@ -13,8 +13,10 @@ type kind =
 
 (* Type application *)
 (* A type application is the process to apply a type to another. *)
-(* Example: forall(A).List<A> *)
-type type_application = type_name * type_name list
+(* Example: forall(A).List<Pair<A,B> > *)
+type type_application = 
+  | TypeApplication of type_name * type_application list
+  | TypeName of type_name
 
 (* Constant definition *)
 
@@ -46,11 +48,11 @@ type effect =
 
 type rule = Rule of pattern * effect
 
-(* rewriting system *)
+type rewriting_declaration =
+  | DKind of kind
+  | DConstant of constant
+  | DOperator of operator
+  | DRule of rule
+
 type info = Lexing.position
-type 'a symbol_table = (string, 'a * info) Hashtbl.t
-type rewriting_system = 
-  kind symbol_table * 
-  constant symbol_table * 
-  operator symbol_table *
-  rule symbol_table
+type rewriting_ast = RewritingAST of (string * info * rewriting_declaration) list
