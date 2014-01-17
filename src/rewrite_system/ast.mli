@@ -10,6 +10,7 @@ type type_binders = type_name list
 type kind =
   | Type of type_binders
   | Atom
+  | Arrow of kind list (* TODO search a name *)
 
 (* Type application *)
 (* A type application is the process to apply a type to another. *)
