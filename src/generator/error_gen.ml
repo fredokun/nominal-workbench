@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+  (See accompanying file LICENSE.txt)
+  (C) Copyright Pierre Talbot
+*)
+
 open Printf
 open Property
 open String
@@ -20,6 +25,24 @@ let make_description_map properties error_file =
   fprintf error_file "let description_of_error_code = function\n";
   List.iter make_description properties
 
+(* Example: data/term_system_error -> TermSystemError *)
+let name_of_exception_from_filepath filepath =
+  let open Str in
+  let filename = replace_first (regexp ".*/\\([a-zA-Z_]+\\).conf") "\\1" filepath in
+  concat "" (List.map capitalize (split (regexp "_") filename))
+
+let make_exception error_conf_filename error_file =
+  fprintf error_file "exception %s of error_code * string\n\n"
+    (name_of_exception_from_filepath error_conf_filename)
+
+let make_exception_msg error_conf_filename error_file =
+  let exception_name = name_of_exception_from_filepath error_conf_filename in
+  fprintf error_file "let exception_msg = function\n";
+  fprintf error_file "  | %s(code, info) = Printf.sprintf (Scanf.format_from_string (description_of_error_code code) \"%%s\") info\n"
+    exception_name;
+  fprintf error_file "  | _ -> failwith(\"Bug! Called exception_msg of the bad the module (exception %s).\"\n"
+    exception_name
+
 let make_error_code error_conf error_filename =
   let error_file = open_out error_filename in
   let properties = read_property_file error_conf in
@@ -31,6 +54,8 @@ let make_error_code error_conf error_filename =
       make_error_map_name; 
       make_description_map] in
   List.iter make_construct construct_makers;
+  make_exception error_conf error_file;
+  make_exception_msg error_conf error_file;
   close_out error_file
 
 let usage = "Usage: error_gen <options>\n"
