@@ -38,9 +38,9 @@ let make_exception error_conf_filename error_file =
 let make_exception_msg error_conf_filename error_file =
   let exception_name = name_of_exception_from_filepath error_conf_filename in
   fprintf error_file "let exception_msg = function\n";
-  fprintf error_file "  | %s(code, info) = Printf.sprintf (Scanf.format_from_string (description_of_error_code code) \"%%s\") info\n"
+  fprintf error_file "  | %s(code, info) -> Printf.sprintf (Scanf.format_from_string (description_of_error_code code) \"%%s\") info\n"
     exception_name;
-  fprintf error_file "  | _ -> failwith(\"Bug! Called exception_msg of the bad the module (exception %s).\"\n"
+  fprintf error_file "  | _ -> failwith(\"Bug! Called exception_msg of the bad the module (exception %s).\")\n"
     exception_name
 
 let make_error_code error_conf error_filename =
