@@ -1,4 +1,6 @@
 
+type info = Lexing.position
+
 type 'info expression_raw =
   | Const of 'info ident
   | Abstraction of 'info ident * 'info ident * 'info expression list
