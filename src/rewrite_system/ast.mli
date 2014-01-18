@@ -4,13 +4,13 @@ type type_binders = type_name list
 
 (* Kind definition *)
 
-(* An atom cannot be parametrized by types. *)
 (* kind List: type -> type *)
 (* kind Variable: atom *)
-type kind =
-  | Type of type_binders
+type kind_type =
+  | Type
   | Atom
-  | Arrow of kind list (* TODO search a name *)
+
+type kind = Kind of kind_type list
 
 (* Type application *)
 (* A type application is the process to apply a type to another. *)
