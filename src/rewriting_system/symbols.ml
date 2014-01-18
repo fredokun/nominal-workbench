@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Mathieu Chailloux
+*)
+
 open Rewriting_ast
 
 type 'a sym_tbl = (string, info * 'a) Hashtbl.t

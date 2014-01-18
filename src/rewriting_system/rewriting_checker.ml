@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Mathieu Chailloux
+*)
+
 open Def_ast
 open Def_ast_util
 

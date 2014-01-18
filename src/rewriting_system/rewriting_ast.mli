@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Pierre Talbot
+*)
+
 (* Auxiliary types *)
 type type_name = string
 type type_binders = type_name list
