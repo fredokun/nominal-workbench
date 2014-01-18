@@ -7,7 +7,7 @@
 
   open Parsing
   open Lexing
-  open Ast
+  open Rewriting_ast
   open Include
 
   (* let annote_pos item = *)
@@ -39,10 +39,10 @@
 %token EOF
 
 %start start
-%type <Ast.rewriting_ast * string list> start
+%type <Rewriting_ast.rewriting_ast * string list> start
 
 %start toplevel_phrase
-%type <Ast.rewriting_ast * string list> toplevel_phrase
+%type <Rewriting_ast.rewriting_ast * string list> toplevel_phrase
 
 %right STAR DARROW ARROW COLON DOT
 
@@ -67,9 +67,9 @@ decls :
 | decl
    { match $1 with
     | (None, None) -> ([],[])
-    | (None, Some(f)) -> let (ast, includes) = $1 in ([], [f])
-    | (Some(a), None) -> let (ast, includes) = $1 in ([a], [])
-    | (Some(a), Some(f)) -> let (ast, includes) = $1 in ([a], [f])
+    | (None, Some(f)) -> ([], [f])
+    | (Some(a), None) -> ([a], [])
+    | (Some(a), Some(f)) -> ([a], [f])
    }
 
 decl:

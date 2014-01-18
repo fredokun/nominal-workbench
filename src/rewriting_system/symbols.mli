@@ -1,4 +1,4 @@
-open Ast
+open Rewriting_ast
 
 val add : string * info * rewriting_declaration -> unit
 

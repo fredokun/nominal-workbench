@@ -1,4 +1,4 @@
-open Ast
+open Rewriting_ast
 
 type 'a sym_tbl = (string, info * 'a) Hashtbl.t
 

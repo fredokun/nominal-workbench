@@ -1,5 +1,5 @@
 begin library "rewriting_system"
   sort = true
-  files = [ "ast.mli" "symbols.ml" ]
+  files = [ "rewriting_ast.mli" "symbols.ml" ]
   requires = [ "error" ]
 end
