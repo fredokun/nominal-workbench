@@ -61,7 +61,7 @@ let test_of_xml xtest =
 (* Test framework. *)
 let test_expectation channel expectation =
   let open Term_system_error in
-  let open Term_system_error_code in
+  (* let open Term_system_error_code in *)
   let match_result_expectation result =
     match (expectation, result) with
     | (MustPass(_), Failed(s)) -> print_failure (sprintf "Failure with error %s." s)

@@ -27,7 +27,7 @@ type constant = Constant of type_binders * type_application
 
 (* A binder is: "Variable" in [Variable].Term * Term -> Term.
  (Note the '.' that delimitates the binder). *)
-type operator_result = type_name
+type operator_result = type_application (* because you can have something like list<A> -> List<A> *)
 type operator_arg =
   | OpTypeArg of type_application
   | OpBinderArg of type_name (* A binder must be of kind atom and thus, cannot be applied to types (List<A>). *)
