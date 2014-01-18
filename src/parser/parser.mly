@@ -24,121 +24,105 @@
 
 /* values */
 %token <float> NUM
-%token <string> WORD FILENAME
+%token <string> WORD PLACEHOLDER
 
 /* keywords */
-%token KIND TYPE ATOM OPERATOR RULE CONSTANT INCLUDE
+%token KIND TYPE ATOM OPERATOR RULE CONSTANT INCLUDE FORALL
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
-%token DARROW STAR COMMA QMARK NEWLINE
+%token DARROW STAR COMMA QMARK NEWLINE LT GT DOT
 
 %token EOF
 
 %start start
-%type <Lexing.position Ast.definitions *string list> start
+%type rewriting_ast start
 
 %start toplevel_phrase
-%type <Lexing.position Ast.definitions * string list> toplevel_phrase
+%type rewriting_ast toplevel_phrase
 
 %right STAR DARROW ARROW
 
 %%
 
 start:
-| decls EOF { $1 }
+| decls EOF { }
 
 toplevel_phrase:
-| decls SEMICOL SEMICOL { $1 }
+| decls SEMICOL SEMICOL { }
 | EOF { raise End_of_file }
 ;
 
 decls :
-| decl decls
-    {
-      let decl, included_file = $1 in
-      let decls, included_files = $2 in
-      let kind, const, operator, rule = decl in
-      let kinds, consts, operators, rules = decls in
-      ((kind@kinds, const@consts, operator@operators, rule@rules),
-       included_file @ included_files)
-      }
-| decl { $1 }
+| decl decls { }
+| decl { }
 
 decl:
-| kind_decl { (([$1], [], [], []),[]) }
-| constant_decl { (([], [$1], [], []),[]) }
-| operator_decl { (([], [], [$1], []),[]) }
-| rule_decl { (([], [], [], [$1]),[]) }
-| INCLUDE FILENAME
-    { match (Include.nw_include $2) with
-        | None -> (([], [], [], []),[])
-	| Some(name) -> (([], [], [], []),[name])
-    }
-| NEWLINE { (([], [], [], []),[]) }
+| kind_decl { }
+| constant_decl { }
+| operator_decl { }
+| rule_decl { }
+| INCLUDE WORD { }
+| NEWLINE { }
 
 
 /* kinds */
 
 kind_decl:
-| KIND WORD COLON kind_lfth { annote_pos ($2, $4) }
+| KIND WORD COLON kind_lfth { }
 
 kind_lfth:
-| kind_type { $1 }
+| kind_type { }
 
 kind_type:
-| kind_type STAR kind_type
-    { Type } /* TODO just to compile */
-| kind_type DARROW kind_type { Type } /* TODO just to compile */
-| TYPE { Type }
-| ATOM { Atom }
+| kind_type ARROW kind_type { }
+| TYPE { }
+| ATOM { }
 
 
-  /* constants */
+/* generic types for constants and operators */
+
+generic_type:
+| FORALL LPAREN WORD RPAREN DOT generic_type { }
+| WORD LT generic_type GT { }
+| WORD { }
+| LBRACKET WORD RBRACKET { }
+
+/* constants */
 
 constant_decl:
-| CONSTANT WORD COLON WORD
-    { annote_pos ($2, annote_pos @@ Kind(annote_pos $4)) }
+| CONSTANT WORD COLON generic_type { }
 
-  /* operators */
+/* operators */
 
 operator_decl:
 | OPERATOR WORD COLON operator_type ARROW operator_type
-    { annote_pos ($2, ($4, $6)) }
+    { }
 
 operator_type:
-| WORD { annote_pos @@ Kind(annote_pos $1) }
-| LBRACKET WORD RBRACKET { annote_pos @@ Abs(annote_pos $2) }
-| operator_type STAR operator_type { annote_pos @@ Kind(annote_pos "toto") }
-  /* Only to compile, don't try do find a meaning.
-     For more information : trebuchet-style-coding.com */
+| generic_type { }
+| generic_type STAR operator_type { }
 
-
-/* | operator_type operator_prod_tail { annote_pos @@ Prod($1::$2) } */
-/* | STAR operator_type operator_prod_tail { $2::$3 } */
-
-
-  /* rules */
+/* rules */
 
 rule_decl:
-| rule_head rule_body { annote_pos ($1, $2) }
-| rule_head NEWLINE rule_body { annote_pos ($1, $3) }
+| rule_head rule_body { }
+| rule_head NEWLINE rule_body { }
 
 rule_head:
-| RULE LBRACKET WORD RBRACKET COLON { $3 }
+| RULE LBRACKET WORD RBRACKET COLON { }
 
 rule_body:
-| rule_side DARROW rule_side { ($1, $3) }
+| rule_side DARROW rule_side { }
 
 rule_side:
-| WORD { annote_pos @@ Constant(annote_pos $1) } /* obvious case of ambiguity */
-| WORD LPAREN RPAREN { annote_pos @@ Operator(annote_pos $1, []) }
-| WORD LPAREN rule_side_list RPAREN
-    { annote_pos @@ Operator(annote_pos $1, $3) }
-| QMARK WORD { annote_pos @@ Placeholder( annote_pos $2) }
+| WORD { }
+| WORD LPAREN RPAREN { }
+| WORD LPAREN rule_side_list RPAREN { }
+| PLACEHOLDER { }
 
 rule_side_list:
-| rule_side COMMA rule_side_list { $1::$3 }
-| rule_side { [$1] }
+| rule_side COMMA rule_side_list { }
+| rule_side { }
 
 %%
