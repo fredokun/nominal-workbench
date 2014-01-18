@@ -1,5 +1,5 @@
 begin program "main"
   sort = true
   files = []
-  requires = [ "term_parser" ]
+  requires = [ "toplevel" ]
 end

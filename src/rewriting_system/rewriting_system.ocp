@@ -1,4 +1,4 @@
-begin library "rewrite_system"
+begin library "rewriting_system"
   sort = true
   files = [ "ast.mli" "symbols.ml" ]
   requires = [ "error" ]

@@ -1,5 +1,5 @@
 begin program "toplevel"
     sort = true
     files = [ "topmain.ml" "toploop.ml" ]
-    requires = [ "parser" ]
+    requires = [ "algorithms" "rewriting_system_parser" "term_system_parser" ]
 end

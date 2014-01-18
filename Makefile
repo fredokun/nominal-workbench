@@ -8,8 +8,8 @@ generator:
 	ocp-build build error_gen
 
 launch_gen: generator
-	$(ERROR_GEN_EXE) -c data/error/rewriting_system_error.conf -o src/auto_gen/rewriting_system_error.ml
-	$(ERROR_GEN_EXE) -c data/error/term_system_error.conf -o src/auto_gen/term_system_error.ml
+	$(ERROR_GEN_EXE) -c data/error/rewriting_system_error.conf -o $(AUTO_GEN_DIR)/rewriting_system_error.ml
+	$(ERROR_GEN_EXE) -c data/error/term_system_error.conf -o $(AUTO_GEN_DIR)/term_system_error.ml
 
 main: launch_gen
 	ocp-build build main
@@ -20,4 +20,4 @@ test: launch_gen
 
 clean:
 	rm -r $(TEMPORARY_DIR)
-	rm $(AUTO_GEN_DIR)/*.ml
+	rm $(AUTO_GEN_DIR)/*.ml*

@@ -1,4 +1,3 @@
-open Ast
 
 type 'info expression_raw =
   | Const of 'info ident

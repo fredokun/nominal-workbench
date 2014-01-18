@@ -1,4 +1,4 @@
-begin library "term_parser"
+begin library "term_system_parser"
     sort = true
     files = [ "term_lexer.mll" "term_parser.mly" ]
     requires = [ "term_system" ]
