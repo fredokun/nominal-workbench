@@ -28,17 +28,25 @@
 %token <string> VARIDENT
 
 /* punctuation */
-%token LPAREN RPAREN LBRACKET RBRACKET COMMA NEWLINE
+%token LPAREN RPAREN LBRACKET RBRACKET COMMA NEWLINE SEMICOL
 
 %token EOF
 
 %start start
 %type <Lexing.position Term_ast.expression> start
 
+%start toplevel_phrase
+%type <Lexing.position Term_ast.expression> toplevel_phrase
+
+
 %%
 
 start:
 | expression EOF { $1 }
+
+toplevel_phrase:
+| expression SEMICOL SEMICOL { $1 }
+| EOF { raise End_of_file }
 
 expression:
 | IDENT LPAREN LBRACKET VARIDENT RBRACKET COMMA expression_params RPAREN 

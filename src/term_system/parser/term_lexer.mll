@@ -18,6 +18,7 @@ let rbracket = ']'
 let comma = ','
 let space = ' '
 let newline = '\n'
+let semicol = ';'
 
   rule token = parse
     | space {token lexbuf}
