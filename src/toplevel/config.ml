@@ -28,10 +28,10 @@ let add_path p =
 (* module Arg list *)
 let list = 
   let open Arg in
-      [ "version", Unit print_version, "Print version and exits"
-      ; "vnum", Unit print_vnum, "Print version number and exits"
-      ; "I", String add_path, "Include the given directory"
-      ; "v", Set verbose, "Be more verbose"
+      [ "--version", Unit print_version, "Print version and exits"
+      ; "--vnum", Unit print_vnum, "Print version number and exits"
+      ; "-I", String add_path, "Include the given directory"
+      ; "-v", Set verbose, "Be more verbose"
       ]
 
   

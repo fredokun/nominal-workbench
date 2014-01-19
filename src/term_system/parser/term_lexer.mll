@@ -31,6 +31,7 @@ let semicol = ';'
     | lbracket { LBRACKET }
     | rbracket { RBRACKET }
     | comma { COMMA }
+    | semicol { SEMICOL }
     | newline
 	{ Lexing.new_line lexbuf;
 	  NEWLINE
