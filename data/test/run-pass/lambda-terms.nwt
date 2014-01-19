@@ -5,16 +5,16 @@ Lambda(x, Var(x))
 
 # Church Integers
 # Zero
-Lambda(f, Lambda(x, Var(x)))
+Lambda([f], Lambda([x], Var(x)))
 
 # One
-Lambda(f, Lambda(x, App(Var(f), Var(x))))
+Lambda([f], Lambda([x], App(Var(f), Var(x))))
 
 # Two
-Lambda(f, Lambda(x, App(Var(f), (App(Var(f), Var(x))))))
+Lambda([f], Lambda([x], App(Var(f), (App(Var(f), Var(x))))))
 
 # Succ
-Lambda(n, Lambda(f, Lambda(x, 
+Lambda([n], Lambda([f], Lambda([x], 
   App(Var(f), 
       (App(Var(n), (App(Var(f), Var(x)))))))))
 
