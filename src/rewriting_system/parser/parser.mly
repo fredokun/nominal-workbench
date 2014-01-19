@@ -91,7 +91,7 @@ kind_decl:
 | KIND WORD COLON kind_type { ($2, get_info (), (DKind (Kind $4))) }
 
 kind_type:
-| kind_type DARROW kind_type { $1 @ $3 }
+| kind_type ARROW kind_type { $1 @ $3 }
 | TYPE { [Type] }
 | ATOM { [Atom] }
 

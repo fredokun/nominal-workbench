@@ -25,4 +25,10 @@
     <file>data/test/run-pass/with_include.nw</file>
   </systemtest>
 
+  <systemtest>
+    <name>With forall</name>
+    <file>data/test/run-pass/with_forall.nw</file>
+  </systemtest>
+
+
 </test>
