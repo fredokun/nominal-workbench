@@ -53,6 +53,8 @@ let parse_toplevel_rule phr =
 
 let parse_toplevel_term phr = 
   let ast = Term_parser.toplevel_phrase Term_lexer.token phr in
+  if !Config.verbose then
+    Printf.printf "%s\n%!" (Term_ast.string_of_expression ast);
   Parsing.clear_parser ();
   ast
     

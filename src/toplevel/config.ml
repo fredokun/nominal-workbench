@@ -11,6 +11,7 @@ let rule_suffix = "nw"
 
 let term_suffix = "nwt"
 
+let verbose = ref false
 
 (* functions *)
 let print_version () =
@@ -30,6 +31,7 @@ let list =
       [ "version", Unit print_version, "Print version and exits"
       ; "vnum", Unit print_vnum, "Print version number and exits"
       ; "I", String add_path, "Include the given directory"
+      ; "v", Set verbose, "Be more verbose"
       ]
 
   
