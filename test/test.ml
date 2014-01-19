@@ -72,7 +72,7 @@ let test_expectation channel expectation =
         print_success (sprintf "Failure with %s as expected." s)
     | (MustPass(terms), Passed) -> print_success "Successfully built the term system." in
   try
-    let term_system = parse_channel channel in
+    let _ = parse_channel channel in
     match_result_expectation Passed
   with
   | TermSystemError(e, _) ->

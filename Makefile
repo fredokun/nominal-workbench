@@ -19,5 +19,5 @@ test: launch_gen
 	./$(TEMPORARY_DIR)/test/test.byte
 
 clean:
-	rm -r $(TEMPORARY_DIR)
+	ocp-build clean
 	rm $(AUTO_GEN_DIR)/*.ml*
