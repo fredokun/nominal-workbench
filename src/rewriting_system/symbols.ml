@@ -4,6 +4,7 @@
 *)
 
 open Rewriting_ast
+open Rewriting_system_error
 
 type 'a sym_tbl = (string, info * 'a) Hashtbl.t
 
@@ -12,13 +13,20 @@ let constant_table : constant sym_tbl = Hashtbl.create 5
 let operator_table : operator sym_tbl = Hashtbl.create 5
 let rule_table : rule sym_tbl = Hashtbl.create 5
 
-exception SymbolAlreadyDefined of string
-exception UnknownSymbol of string
 
-let add (name, info, desc)  =
+let raise_unknown_symbol kind id =
+  raise (RewritingSystemError (
+    UnknownSymbol,
+    kind ^ " " ^ id))
+
+let warn id =
+  Format.printf "Warning : Symbol %s is already defined.\n" id
+
+
+let enter_decl (name, info, desc)  =
   let aux tbl id value =
     if Hashtbl.mem tbl id then
-      raise (SymbolAlreadyDefined id)
+      warn id
     else
       Hashtbl.add tbl id value
   in
@@ -29,13 +37,20 @@ let add (name, info, desc)  =
   | DRule r -> aux rule_table name (info, r)
 
 
-let lookup tbl id =
+let lookup tbl sym_kind id =
   try
     Hashtbl.find tbl id
   with
-  | Not_found -> raise (UnknownSymbol id)
+  | Not_found -> raise_unknown_symbol sym_kind id
 
-let lookup_kind = lookup kind_table
-let lookup_const = lookup constant_table
-let lookup_op = lookup operator_table
-let lookup_rule = lookup rule_table
+let lookup_kind = lookup kind_table "kind"
+let lookup_const = lookup constant_table "const"
+let lookup_op = lookup operator_table "operator"
+let lookup_rule = lookup rule_table "rule"
+
+let exists tbl id = Hashtbl.mem tbl id
+let is_kind = exists kind_table
+let is_const = exists constant_table
+let is_op = exists operator_table
+let is_rule = exists rule_table
+
