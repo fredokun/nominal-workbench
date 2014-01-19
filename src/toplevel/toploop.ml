@@ -46,10 +46,16 @@ let refill_lexbuf buffer len =
       len
   end
 
-let parse_toplevel_phrase phr =
+let parse_toplevel_rule phr =
   let ast = Parser.toplevel_phrase Lexer.token phr in
   Parsing.clear_parser ();
   ast
+
+let parse_toplevel_term phr = 
+  let ast = Term_parser.toplevel_phrase Term_lexer.token phr in
+  Parsing.clear_parser ();
+  ast
+    
 
 let loop ppf =
   Format.fprintf ppf "        NoWork version %s@.@." "0.00.1" (* Config.version *);
@@ -60,7 +66,7 @@ let loop ppf =
     try
       Lexing.flush_input lb;
       first_line := true;
-      let phr = parse_toplevel_phrase lb in
+      let phr = parse_toplevel_term lb in
       ignore (execute_phrase true ppf phr)
     with
     | End_of_file -> exit 0
