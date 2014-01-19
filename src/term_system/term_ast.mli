@@ -1,6 +1,7 @@
 (* Distributed under the MIT License.
   (See accompanying file LICENSE.txt)
   (C) Copyright Roven Gabriel
+  (C) Copyright Vincent Botbol
 *)
 
 type info = Lexing.position
@@ -15,3 +16,6 @@ type 'info expression_raw =
   | Call of ident * 'info expression list
   | Var of ident
 and 'info expression = ('info expression_raw, 'info) annotated
+
+
+val string_of_expression : 'a expression -> string
