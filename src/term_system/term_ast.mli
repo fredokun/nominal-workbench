@@ -5,13 +5,13 @@
 
 type info = Lexing.position
 
-type 'a ident = string * 'a
+type ident = string
 
 type ('a, 'b) annotated = { value : 'a; info : 'b} 
 
 type 'info expression_raw =
-  | Const of 'info ident
-  | Abstraction of 'info ident * 'info ident * 'info expression list
-  | Call of 'info ident * 'info expression list
-  | Var of 'info ident
+  | Const of ident
+  | Abstraction of ident * ident * 'info expression list
+  | Call of ident * 'info expression list
+  | Var of ident
 and 'info expression = ('info expression_raw, 'info) annotated

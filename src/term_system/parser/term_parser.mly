@@ -7,7 +7,7 @@
 
   open Parsing
   open Lexing
-  open Ast
+  (* open Rewriting_ast *)
   open Term_ast
 
   let err_msg = fun kwd name msg ->
