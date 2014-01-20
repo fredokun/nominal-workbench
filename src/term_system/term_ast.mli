@@ -17,5 +17,17 @@ type 'info expression_raw =
   | Var of ident
 and 'info expression = ('info expression_raw, 'info) annotated
 
+val mk_dummy : 'a -> ('a, unit) annotated
+val mk_node : 'a -> 'b -> ('a, 'b) annotated
 
 val string_of_expression : 'a expression -> string
+
+
+
+
+
+
+
+
+
+

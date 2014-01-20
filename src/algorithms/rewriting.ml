@@ -13,8 +13,6 @@ open Term_ast
 type error = UnknownPlaceholder of string
 exception Error of error
 
-let mk_dummy e = { value = e; info = Lexing.dummy_pos}
-    
 let rewrite pattern effect term =
   let rec substitute placeholders effect =
     match effect with
