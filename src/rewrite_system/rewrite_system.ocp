@@ -1,5 +1,5 @@
 begin library "rewrite_system"
   sort = true
-  files = [ "ast.mli" "rewrite_system_error.ml" ]
+  files = [ "ast.mli" "rewrite_system_error.ml" "rewrite_system.ml"]
   requires = [ "error_code" ]
 end

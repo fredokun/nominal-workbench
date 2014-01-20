@@ -4,4 +4,5 @@ _obuild
 doc/*.pdf
 ocp-build.root*
 *.swp
+*~
 src/auto_gen/*.ml
