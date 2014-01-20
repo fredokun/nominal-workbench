@@ -10,25 +10,23 @@ open Term_ast
  
 *)
 
+type error = UnknownPlaceholder of string
+exception Error of error
 
-module SMap = Map.Make(String)
-
-type 'info term_effect_raw =
-  | TEconstant of 'info ident (* True *)
-  | TEplaceholder of 'info ident (* ?x *)
-  | TEoperator of 'info ident * 'info term_effect list
-and 'info term_effect = ('info term_effect_raw, 'info) annotated
-
+let mk_dummy e = { value = e; info = Lexing.dummy_pos}
+    
 let rewrite pattern effect term =
   let rec substitute placeholders effect =
     match effect with
-    | TEconstant ident -> Const ident
-    | TEplaceholder ident ->
-        begin try SMap.find ident placeholders with Not_found ->
-          raise (Error (UnknownPlaceholder ident)) end
-    | TEoperator (ident, operands) ->
-        Call (ident, List.map (substitute placeholders) operands)
-  in 
+    | EConstant ident -> mk_dummy (Const ident)
+    | EPlaceholder ident ->
+        begin try Matching.SMap.find ident placeholders
+          with Not_found ->
+            raise (Error (UnknownPlaceholder ident)) end
+    | EOperator (ident, operands) ->
+        mk_dummy
+          (Call (ident, List.map (substitute placeholders) operands))
+  in
   let matches, ph = Matching.matching term pattern in
   if matches then substitute ph effect else term
 

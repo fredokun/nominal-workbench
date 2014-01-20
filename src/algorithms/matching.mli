@@ -3,7 +3,8 @@
   (C) Copyright Pierrick Couderc
 *)
 
-type 'info placeholders
+module SMap : Map.S with type key = string
+type 'info placeholders = 'info Term_ast.expression SMap.t
 
 (** [matching term pattern] returns a boolean and a map containing the possible
   placeholders if the term matches the pattern given.
@@ -11,3 +12,5 @@ type 'info placeholders
   a typing phase.
 *)
 val matching : 'info Term_ast.expression -> Rewriting_ast.pattern -> bool * 'info placeholders
+
+

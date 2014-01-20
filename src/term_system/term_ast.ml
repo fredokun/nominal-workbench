@@ -10,6 +10,9 @@ type ident = string
 
 type ('a, 'b) annotated = { value : 'a; info : 'b} 
 
+let mk_node e t = { value = e; info = t}
+let mk_dummy e = { value = e; info = ()}
+    
 type 'info expression_raw =
   | Const of ident
   | Abstraction of ident * ident * 'info expression list
