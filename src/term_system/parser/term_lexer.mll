@@ -18,6 +18,7 @@ let rbracket = ']'
 let comma = ','
 let space = ' '
 let newline = '\n'
+let semicol = ';'
 
   rule token = parse
     | space {token lexbuf}
@@ -30,6 +31,7 @@ let newline = '\n'
     | lbracket { LBRACKET }
     | rbracket { RBRACKET }
     | comma { COMMA }
+    | semicol { SEMICOL }
     | newline
 	{ Lexing.new_line lexbuf;
 	  NEWLINE

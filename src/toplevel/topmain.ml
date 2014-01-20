@@ -3,29 +3,59 @@
   (C) Copyright Vincent Botbol
 *)
 
-let usage = "Usage: nowork <options> files\noptions are:"
+open Rewriting_ast
+
+let usage = "Usage: nowork [options] <rules files> <terms files>\noptions are:"
+
+let rule_files : string list ref = ref []
+let term_files : string list ref = ref []
+
+(* ! *)
+let rewriting_ast : rewriting_ast ref = ref (RewritingAST [])
 
 let file_argument name =
-  ignore name
+  if Filename.check_suffix name Config.rule_suffix then
+    rule_files := name :: !rule_files
+  else if Filename.check_suffix name Config.term_suffix then
+    term_files := name :: !term_files
+  else 
+    Printf.eprintf "[Warning] Unknown file type : %s. Argument ignored\n" name
 
-
-let print_version () =
-  Printf.printf "NoWork toplevel, version %s\n" "0.00.1" (* Config.version *);
-  exit 0
-
-let print_vnum () =
-  Printf.printf "%s\n" "0.00.1" (* Config.version *);
-  exit 0
-
-let options_list = 
-  let open Arg in
-      [ "version", Unit print_version, "Print version and exits"
-      ; "vnum", Unit print_vnum, "Print version number and exits"
-      ]
+let process_rule_files rfile =
+  if not (Sys.file_exists rfile) then
+    Printf.eprintf "[Warning] %s doesn't exist. Skipping file...\n%!" rfile
+  else 
+    begin 
+      Printf.printf "Adding rules in : %s...\n%!" rfile;
+      let ic = open_in rfile in
+      try
+	let (RewritingAST new_decls, l) = 
+	  Parser.start Lexer.token (Lexing.from_channel ic) in
+	(* ! *)
+	rewriting_ast := RewritingAST
+	  (match !rewriting_ast with
+	    | RewritingAST prev_decls -> new_decls@prev_decls);
+	close_in ic
+      with 
+	| _ -> 
+	    Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
+	  close_in ic
+    end
 
 let main () =
   begin
-    Arg.parse options_list file_argument usage;
+    (* Parse the command-line *)
+    Arg.parse Config.list file_argument usage;
+    
+    (* Parse the rule files *)
+    List.iter process_rule_files !rule_files;
+
+    (* Parse the term files *)
+    List.iter 
+      (fun s -> Printf.printf "%s ignored : term evaluation not yet implemented\n" s)
+      !term_files;
+
+    (* Read-Eval-Print-Loop *)
     Toploop.loop Format.std_formatter
   end
 

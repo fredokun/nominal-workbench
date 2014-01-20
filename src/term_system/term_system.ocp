@@ -1,5 +1,5 @@
 begin library "term_system"
   sort = true
-  files = [ "term_ast.mli" "term_system_error.ml" "symbols.ml" "matching.ml"]
-  requires = [ "rewrite_system" ]
+  files = [ "term_ast.mli" "term_ast.ml" "term_checker.ml" ]
+  requires = [ ]
 end

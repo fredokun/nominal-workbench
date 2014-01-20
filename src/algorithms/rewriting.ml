@@ -1,5 +1,5 @@
 
-open Ast
+open Rewriting_ast
 open Term_ast
 
 (*

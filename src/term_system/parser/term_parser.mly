@@ -7,7 +7,7 @@
 
   open Parsing
   open Lexing
-  open Ast
+  (* open Rewriting_ast *)
   open Term_ast
 
   let err_msg = fun kwd name msg ->
@@ -28,25 +28,33 @@
 %token <string> VARIDENT
 
 /* punctuation */
-%token LPAREN RPAREN LBRACKET RBRACKET COMMA NEWLINE
+%token LPAREN RPAREN LBRACKET RBRACKET COMMA NEWLINE SEMICOL
 
 %token EOF
 
 %start start
 %type <Lexing.position Term_ast.expression> start
 
+%start toplevel_phrase
+%type <Lexing.position Term_ast.expression> toplevel_phrase
+
+
 %%
 
 start:
 | expression EOF { $1 }
 
+toplevel_phrase:
+| expression SEMICOL SEMICOL { $1 }
+| EOF { raise End_of_file }
+
 expression:
 | IDENT LPAREN LBRACKET VARIDENT RBRACKET COMMA expression_params RPAREN 
-  { annote_pos @@ Abstraction(annote_pos $1, annote_pos $4, $7) }
+  { annote_pos @@ Abstraction($1, $4, $7) }
 | IDENT LPAREN expression_params RPAREN 
-  { annote_pos @@ Call(annote_pos $1, $3) }
-| IDENT { annote_pos @@ Const(annote_pos $1) }
-| VARIDENT { annote_pos @@ Var(annote_pos $1) }
+  { annote_pos @@ Call($1, $3) }
+| IDENT { annote_pos @@ Const($1) }
+| VARIDENT { annote_pos @@ Var($1) }
 
 expression_params:
 | expression { [$1] }

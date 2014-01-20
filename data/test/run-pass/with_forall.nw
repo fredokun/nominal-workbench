@@ -1,0 +1,12 @@
+kind List : type -> type
+
+constant Nil : forall(A).List<A>
+
+operator Cons: forall(A).A * List<A> -> List<A>
+operator Successor: forall(A).A -> A
+
+rule [length] :
+  Cons(_, ?y) => Successor(?y)
+
+rule [length2] :
+  Cons(_, Nil) => Successor(Nil)

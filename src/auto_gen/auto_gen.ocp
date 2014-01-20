@@ -1,5 +1,5 @@
-begin library "error_code"
+begin library "error"
     sort = true
-    files = [ "term_system_error_code.ml" ]
+    files = [ "term_system_error.ml" "rewriting_system_error.ml"]
     requires = []
 end
