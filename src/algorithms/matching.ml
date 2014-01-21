@@ -11,11 +11,11 @@ module SMap = Map.Make(String)
 
 exception PlaceholderAlreadyDefined of string
 
-type 'info placeholders = 'info expression SMap.t
-
+type placeholders = Term_ast.term SMap.t
+    
 let matching term pattern =
   let rec step term pattern placeholders =
-    match term.value, pattern with
+    match term, pattern with
     | Abstraction (t_id, _, t_terms), POperator (p_id, p_terms)
     | Call (t_id, t_terms), POperator (p_id, p_terms) ->
       if t_id = p_id then

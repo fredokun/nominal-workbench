@@ -16,9 +16,9 @@
     " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
     " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol))
 
-  let annote_pos item = 
+  let annote_pos item : Term_ast.info * Term_ast.term = 
     let pos = Parsing.symbol_start_pos () in
-    { value = item ; info = pos }
+    pos, item
 
 %}
 
@@ -33,28 +33,32 @@
 %token EOF
 
 %start start
-%type <Lexing.position Term_ast.expression> start
+%type <Term_ast.term_ast> start
 
 %start toplevel_phrase
-%type <Lexing.position Term_ast.expression> toplevel_phrase
+%type <Term_ast.term> toplevel_phrase
 
 
 %%
 
 start:
-| expression EOF { $1 }
+| expressions EOF { TermAST $1 }
 
 toplevel_phrase:
 | expression SEMICOL SEMICOL { $1 }
 | EOF { raise End_of_file }
 
+expressions:
+| expression { [annote_pos @@ $1] }
+| expression expressions { annote_pos $1::$2 } 
+
 expression:
 | IDENT LPAREN LBRACKET VARIDENT RBRACKET COMMA expression_params RPAREN 
-  { annote_pos @@ Abstraction($1, $4, $7) }
+  { Abstraction($1, $4, $7) }
 | IDENT LPAREN expression_params RPAREN 
-  { annote_pos @@ Call($1, $3) }
-| IDENT { annote_pos @@ Const($1) }
-| VARIDENT { annote_pos @@ Var($1) }
+  { Call($1, $3) }
+| IDENT { Const($1) }
+| VARIDENT { Var($1, None) }
 
 expression_params:
 | expression { [$1] }

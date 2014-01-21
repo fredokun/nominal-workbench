@@ -4,30 +4,26 @@
   (C) Copyright Vincent Botbol
 *)
 
+(** Terms Abstract Syntax Tree *)
+
+(** {2 Types} *)
+
 type info = Lexing.position
 
 type ident = string
 
-type ('a, 'b) annotated = { value : 'a; info : 'b} 
-
-type 'info expression_raw =
+type term =
   | Const of ident
-  | Abstraction of ident * ident * 'info expression list
-  | Call of ident * 'info expression list
-  | Var of ident
-and 'info expression = ('info expression_raw, 'info) annotated
+  (* Comment on représente une liste de binder? *)
+  | Abstraction of ident * ident * term list
+  | Call of ident * term list
+  | Var of ident * (term ref) option (* DAG arrow *)
 
+type term_ast = TermAST of (info * term) list
+
+(** {2 Functions} *)
+(*
 val mk_dummy : 'a -> ('a, unit) annotated
 val mk_node : 'a -> 'b -> ('a, 'b) annotated
-
-val string_of_expression : 'a expression -> string
-
-
-
-
-
-
-
-
-
-
+*)
+val string_of_term : term -> string
