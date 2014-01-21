@@ -10,9 +10,6 @@ let usage = "Usage: nowork [options] <rules files> <terms files>\noptions are:"
 let rule_files : string list ref = ref []
 let term_files : string list ref = ref []
 
-(* ! *)
-let rewriting_ast : rewriting_ast ref = ref (RewritingAST [])
-
 let file_argument name =
   if Filename.check_suffix name Config.rule_suffix then
     rule_files := name :: !rule_files
@@ -21,24 +18,39 @@ let file_argument name =
   else 
     Printf.eprintf "[Warning] Unknown file type : %s. Argument ignored\n" name
 
-let process_rule_files rfile =
+let process_rule_file rfile =
   if not (Sys.file_exists rfile) then
     Printf.eprintf "[Warning] %s doesn't exist. Skipping file...\n%!" rfile
   else 
     begin 
-      Printf.printf "Adding rules in : %s...\n%!" rfile;
+      Printf.printf "Adding rules from : %s...\n%!" rfile;
       let ic = open_in rfile in
       try
-	let (RewritingAST new_decls, l) = 
+	let (ast, _) = 
 	  Parser.start Lexer.token (Lexing.from_channel ic) in
-	(* ! *)
-	rewriting_ast := RewritingAST
-	  (match !rewriting_ast with
-	    | RewritingAST prev_decls -> new_decls@prev_decls);
+	Type_checking.enter_ast ast;
 	close_in ic
       with 
 	| _ -> 
 	    Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
+	  close_in ic
+    end
+
+let process_term_file rfile =
+  if not (Sys.file_exists rfile) then
+    Printf.eprintf "[Warning] %s doesn't exist. Skipping file...\n%!" rfile
+  else 
+    begin 
+      Printf.printf "Evaluating terms from : %s...\n%!" rfile;
+      let ic = open_in rfile in
+      try
+	let (*term_ast*) _ =
+	  Term_parser.start Term_lexer.token (Lexing.from_channel ic) in
+	(); (* matching *)
+	close_in ic
+      with 
+	| _ -> 
+	  Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
 	  close_in ic
     end
 
@@ -48,7 +60,10 @@ let main () =
     Arg.parse Config.list file_argument usage;
     
     (* Parse the rule files *)
-    List.iter process_rule_files !rule_files;
+    List.iter process_rule_file !rule_files;
+    
+    (* Parse the terms files *)
+    List.iter process_term_file !term_files;
 
     (* Parse the term files *)
     List.iter 

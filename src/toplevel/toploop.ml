@@ -52,13 +52,12 @@ let parse_toplevel_rule phr =
   ast
 
 let parse_toplevel_term phr = 
-  let ast = Term_parser.toplevel_phrase Term_lexer.token phr in
+  let term = Term_parser.toplevel_phrase Term_lexer.token phr in
   if !Config.verbose then
-    Printf.printf "%s\n%!" (Term_ast.string_of_expression ast);
+    Printf.printf "%s\n%!" (Term_ast.string_of_term term);
   Parsing.clear_parser ();
-  ast
+  term
     
-
 let loop ppf =
   Format.fprintf ppf "        NoWork version %s@.@." "0.00.1" (* Config.version *);
   initialize_toplevel_env ();
@@ -68,6 +67,7 @@ let loop ppf =
     try
       Lexing.flush_input lb;
       first_line := true;
+      (* TODO : discriminer les termes, des règles.. combinaison des parsers? *)
       let phr = parse_toplevel_term lb in
       ignore (execute_phrase true ppf phr)
     with
