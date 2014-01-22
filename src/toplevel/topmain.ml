@@ -21,19 +21,19 @@ let file_argument name =
 let process_rule_file rfile =
   if not (Sys.file_exists rfile) then
     Printf.eprintf "[Warning] %s doesn't exist. Skipping file...\n%!" rfile
-  else 
-    begin 
+  else
+    begin
       Printf.printf "Adding rules from : %s...\n%!" rfile;
       let ic = open_in rfile in
       try
-	let (ast, _) = 
-	  Parser.start Lexer.token (Lexing.from_channel ic) in
-	Type_checking.enter_ast ast;
-	close_in ic
-      with 
-	| _ -> 
-	    Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
-	  close_in ic
+        let (ast, _) = Parser.start Lexer.token (Lexing.from_channel ic) in
+        Type_checking.set_up_environment ast;
+        Type_checking.check_ast ast;
+        close_in ic
+      with
+      | _ -> 
+        Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
+        close_in ic
     end
 
 let process_term_file rfile =
@@ -44,14 +44,14 @@ let process_term_file rfile =
       Printf.printf "Evaluating terms from : %s...\n%!" rfile;
       let ic = open_in rfile in
       try
-	let (*term_ast*) _ =
-	  Term_parser.start Term_lexer.token (Lexing.from_channel ic) in
-	(); (* matching *)
-	close_in ic
+  let (*term_ast*) _ =
+    Term_parser.start Term_lexer.token (Lexing.from_channel ic) in
+  (); (* matching *)
+  close_in ic
       with 
-	| _ -> 
-	  Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
-	  close_in ic
+  | _ -> 
+    Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
+    close_in ic
     end
 
 let main () =

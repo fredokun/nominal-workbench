@@ -8,7 +8,6 @@ open Parser
 open Include
 open Lexer
 
-
 let rec parse_channel channel =
   let lexbuf = Lexing.from_channel channel in
   let res = Parser.start Lexer.token lexbuf in

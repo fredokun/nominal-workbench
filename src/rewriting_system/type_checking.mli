@@ -8,4 +8,6 @@ val set_up_environment : rewriting_ast -> unit
   Raise a RewritingSystemError on redeclaration. *)
 val set_up_environment_strict : rewriting_ast -> unit
 
-val check_rule : rule -> unit
+(* Check that the AST is well-formed and well-typed.
+  Raise RewritingSystemError on error. *)
+val check_ast : rewriting_ast -> unit

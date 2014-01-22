@@ -87,9 +87,6 @@ let rec decl_list_well_formed decll= match decll with
 let ast_well_formed = function
   | RewritingAST decls -> decl_list_well_formed decls
 
-
-
-
 (* Type checking *)
 
 let check_types (tb1, ta1) (tb2, ta2) =
@@ -147,7 +144,7 @@ and check_pat_op_arg tb env pat op_arg =
     
   
     
-let check_pat pat =
+let check_pattern pat =
   match pat with
   | POperator (id, patl) ->
     let (_, Operator (tb, args, _)) = lookup_op id in
@@ -174,7 +171,7 @@ and check_eff_op_arg tb env eff op_arg =
   | OpBinderArg id -> () (* TODO *)
     
 
-let check_eff env eff =
+let check_effect env eff =
   match eff with
   | EOperator (id, effl) ->
     let (_, Operator (tb, args, _)) = lookup_op id in
@@ -183,7 +180,17 @@ let check_eff env eff =
 
 (* Rule checking *)
 
-let check_rule = function
-  | Rule (pat, eff) ->
-    let env = check_pat pat in
-    check_eff env eff
+let check_rule (Rule(pattern, effect)) =
+  let env = check_pattern pattern in
+  check_effect env effect
+
+let check_typing (RewritingAST(decls)) =
+  let type_check = function
+    | DRule rule -> check_rule rule
+    | _ -> () in
+  List.iter (fun (_,_,decl) -> type_check decl) decls
+
+(* Checking interface *)
+let check_ast ast =
+  ast_well_formed ast;
+  check_typing ast
