@@ -5,7 +5,10 @@
 
 open Rewriting_ast
 
-val enter_decl : string * info * rewriting_declaration -> unit
+(* Add a symbol in the global environment. Warn on symbol redeclaration. *)
+val add_symbol : string * info * rewriting_declaration -> unit
+(* Add a symbol in the global environment. Raise a RewritingSystemError on redeclaration. *)
+val add_symbol_strict : string * info * rewriting_declaration -> unit
 
 val lookup_kind : string -> info * kind
 val lookup_const : string -> info * constant

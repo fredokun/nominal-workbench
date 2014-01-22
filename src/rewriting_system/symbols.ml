@@ -19,14 +19,16 @@ let raise_unknown_symbol kind id =
     UnknownSymbol,
     kind ^ " " ^ id))
 
-let warn id =
+let warn_on_redeclaration id =
   Format.printf "Warning : Symbol %s is already defined.\n" id
 
+let raise_on_redeclaration id =
+  raise (RewritingSystemError (RedeclaredSymbol, id))
 
-let enter_decl (name, info, desc)  =
+let add_symbol_impl (name, info, desc) redeclaration_policy  =
   let aux tbl id value =
     if Hashtbl.mem tbl id then
-      warn id
+      redeclaration_policy id
     else
       Hashtbl.add tbl id value
   in
@@ -36,6 +38,8 @@ let enter_decl (name, info, desc)  =
   | DOperator op -> aux operator_table name (info, op)
   | DRule r -> aux rule_table name (info, r)
 
+let add_symbol symbol = add_symbol_impl symbol warn_on_redeclaration
+let add_symbol_strict symbol = add_symbol_impl symbol raise_on_redeclaration
 
 let lookup tbl sym_kind id =
   try

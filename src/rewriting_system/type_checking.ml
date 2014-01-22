@@ -10,9 +10,14 @@ open Symbols
 
 exception TMP of string
 
-let enter_ast = function
-  | RewritingAST decls ->
-    List.iter enter_decl decls
+let set_up_environment_impl add_decl = function
+  | RewritingAST decls -> List.iter add_decl decls
+
+let set_up_environment ast =
+  set_up_environment_impl add_symbol ast
+
+let set_up_environment_strict ast =
+  set_up_environment_impl add_symbol_strict ast
 
 let rec type_to_string = function
   | TypeName id -> id
