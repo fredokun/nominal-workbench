@@ -7,13 +7,15 @@ open Term_ast
 
   App (Lambda(x, ?E), e) => E[e/x]
 
- 
+
 *)
+
+
 
 type error = UnknownPlaceholder of string
 exception Error of error
 
-let rewrite pattern effect term =
+let rec rewrite rules term =
   let rec substitute placeholders effect =
     match effect with
     | EConstant ident -> Const ident
@@ -24,27 +26,13 @@ let rewrite pattern effect term =
     | EOperator (ident, operands) ->
       Call (ident, List.map (substitute placeholders) operands)
   in
-  let matches, ph = Matching.matching term pattern in
-  if matches then substitute ph effect else term
 
-(* match term with *)
-  (* | Const _ | Var _ -> term *)
-  (* | Abstraction (name, bind, exprs) -> *)
-  (*     List.map (rewrite pattern) exprs *)
-  (* | Call (name, exprs) -> *)
-  
-  
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
+  let rec find_rule = function
+    | [] -> None
+    | (Rule (pattern, effect) as rule) :: tail ->
+    let matches, ph = Matching.matching term pattern in
+    if matches then Some (ph, effect) else find_rule tail
+  in
+  match find_rule rules with
+  | None -> term
+  | Some (ph, effect) -> rewrite rules (substitute ph effect)
