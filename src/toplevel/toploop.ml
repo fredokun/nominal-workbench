@@ -1,12 +1,27 @@
 (* Distributed under the MIT License.
-  (See accompanying file LICENSE.txt)
-  (C) Copyright Vincent Botbol
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Vincent Botbol
 *)
 
 let initialize_toplevel_env () =
   ()
 
+
+let process_term rules t =
+  let open Term_ast in
+      try
+	let nt = Rewriting.rewrite rules t in
+	Printf.printf "Term : %s rewrote into %s\n%!" 
+	  (string_of_term t)
+	  (string_of_term nt)
+      with 
+	| _ -> 
+	  Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t)
+
+
 let execute_phrase print_outcome ppf phr =
+  let rules = Symbols.list_of_rules () in
+  process_term rules phr;
   ()
 
 let first_line = ref true
@@ -25,9 +40,9 @@ let read_input prompt buffer len =
     done;
     (!i, false)
   with
-  | End_of_file ->
+    | End_of_file ->
       (!i, true)
-  | Exit ->
+    | Exit ->
       (!i, false)
 
 let refill_lexbuf buffer len =
@@ -71,9 +86,9 @@ let loop ppf =
       let phr = parse_toplevel_term lb in
       ignore (execute_phrase true ppf phr)
     with
-    | End_of_file -> exit 0
-    | Sys.Break -> Format.fprintf ppf "Interrupted.@."
-    | x ->
-      Format.fprintf ppf "%s.@." (Printexc.to_string x)
-      (* Todo : handle errors *)
+      | End_of_file -> exit 0
+      | Sys.Break -> Format.fprintf ppf "Interrupted.@."
+      | x ->
+	Format.fprintf ppf "%s.@." (Printexc.to_string x)
+  (* Todo : handle errors *)
   done

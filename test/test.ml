@@ -5,6 +5,7 @@
 
 open Printf
 open Display_test
+open Parser_include
 open Symbols
 open Type_checking
 

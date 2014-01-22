@@ -5,6 +5,8 @@
 
 open Rewriting_ast
 open Rewriting_system_error
+open Utils
+
 
 type 'a sym_tbl = (string, info * 'a) Hashtbl.t
 
@@ -14,38 +16,55 @@ let operator_table : operator sym_tbl = Hashtbl.create 5
 let rule_table : rule sym_tbl = Hashtbl.create 5
 
 
-let raise_unknown_symbol kind id =
+let raise_unknown_symbol pos kind id =
   raise (RewritingSystemError (
-    UnknownSymbol,
-    kind ^ " " ^ id))
+    RewritingUnboundSymbol,
+    kind ^ " " ^ id ^ (pos_to_string pos)))
 
-let warn_on_redeclaration id =
-  Format.printf "Warning : Symbol %s is already defined.\n" id
+let warn_on_redeclaration symbol_category id pos =
+  Format.printf "Warning : %s %s at %s is already defined.\n"
+    symbol_category id (pos_to_string pos)
 
-let raise_on_redeclaration id =
-  raise (RewritingSystemError (RedeclaredSymbol, id))
+let raise_on_redeclaration symbol_category id pos =
+  raise (RewritingSystemError (RedeclaredSymbol, 
+    Printf.sprintf "[%s] %s %s" (pos_to_string pos) symbol_category id))
 
 let add_symbol_impl (name, info, desc) redeclaration_policy  =
-  let aux tbl id value =
-    if Hashtbl.mem tbl id then
-      redeclaration_policy id
+  let aux tbl symbol_category value =
+    if Hashtbl.mem tbl name then
+      redeclaration_policy symbol_category name info
     else
-      Hashtbl.add tbl id value
+      Hashtbl.add tbl name value
   in
   match desc with
-  | DKind k -> aux kind_table name (info, k)
-  | DConstant c -> aux constant_table name (info, c)
-  | DOperator op -> aux operator_table name (info, op)
-  | DRule r -> aux rule_table name (info, r)
+  | DKind k -> aux kind_table "Kind" (info, k)
+  | DConstant c -> aux constant_table "Constant" (info, c)
+  | DOperator op -> aux operator_table "Operator" (info, op)
+  | DRule r -> aux rule_table "Rule" (info, r)
+
+let set_up_environment_impl add_decl = function
+  | RewritingAST decls -> List.iter add_decl decls
+
+let set_up_environment ast =
+  set_up_environment_impl add_symbol ast
+
+let set_up_environment_strict ast =
+  set_up_environment_impl add_symbol_strict ast
+
+let clear_symbols () =
+  Hashtbl.reset kind_table;
+  Hashtbl.reset constant_table;
+  Hashtbl.reset operator_table;
+  Hashtbl.reset rule_table
 
 let add_symbol symbol = add_symbol_impl symbol warn_on_redeclaration
 let add_symbol_strict symbol = add_symbol_impl symbol raise_on_redeclaration
 
-let lookup tbl sym_kind id =
+let lookup tbl sym_kind ?(pos=Lexing.dummy_pos) id =
   try
     Hashtbl.find tbl id
   with
-  | Not_found -> raise_unknown_symbol sym_kind id
+  | Not_found -> raise_unknown_symbol pos sym_kind id
 
 let lookup_kind = lookup kind_table "kind"
 let lookup_const = lookup constant_table "const"
@@ -58,3 +77,9 @@ let is_const = exists constant_table
 let is_op = exists operator_table
 let is_rule = exists rule_table
 
+(* tmp *)
+let list_of_rules () =
+  Hashtbl.fold
+    (fun _ (_, v) acc -> v :: acc)
+    rule_table
+    []

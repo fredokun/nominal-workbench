@@ -10,13 +10,13 @@ rule [beta] :
   App(Lambda(?x, ?T), ?U)  => Subst(?x, ?T, ?U)
 
 rule [subst-var] :
-  Subst(?x, Var(?x), ?T) => ?T
+  Subst(?x, ?T, Var(?x)) => ?T
 
 rule [subst-nvar] :
-  Subst(?x, Var(?y), ?T) => Var(?y)
+  Subst(?x, ?T, Var(?y)) => Var(?y)
 
 rule [app] :
-  Subst(?x, App(?T, ?U), ?U) => App(Subst(?x, ?T, ?U))
+  Subst(?x, ?T, App(?M, ?N)) => App(Subst(?x, ?T, ?M), Subst(?x, ?T, ?N))
 
 rule [lambda] :
-  Subst(?x, Lambda(?y, ?T), ?U) => Lambda(?y, Subst(?x, ?T, ?U))
+  Subst(?x, ?T, Lambda(?y, ?U)) => Lambda(?y, Subst(?x, ?T, ?U))
