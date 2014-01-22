@@ -2,16 +2,6 @@
 open Rewriting_ast
 open Term_ast
 
-(*
-  exemple :
-
-  App (Lambda(x, ?E), e) => E[e/x]
-
-
-*)
-
-
-
 type error = UnknownPlaceholder of string
 exception Error of error
 
