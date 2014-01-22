@@ -66,3 +66,10 @@ let is_const = exists constant_table
 let is_op = exists operator_table
 let is_rule = exists rule_table
 
+
+(* tmp *)
+let list_of_rules () =
+  Hashtbl.fold 
+    (fun _ (_, v) acc -> v::acc) 
+    rule_table
+    []

@@ -19,3 +19,6 @@ val is_kind : string -> bool
 val is_const : string -> bool
 val is_op : string -> bool
 val is_rule : string -> bool
+
+(* tmp *)
+val list_of_rules : unit -> Rewriting_ast.rule list

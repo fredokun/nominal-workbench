@@ -1,6 +1,6 @@
 (* Distributed under the MIT License.
-  (See accompanying file LICENSE.txt)
-  (C) Copyright Vincent Botbol
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Vincent Botbol
 *)
 
 let version = "0.00.1"

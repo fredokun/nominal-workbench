@@ -28,7 +28,7 @@
 %token <string> VARIDENT
 
 /* punctuation */
-%token LPAREN RPAREN LBRACKET RBRACKET COMMA NEWLINE SEMICOL
+%token LPAREN RPAREN LBRACKET RBRACKET COMMA SEMICOL
 
 %token EOF
 
@@ -37,7 +37,6 @@
 
 %start toplevel_phrase
 %type <Term_ast.term> toplevel_phrase
-
 
 %%
 
@@ -53,6 +52,7 @@ expressions:
 | expression expressions { annote_pos $1::$2 } 
 
 expression:
+| LPAREN expression RPAREN { $2 }
 | IDENT LPAREN LBRACKET VARIDENT RBRACKET COMMA expression_params RPAREN 
   { Abstraction($1, $4, $7) }
 | IDENT LPAREN expression_params RPAREN 

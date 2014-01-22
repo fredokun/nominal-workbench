@@ -29,8 +29,8 @@ let rec string_of_term : term -> string = function
 
   | Abstraction (name, plh, expr_l) ->
     "Abstraction ("^name^", ["^plh^"], "^
-      String.concat ", " (List.map string_of_term expr_l)
+      String.concat ", " (List.map string_of_term expr_l) ^ ")"
 
   | Call (name, expr_l) -> 
     "Call ("^name^", "^
-      String.concat ", " (List.map string_of_term expr_l)
+      String.concat ", " (List.map string_of_term expr_l) ^ ")"

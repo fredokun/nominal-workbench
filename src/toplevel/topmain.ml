@@ -1,6 +1,6 @@
 (* Distributed under the MIT License.
-  (See accompanying file LICENSE.txt)
-  (C) Copyright Vincent Botbol
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Vincent Botbol
 *)
 
 open Rewriting_ast
@@ -26,14 +26,14 @@ let process_rule_file rfile =
       Printf.printf "Adding rules from : %s...\n%!" rfile;
       let ic = open_in rfile in
       try
-	let (ast, _) = 
-	  Parser.start Lexer.token (Lexing.from_channel ic) in
-	Symbols.enter_ast ast;
-	close_in ic
+	    let (ast, _) = 
+	      Parser.start Lexer.token (Lexing.from_channel ic) in
+	    Symbols.enter_ast ast;
+	    close_in ic
       with 
-	| _ -> 
-	    Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
-	  close_in ic
+	    | _ ->
+	      Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
+	      close_in ic
     end
 
 let process_term_file rfile =
@@ -44,14 +44,16 @@ let process_term_file rfile =
       Printf.printf "Evaluating terms from : %s...\n%!" rfile;
       let ic = open_in rfile in
       try
-	let (*term_ast*) _ =
-	  Term_parser.start Term_lexer.token (Lexing.from_channel ic) in
-	(); (* matching *)
-	close_in ic
+	    let (Term_ast.TermAST terms) =
+	      Term_parser.start Term_lexer.token (Lexing.from_channel ic) in
+	    let rules = Symbols.list_of_rules () in
+	    List.iter (fun (_, t) -> Toploop.process_term rules t) terms;
+	    close_in ic
       with 
-	| _ -> 
-	  Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;
-	  close_in ic
+	    | e -> 
+	      Printf.eprintf "[Warning] Unhandled error : %s. Skipping %s\n%!" 
+	        (Printexc.to_string e) rfile;
+	      close_in ic
     end
 
 let main () =
@@ -64,11 +66,6 @@ let main () =
     
     (* Parse the terms files *)
     List.iter process_term_file !term_files;
-
-    (* Parse the term files *)
-    List.iter 
-      (fun s -> Printf.printf "%s ignored : term evaluation not yet implemented\n" s)
-      !term_files;
 
     (* Read-Eval-Print-Loop *)
     Toploop.loop Format.std_formatter
