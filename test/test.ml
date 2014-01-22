@@ -6,6 +6,8 @@
 open Printf
 open Display_test
 open Parser_include
+open Symbols
+open Type_checking
 
 type term_test = TermTest of string
 
@@ -72,7 +74,12 @@ let test_expectation channel expectation =
         print_success (sprintf "Failure with %s as expected." s)
     | (MustPass(terms), Passed) -> print_success "Successfully built the term system." in
   try
-    let _ = parse_channel channel in
+    let ast_list = parse_channel channel in
+    List.iter (fun ast ->
+      enter_ast ast;
+      ast_well_formed ast;
+      check_ast ast;
+      clear_symbols ()) ast_list;
     match_result_expectation Passed
   with
   | TermSystemError(e, _) ->

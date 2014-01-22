@@ -114,11 +114,7 @@ let rec eff_well_formed bounded_l eff =
       if List.length effect_list = List.length operator_arg_list then 
 	List.iter (eff_well_formed bounded_l) effect_list
       else
-	begin
-	  Printf.printf "patl size = %d / op_argl size = %d\n"
-	    (List.length effect_list) (List.length operator_arg_list);
-	  raise_wrong_arity pos string
-	end
+	raise_wrong_arity pos string
 
 let rule_well_formed = function
   |Rule(pat, eff)->

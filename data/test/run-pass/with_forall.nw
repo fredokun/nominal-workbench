@@ -3,7 +3,7 @@ kind List : type -> type
 constant Nil : forall(A).List<A>
 
 operator Cons: forall(A).A * List<A> -> List<A>
-operator Successor: forall(A).A -> A
+operator Successor: forall(B).B -> B
 
 rule [length] :
   Cons(_, ?y) => Successor(?y)
