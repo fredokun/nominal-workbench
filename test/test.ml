@@ -78,8 +78,8 @@ let test_expectation channel expectation =
     List.iter (fun ast ->
       enter_ast ast;
       ast_well_formed ast;
-      check_ast ast;
-      clear_symbols ()) ast_list;
+      check_ast ast) ast_list;
+    clear_symbols ();
     match_result_expectation Passed
   with
   | TermSystemError(e, _) ->
