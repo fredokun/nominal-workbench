@@ -28,7 +28,7 @@ let process_rule_file rfile =
       try
 	let (ast, _) = 
 	  Parser.start Lexer.token (Lexing.from_channel ic) in
-	Type_checking.enter_ast ast;
+	Symbols.enter_ast ast;
 	close_in ic
       with 
 	| _ -> 

@@ -5,6 +5,8 @@
 
 open Rewriting_ast
 open Rewriting_system_error
+open Utils
+
 
 type 'a sym_tbl = (string, info * 'a) Hashtbl.t
 
@@ -14,10 +16,10 @@ let operator_table : operator sym_tbl = Hashtbl.create 5
 let rule_table : rule sym_tbl = Hashtbl.create 5
 
 
-let raise_unknown_symbol kind id =
+let raise_unknown_symbol pos kind id =
   raise (RewritingSystemError (
-    UnknownSymbol,
-    kind ^ " " ^ id))
+    RewritingUnboundSymbol,
+    kind ^ " " ^ id ^ (pos_to_string pos)))
 
 let warn id =
   Format.printf "Warning : Symbol %s is already defined.\n" id
@@ -36,12 +38,22 @@ let enter_decl (name, info, desc)  =
   | DOperator op -> aux operator_table name (info, op)
   | DRule r -> aux rule_table name (info, r)
 
+let enter_ast = function
+  | RewritingAST decls ->
+    List.iter enter_decl decls
 
-let lookup tbl sym_kind id =
+let clear_symbols () =
+  Hashtbl.reset kind_table;
+  Hashtbl.reset constant_table;
+  Hashtbl.reset operator_table;
+  Hashtbl.reset rule_table
+
+
+let lookup tbl sym_kind ?(pos=Lexing.dummy_pos) id =
   try
     Hashtbl.find tbl id
   with
-  | Not_found -> raise_unknown_symbol sym_kind id
+  | Not_found -> raise_unknown_symbol pos sym_kind id
 
 let lookup_kind = lookup kind_table "kind"
 let lookup_const = lookup constant_table "const"
