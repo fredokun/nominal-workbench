@@ -5,13 +5,20 @@
 
 open Printf
 open Display_test
-open Parser_include
+open Symbols
+open Type_checking
 
-type term_test = TermTest of string
+type term_result = string
+type term_lib = string
+type term_test = TermTest of term_lib list * string * term_result
+
+type domain = string
+type name = string
+type error = Error of name * domain
 
 type expectation =
   | MustPass of term_test list
-  | MustFail of string
+  | MustFail of Error
 
 type system_test = SystemTest of string * string * expectation
 
@@ -20,15 +27,6 @@ type test = Test of system_test list
 type result =
   | Passed
   | Failed of string
-
-(* Parsing utility function *)
-(* let parse_channel channel = *)
-(*   let lexbuf = Lexing.from_channel channel in *)
-(*   let res = Parser.start Lexer.token lexbuf in *)
-(*   close_in channel; *)
-(*   res *)
-
-let parse_channel = Parser_include.parse_channel
 
 (* Transform XML data to test type. *)
 let filter_children xdata name =
@@ -41,15 +39,24 @@ let filter_children xdata name =
 let first_child xdata =
   (List.hd (Xml.children xdata))
 
+let first_child_node xdata name =
+  first_child (List.hd (filter_children xdata name))
+
 let child_data xdata name =
-  Xml.pcdata (first_child (List.hd (filter_children xdata name)))
+  Xml.pcdata (first_child_node xdata name)
+
+let term_test_of_xml xdata =
+  TermTest((child_data xdata "term"), (child_data xdata "result"))
 
 let rec term_tests_of_xml = function
   | [] -> []
-  | hd::tl -> TermTest(child_data hd "term") :: (term_tests_of_xml tl)
+  | hd::tl -> (term_test_of_xml (first_child_node hd "term")) :: (term_tests_of_xml tl)
+
+let error_of_xml xdata =
+  Error((child_data xdata "name"), (child_data xdata "domain"))
 
 let expectation_of_xml xtest =
-  try MustFail(child_data xtest "error")
+  try MustFail(error_of_xml (first_child_node xtest "error"))
   with Failure(_) -> MustPass(term_tests_of_xml (filter_children xtest "termtest"))
 
 let system_test_of_xml xtest =
@@ -59,6 +66,32 @@ let test_of_xml xtest =
   Xml.map system_test_of_xml xtest
 
 (* Test framework. *)
+
+let check_expectation expectation result =
+  match (expectation, result) with
+  | (MustPass(_), Failed(s)) -> print_failure (sprintf "Failure with error %s." s)
+  | (MustFail(s), Passed) -> print_failure (sprintf "Should have failed with %s." s)
+  | (MustFail(expected), Failed(s)) when expected <> s ->
+      print_failure (sprintf "Expected error %s but fails with %s." expected s)
+  | (MustFail(expected), Failed(s)) ->
+      print_success (sprintf "Failure with %s as expected." s)
+  | (MustPass(terms), Passed) -> print_success "Successfully built the term system."
+
+let check_rewriting_system ast (SystemTest(name, file, expectation)) = 
+  try
+    
+  with
+  | _ -> failwith "Unknown"
+
+let parse_rewriting_system channel expectation =
+  try
+    check_rewriting_system (Parser_include.parse_channel channel)
+  with
+  | Parsing.Parse_error -> failwith "not implemented."
+  | e -> print_failure (sprintf 
+      "Unexpected exception (%s) caught during the parsing of the rewriting system."
+      Printexc.to_string e)
+
 let test_expectation channel expectation =
   let open Term_system_error in
   (* let open Term_system_error_code in *)
@@ -72,7 +105,12 @@ let test_expectation channel expectation =
         print_success (sprintf "Failure with %s as expected." s)
     | (MustPass(terms), Passed) -> print_success "Successfully built the term system." in
   try
-    let _ = parse_channel channel in
+    let ast_list = parse_channel channel in
+    List.iter (fun ast ->
+      set_up_environment_strict ast;
+      ast_well_formed ast;
+      check_ast ast;
+      clear_symbols ()) ast_list;
     match_result_expectation Passed
   with
   | TermSystemError(e, _) ->

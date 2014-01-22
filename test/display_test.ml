@@ -22,7 +22,6 @@ let print_result_line leftline color rightline =
   let spaces = make_spaces padding in
   printf "%s%s%s%s%s\n" leftline spaces color rightline reset_color
 
-
 let print_system_error s =
   print_result_line s red_color "[ system error ]"
 
