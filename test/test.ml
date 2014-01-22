@@ -80,9 +80,9 @@ let check_expectation expectation result =
 
 let check_rewriting_system ast (SystemTest(name, file, expectation)) = 
   try
-    
+    Type_checking.check_ast ast;
   with
-  | _ -> failwith "Unknown"
+  | RewritingSystemError(e) -> failwith "Unknown"
 
 let parse_rewriting_system channel expectation =
   try
