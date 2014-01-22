@@ -21,22 +21,23 @@ let raise_unknown_symbol pos kind id =
     RewritingUnboundSymbol,
     kind ^ " " ^ id ^ (pos_to_string pos)))
 
-let warn id =
-  Format.printf "Warning : Symbol %s is already defined.\n" id
+let warn sym_kind id pos =
+  Format.printf "Warning : %s %s %s is already defined.\n"
+    sym_kind id (pos_to_string pos)
 
 
 let enter_decl (name, info, desc)  =
-  let aux tbl id value =
-    if Hashtbl.mem tbl id then
-      warn id
+  let aux tbl sym_kind value =
+    if Hashtbl.mem tbl name then
+      warn sym_kind name info
     else
-      Hashtbl.add tbl id value
+      Hashtbl.add tbl name value
   in
   match desc with
-  | DKind k -> aux kind_table name (info, k)
-  | DConstant c -> aux constant_table name (info, c)
-  | DOperator op -> aux operator_table name (info, op)
-  | DRule r -> aux rule_table name (info, r)
+  | DKind k -> aux kind_table "Kind" (info, k)
+  | DConstant c -> aux constant_table "Constant" (info, c)
+  | DOperator op -> aux operator_table "Operator" (info, op)
+  | DRule r -> aux rule_table "Rule" (info, r)
 
 let enter_ast = function
   | RewritingAST decls ->
@@ -66,10 +67,9 @@ let is_const = exists constant_table
 let is_op = exists operator_table
 let is_rule = exists rule_table
 
-
 (* tmp *)
 let list_of_rules () =
-  Hashtbl.fold 
-    (fun _ (_, v) acc -> v::acc) 
+  Hashtbl.fold
+    (fun _ (_, v) acc -> v :: acc)
     rule_table
     []

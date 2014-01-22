@@ -9,10 +9,10 @@ open Rewriting_system_error
 open Symbols
 open Utils
 
-let raise_wrong_arity pos op_id =
+let raise_wrong_arity msg =
   raise (RewritingSystemError (
     WrongArity,
-    op_id ^ pos_to_string pos))
+    msg))
 
 let raise_unbound_symbol pos id =
   raise (RewritingSystemError (
@@ -69,7 +69,7 @@ let rec type_well_formed tb ta =
       raise_type_ill_formed pos id
   
 
-let const_well_formed = function
+let const_well_formed info = function
   | Constant (tb, ta) -> type_well_formed tb ta
 
 let op_arg_well_formed tb op_arg =
@@ -77,13 +77,13 @@ let op_arg_well_formed tb op_arg =
   | OpTypeArg ta -> type_well_formed tb ta
   | OpBinderArg id -> ignore (lookup_kind id)
 
-let op_well_formed = function
+let op_well_formed info = function
   | Operator (tb, op_args, op_res) ->
     List.iter (op_arg_well_formed tb) op_args;
     type_well_formed tb op_res
   
 
-let rec pat_well_formed bounded_l pat =
+let rec pat_well_formed rule_pos bounded_l pat =
   match pat with
   |PAny-> bounded_l
   |PConstant(string)-> ignore (lookup_const string); bounded_l
@@ -93,16 +93,11 @@ let rec pat_well_formed bounded_l pat =
 	= lookup_op string in
     List.iter (op_arg_well_formed type_binders_list) operator_arg_list;
     if List.length pattern_list = List.length operator_arg_list then
-      List.fold_left (fun a b -> pat_well_formed a b) bounded_l pattern_list
+      List.fold_left (pat_well_formed rule_pos) bounded_l pattern_list
     else
-      begin
-	Printf.printf "patl size = %d / op_argl size = %d\n"
-	  (List.length pattern_list) (List.length operator_arg_list);
-	raise_wrong_arity pos string
-      end
+      raise_wrong_arity (string ^ " in pattern, in rule" ^ (pos_to_string rule_pos))
 
-
-let rec eff_well_formed bounded_l eff =
+let rec eff_well_formed rule_pos bounded_l eff =
     match eff with
     |EConstant(string)-> ignore (lookup_const string)
     |EPlaceholder(string)->
@@ -112,21 +107,21 @@ let rec eff_well_formed bounded_l eff =
       let (pos, Operator(type_binders_list, operator_arg_list, operator_result))
 	= lookup_op string in
       if List.length effect_list = List.length operator_arg_list then 
-	List.iter (eff_well_formed bounded_l) effect_list
+	List.iter (eff_well_formed rule_pos bounded_l) effect_list
       else
-	raise_wrong_arity pos string
+	raise_wrong_arity (string ^ " in effect, in rule" ^ (pos_to_string rule_pos))
 
-let rule_well_formed = function
+let rule_well_formed info = function
   |Rule(pat, eff)->
-    let bounded_l = pat_well_formed [] pat in
-    eff_well_formed bounded_l eff
+    let bounded_l = pat_well_formed info [] pat in
+    eff_well_formed info bounded_l eff
 
 let decl_list_well_formed decll=
   List.iter (fun decl ->
     match decl with
-    | (_, _, DConstant c) -> const_well_formed c
-    | (_, _, DOperator op) -> op_well_formed op
-    | (_, _, DRule r) -> rule_well_formed r
+    | (_, info, DConstant c) -> const_well_formed info c
+    | (_, info, DOperator op) -> op_well_formed info op
+    | (_, info, DRule r) -> rule_well_formed info r
     | _ -> ()) decll
 
 let ast_well_formed = function
