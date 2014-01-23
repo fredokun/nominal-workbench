@@ -1,5 +1,10 @@
 begin library "error"
     sort = true
-    files = [ "term_system_error.ml" "rewriting_system_error.ml" "rewriting_parsing_error.ml" "rewriting_error.ml" ]
+    files = [ 
+      "term_system_error.ml"
+      "rewriting_system_error.ml"
+      "rewriting_parsing_error.ml"
+      "rewriting_error.ml"
+      "term_parsing_error.ml" ]
     requires = []
 end
