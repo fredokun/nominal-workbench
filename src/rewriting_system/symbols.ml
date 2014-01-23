@@ -42,6 +42,9 @@ let add_symbol_impl (name, info, desc) redeclaration_policy  =
   | DOperator op -> aux operator_table "Operator" (info, op)
   | DRule r -> aux rule_table "Rule" (info, r)
 
+let add_symbol symbol = add_symbol_impl symbol warn_on_redeclaration
+let add_symbol_strict symbol = add_symbol_impl symbol raise_on_redeclaration
+
 let set_up_environment_impl add_decl = function
   | RewritingAST decls -> List.iter add_decl decls
 
@@ -56,9 +59,6 @@ let clear_symbols () =
   Hashtbl.reset constant_table;
   Hashtbl.reset operator_table;
   Hashtbl.reset rule_table
-
-let add_symbol symbol = add_symbol_impl symbol warn_on_redeclaration
-let add_symbol_strict symbol = add_symbol_impl symbol raise_on_redeclaration
 
 let lookup tbl sym_kind ?(pos=Lexing.dummy_pos) id =
   try
