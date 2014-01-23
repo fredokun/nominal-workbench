@@ -9,10 +9,12 @@ open Rewriting_ast
 (* Placeholders bindings *)
 module SMap = Map.Make(String)
 
-exception PlaceholderAlreadyDefined of string
-
 type placeholders = Term_ast.term SMap.t
-    
+
+let raise_placeholder_already_defined id =
+  let open Rewriting_error in
+  raise (RewritingError(PlaceholderAlreadyDefined, id))
+
 let matching term pattern =
   let rec step term pattern placeholders =
     match term, pattern with
@@ -31,7 +33,7 @@ let matching term pattern =
 
     | _, PPlaceholder id ->
       (* Testing placeholder unicity at typing phase ? *)
-      if SMap.mem id placeholders then raise (PlaceholderAlreadyDefined id)
+      if SMap.mem id placeholders then raise_placeholder_already_defined id
       else (true, SMap.add id term placeholders)
 
     | _, PAny -> (true, placeholders)

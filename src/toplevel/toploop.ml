@@ -9,14 +9,14 @@ let initialize_toplevel_env () =
 
 let process_term rules t =
   let open Term_ast in
-      try
-	let nt = Rewriting.rewrite rules t in
-	Printf.printf "Term : %s rewrote into %s\n%!" 
-	  (string_of_term t)
-	  (string_of_term nt)
-      with 
-	| _ -> 
-	  Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t)
+  try
+    let nt = Rewriting.rewrite rules t in
+    Printf.printf "Term : %s rewrote into %s\n%!" 
+      (string_of_term t)
+      (string_of_term nt)
+  with 
+  | _ -> 
+    Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t)
 
 
 let execute_phrase print_outcome ppf phr =
