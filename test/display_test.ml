@@ -33,3 +33,7 @@ let print_success s =
 
 let print_test no name file =
   printf "%sTest %d%s %s (%s).\n" cyan_color no reset_color name file
+
+let print_unknown_exc e action_name = print_failure (sprintf 
+  "Unexpected exception (%s) caught during the %s."
+      (Printexc.to_string e) action_name)
