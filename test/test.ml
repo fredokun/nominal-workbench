@@ -79,8 +79,8 @@ let expectation_of_xml xtest =
   with Failure(_) -> MustPass
 
 let system_test_of_xml xtest =
-  SystemTest(child_data xtest "name", child_data xtest "file", 
-    expectation_of_xml xtest, 
+  SystemTest(child_data xtest "name", child_data xtest "file",
+    expectation_of_xml xtest,
     term_tests_of_xml (filter_children xtest "termtest"))
 
 let test_of_xml xtest =
@@ -96,11 +96,12 @@ let equal_error (Error(name1, domain1)) (Error(name2, domain2)) =
 (* Term rewriting tests. *)
 let check_term_expectation expectation result domain success_cont =
   match (expectation, result) with
-  | (TMustPass(_), TFailed(e)) -> print_failure (sprintf "Failure with error %s." e)
-  | (TMustFail(e), TPassed(t)) -> print_failure 
+  | (TMustPass(_), TFailed(e)) ->
+    print_failure (sprintf "Failure with error %s." @@ string_of_error e)
+  | (TMustFail(e), TPassed(t)) -> print_failure
       (sprintf "Should have failed with %s but passed with %s." (string_of_error e) t)
-  | (TMustFail(expected), TFailed(e)) when not equal_error(expected, e) ->
-      print_failure (sprintf "Expected error %s but failed with %s." 
+  | (TMustFail(expected), TFailed(e)) when not @@ equal_error expected e ->
+      print_failure (sprintf "Expected error %s but failed with %s."
         (string_of_error expected)
         (string_of_error e))
   | (TMustFail(_), TFailed(e)) ->
@@ -117,15 +118,15 @@ let check_processed_term term rules expectation =
   try
     let rewritten_term = Rewriting.rewrite rules term in
     let srewritten_term = Term_ast.string_of_term rewritten_term in
-    check_term_expectation expectation TPassed(srewritten_term) domain_name 
+    check_term_expectation expectation (TPassed(srewritten_term)) domain_name
      (rewritten_success (Term_ast.string_of_term term) srewritten_term)
   with
   | RewritingError(code, _) ->
-      check_term_expectation expectation TFailed(code) domain_name ignore
+      check_term_expectation expectation (TFailed(code)) domain_name ignore
   | e -> print_unknown_exc e "term rewriting"
 
-let load_library term_libs = 
-  List.iter (fun lib -> failwith "term library not yet implemented") term_libs;
+let load_library term_libs =
+  List.iter (fun lib -> failwith "term library not yet implemented") term_libs
 
 let check_term (libs, term, expectation) =
   (* let open Term_parsing_error in *)
@@ -140,7 +141,7 @@ let check_term (libs, term, expectation) =
       check_processed_term rewriting_system List.hd rules expectation
   with
   | TermParsingError(code, _) ->
-      check_term_expectation expectation TFailed(code) domain_name ignore
+    check_term_expectation expectation TFailed(code) domain_name ignore
   | e -> print_unknown_exc e "parsing of the terms"
 
 let check_terms rewriting_system terms () =
@@ -152,21 +153,21 @@ let check_expectation expectation result domain success_cont =
   | (MustPass, Failed(e)) -> print_failure (sprintf "Failure with error %s." e)
   | (MustFail(e), Passed) -> print_failure (sprintf "Should have failed with %s." (string_of_error e))
   | (MustFail(expected), Failed(e)) when not equal_error(expected, e) ->
-      print_failure (sprintf "Expected error %s but failed with %s." 
+      print_failure (sprintf "Expected error %s but failed with %s."
         (string_of_error expected)
         (string_of_error e))
   | (MustFail(_), Failed(e)) ->
       print_success (sprintf "Failure with %s as expected." (string_of_error e))
   | (MustPass, Passed) -> success_cont ()
 
-let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) = 
+let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
   let open Rewriting_system_error in
   try
     Type_checking.check_ast ast;
     check_expectation expectation Passed (check_terms ast terms)
   with
-  | RewritingSystemError(code, _) -> 
-      check_expectation expectation Failed(string_of_error_code code) 
+  | RewritingSystemError(code, _) ->
+      check_expectation expectation Failed(string_of_error_code code)
         domain_name ignore
   | e -> print_unknown_exc e "check of the rewriting system"
 
@@ -176,7 +177,7 @@ let parse_rewriting_system channel expectation =
     check_rewriting_system (Parser_include.parse_rewriting_system channel)
   with
   | RewritingParsingError(code,_) ->
-      check_expectation expectation Failed(string_of_error_code code) 
+      check_expectation expectation Failed(string_of_error_code code)
         domain_name ignore
   | e -> print_unknown_exc e "parsing of the rewriting system"
 
