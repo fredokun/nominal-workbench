@@ -22,3 +22,10 @@ and parse_file_list l =
   match l with
     | [] -> []
     | f :: q -> (parse_file f) @ parse_file_list q
+
+let parse_rewriting_system channel =
+  let open Rewriting_parsing_error in
+  try
+    parse_channel channel
+  with
+  | Parsing.Parse_error -> raise (RewritingParsingError(SyntaxError, ""))
