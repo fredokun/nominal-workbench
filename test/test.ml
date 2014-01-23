@@ -5,86 +5,8 @@
 
 open Printf
 open Display_test
-
-type filename = string
-type name = string
-type domain = string
-type error = Error of name * domain
-
-type expected_term = string
-
-type term_expectation =
-  | TMustPass of expected_term
-  | TMustFail of error
-
-type term_lib = string
-type term_test = TermTest of term_lib list * string * term_expectation
-
-type expectation =
-  | MustPass
-  | MustFail of error
-
-type system_test = SystemTest of name * filename * expectation * term_test list
-
-type test = Test of system_test list
-
-type result =
-  | Passed
-  | Failed of error
-
-type term_result =
-  | TPassed of string
-  | TFailed of error
-
-(* Transform XML data to test type. *)
-let filter_children xdata name =
-  let foreach_child ldata child =
-    if name = (Xml.tag child)
-    then child :: ldata
-    else ldata in
-  Xml.fold foreach_child [] xdata
-
-let first_child xdata =
-  (List.hd (Xml.children xdata))
-
-let first_child_node xdata name =
-  first_child (List.hd (filter_children xdata name))
-
-let child_data xdata name =
-  Xml.pcdata (first_child_node xdata name)
-
-let error_of_xml xdata =
-  Error((child_data xdata "name"), (child_data xdata "domain"))
-
-let term_expectation_of_xml xdata =
-  try
-    TMustFail(error_of_xml (first_child_node xdata "error"))
-  with
-  | Failure(_) -> TMustPass(child_data xdata "result")
-
-let lib_test_of_xml libs =
-  List.map (fun xlib -> Xml.pcdata xlib) libs
-
-let term_test_of_xml xdata =
-  TermTest(lib_test_of_xml (filter_children xdata "lib"),
-    child_data xdata "term",
-    term_expectation_of_xml xdata)
-
-let rec term_tests_of_xml = function
-  | [] -> []
-  | hd::tl -> (term_test_of_xml hd) :: (term_tests_of_xml tl)
-
-let expectation_of_xml xtest =
-  try MustFail(error_of_xml (first_child_node xtest "error"))
-  with _ -> MustPass
-
-let system_test_of_xml xtest =
-  SystemTest(child_data xtest "name", child_data xtest "file",
-    expectation_of_xml xtest,
-    term_tests_of_xml (filter_children xtest "termtest"))
-
-let test_of_xml xtest =
-  Xml.map system_test_of_xml xtest
+open Test_ast
+open Test_from_xml
 
 (* Test framework. *)
 let string_of_error (Error(name, domain)) =

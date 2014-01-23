@@ -1,6 +1,6 @@
 begin program "test"
   sort = true
-  files = [ "display_test.ml" "test.ml" ]
+  files = [ "display_test.ml" "test.ml" "test_ast.mli" "test_from_xml.ml" ]
   requires = [ 
     "xml-light"
     "algorithms"
