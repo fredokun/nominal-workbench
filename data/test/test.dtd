@@ -4,7 +4,7 @@
 <!ELEMENT file (#PCDATA)>
 <!ELEMENT error (name, domain)>
 <!ELEMENT domain (#PCDATA)>
-<!ELEMENT termtest (lib*, term, (error|result)>
+<!ELEMENT termtest ((lib*), term, (error|result))>
 <!ELEMENT lib (#PCDATA)>
 <!ELEMENT result (#PCDATA)>
 <!ELEMENT term (#PCDATA)>

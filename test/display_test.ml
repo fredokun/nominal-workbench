@@ -5,7 +5,7 @@
 
 open Printf
 
-let ncolumns = 120
+let ncolumns = 140
 
 let red_color = "\x1b[0;31m"
 let green_color = "\x1b[0;32m"

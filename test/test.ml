@@ -30,11 +30,11 @@ type test = Test of system_test list
 
 type result =
   | Passed
-  | Failed of string
+  | Failed of error
 
 type term_result =
   | TPassed of string
-  | TFailed of string
+  | TFailed of error
 
 (* Transform XML data to test type. *)
 let filter_children xdata name =
@@ -76,7 +76,7 @@ let rec term_tests_of_xml = function
 
 let expectation_of_xml xtest =
   try MustFail(error_of_xml (first_child_node xtest "error"))
-  with Failure(_) -> MustPass
+  with _ -> MustPass
 
 let system_test_of_xml xtest =
   SystemTest(child_data xtest "name", child_data xtest "file",
@@ -122,37 +122,39 @@ let check_processed_term term rules expectation =
      (rewritten_success (Term_ast.string_of_term term) srewritten_term)
   with
   | RewritingError(code, _) ->
-      check_term_expectation expectation (TFailed(code)) domain_name ignore
+      check_term_expectation expectation (TFailed(Error(string_of_error_code code, domain_name)))
+        domain_name ignore
   | e -> print_unknown_exc e "term rewriting"
 
 let load_library term_libs =
   List.iter (fun lib -> failwith "term library not yet implemented") term_libs
 
-let check_term (libs, term, expectation) =
-  (* let open Term_parsing_error in *)
+let check_term (TermTest(libs, term, expectation)) =
+  let open Term_parsing_error in
   try
     load_library libs;
     let (Term_ast.TermAST terms) =
-      Term_parser.start Term_lexer.token (Lexing.from_channel ic) in
+      Term_parser.start Term_lexer.token (Lexing.from_string term) in
     if (List.length terms) <> 1 then
       print_system_error "You can only test one term at a time."
     else
       let rules = Symbols.list_of_rules () in
-      check_processed_term rewriting_system List.hd rules expectation
+      check_processed_term (snd (List.hd terms)) rules expectation
   with
   | TermParsingError(code, _) ->
-    check_term_expectation expectation TFailed(code) domain_name ignore
+    check_term_expectation expectation (TFailed(Error(string_of_error_code code, domain_name)))
+      domain_name ignore
   | e -> print_unknown_exc e "parsing of the terms"
 
-let check_terms rewriting_system terms () =
-  List.iter (check_term rewriting_system) terms
+let check_terms terms () =
+  List.iter check_term terms
 
 (* Rewriting System test *)
 let check_expectation expectation result domain success_cont =
   match (expectation, result) with
-  | (MustPass, Failed(e)) -> print_failure (sprintf "Failure with error %s." e)
+  | (MustPass, Failed(e)) -> print_failure (sprintf "Failure with error %s." (string_of_error e))
   | (MustFail(e), Passed) -> print_failure (sprintf "Should have failed with %s." (string_of_error e))
-  | (MustFail(expected), Failed(e)) when not equal_error(expected, e) ->
+  | (MustFail(expected), Failed(e)) when not @@ equal_error expected e ->
       print_failure (sprintf "Expected error %s but failed with %s."
         (string_of_error expected)
         (string_of_error e))
@@ -164,31 +166,31 @@ let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
   let open Rewriting_system_error in
   try
     Type_checking.check_ast ast;
-    check_expectation expectation Passed (check_terms ast terms)
+    check_expectation expectation Passed domain_name (check_terms terms)
   with
   | RewritingSystemError(code, _) ->
-      check_expectation expectation Failed(string_of_error_code code)
+      check_expectation expectation (Failed(Error(string_of_error_code code, domain_name)))
         domain_name ignore
   | e -> print_unknown_exc e "check of the rewriting system"
 
-let parse_rewriting_system channel expectation =
+let test_rewriting_system channel (SystemTest(_,_, expectation, _) as sys_test)  =
   let open Rewriting_parsing_error in
   try
-    check_rewriting_system (Parser_include.parse_rewriting_system channel)
+    check_rewriting_system (Parser_include.parse_rewriting_system channel) sys_test
   with
   | RewritingParsingError(code,_) ->
-      check_expectation expectation Failed(string_of_error_code code)
+      check_expectation expectation (Failed(Error(string_of_error_code code, domain_name)))
         domain_name ignore
   | e -> print_unknown_exc e "parsing of the rewriting system"
 
-let launch_test no (SystemTest(name, file, expectation)) =
+let launch_test no (SystemTest(name, file, _, _) as sys_test) =
   print_test no name file;
   try
     if Sys.is_directory file then
       print_system_error (sprintf "%s: is a directory" file)
     else
       let f = open_in file in
-      test_expectation f expectation;
+      test_rewriting_system f sys_test;
       close_in f
   with
   | Sys_error(e) -> print_system_error e
@@ -205,13 +207,18 @@ let launch_tests tests =
 
 let () =
 try
+  Printexc.record_backtrace true;
   let xtest = Xml.parse_file "data/test/test.xml" in
   let dtd = Dtd.parse_file "data/test/test.dtd" in
   let valid_xtest = Dtd.prove (Dtd.check dtd) "test" xtest in
   launch_tests (test_of_xml valid_xtest)
 with
-| Dtd.Check_error(e) -> print_endline (Dtd.check_error e)
-| Dtd.Prove_error(e) -> print_endline (Dtd.prove_error e)
-| Dtd.Parse_error(e) -> print_endline (Dtd.parse_error e)
-| Xml.Error(e) -> print_endline (Xml.error e)
+| Dtd.Check_error(e) -> print_endline ("Dtd.Check_error: " ^ (Dtd.check_error e))
+| Dtd.Prove_error(e) -> print_endline ("Dtd.Prove_error: " ^ (Dtd.prove_error e))
+| Dtd.Parse_error(e) -> print_endline ("Dtd.Parse_error: " ^ (Dtd.parse_error e))
+| Xml.Error(e) -> print_endline ("Xml.Error: " ^ (Xml.error e))
 | Xml.File_not_found(s) -> printf "File %s not found.\n" s
+| e ->
+    printf "Something got really wrong, here the exception backtrace:\n";
+    printf "Exception: %s.\n" @@ Printexc.to_string e;
+    Printexc.print_backtrace stdout

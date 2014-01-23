@@ -1,5 +1,11 @@
 begin program "test"
   sort = true
   files = [ "display_test.ml" "test.ml" ]
-  requires = [ "xml-light" "algorithms" "rewriting_system_parser" ]
+  requires = [ 
+    "xml-light"
+    "algorithms"
+    "rewriting_system_parser"
+    "term_system_parser" ]
+  bytecomp = [ "-g" ]
+  bytelink = [ "-g" ]
 end

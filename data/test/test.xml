@@ -2,22 +2,33 @@
   <systemtest>
     <name>Constant</name>
     <file>data/test/run-fail/constants.nw</file>
-    <error>KindAlreadyDefined</error>
+    <error>
+      <name>RedeclaredSymbol</name>
+      <domain>RewritingSystemError</domain>
+    </error>
   </systemtest>
 
   <systemtest>
-    <name>With Comments (Pass)</name>
+    <name>With Comments</name>
     <file>data/test/run-pass/with_comment.nw</file>
   </systemtest>
 
   <systemtest>
-    <name>With Comment not closed (Fail)</name>
+    <name>With Comment not closed</name>
     <file>data/test/run-fail/comment_fail_not_closed.nw</file>
+    <error>
+      <name>SyntaxError</name>
+      <domain>RewritingParsingError</domain>
+    </error>
   </systemtest>
 
   <systemtest>
-    <name>With Comment already closed (Fail)</name>
+    <name>With Comment already closed</name>
     <file>data/test/run-fail/comment_fail_already_closed.nw</file>
+    <error>
+      <name>SyntaxError</name>
+      <domain>RewritingParsingError</domain>
+    </error>
   </systemtest>
 
   <systemtest>
