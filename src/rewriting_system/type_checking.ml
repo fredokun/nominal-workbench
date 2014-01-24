@@ -320,9 +320,6 @@ let check_typing sys (RewritingAST(decls)) =
   List.iter (fun (_,_,decl) -> type_check decl) decls
 
 (* Checking interface *)
-let rec check_ast sys = function
-  | [] -> ()
-  | hd::tl ->
-      ast_well_formed sys hd;
-      check_typing sys hd;
-      check_ast sys tl
+let check_ast sys ast =
+  ast_well_formed sys ast;
+  check_typing sys ast

@@ -89,7 +89,8 @@ let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
   let open Rewriting_system_error in
   try
     (* tmp *)
-    Type_checking.check_ast Symbols.empty_system ast;
+    let system = List.fold_left Symbols.enter_ast Symbols.empty_system ast in
+    List.iter (Type_checking.check_ast system) ast;
     check_expectation expectation Passed domain_name (check_terms terms)
   with
   | RewritingSystemError(code, _) ->
