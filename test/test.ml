@@ -60,7 +60,8 @@ let check_term (TermTest(libs, term, expectation)) =
     if (List.length terms) <> 1 then
       print_system_error "You can only test one term at a time."
     else
-      let rules = Symbols.list_of_rules () in
+      (* tmp fix *)
+      let rules = Symbols.list_of_rules Symbols.empty_system in
       check_processed_term (snd (List.hd terms)) rules expectation
   with
   | TermParsingError(code, _) ->
@@ -87,7 +88,8 @@ let check_expectation expectation result domain success_cont =
 let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
   let open Rewriting_system_error in
   try
-    Type_checking.check_ast ast;
+    (* tmp *)
+    Type_checking.check_ast Symbols.empty_system ast;
     check_expectation expectation Passed domain_name (check_terms terms)
   with
   | RewritingSystemError(code, _) ->

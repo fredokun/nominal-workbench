@@ -27,8 +27,8 @@ let process_rule_file rfile =
       let ic = open_in rfile in
       try
         let (ast, _) = Parser.start Lexer.token (Lexing.from_channel ic) in
-        Symbols.set_up_environment ast;
-        Type_checking.check_ast ast;
+        let system = Symbols.enter_ast Symbols.empty_system ast in
+        Type_checking.check_ast system [ast];
         close_in ic
       with
       | _ -> 
@@ -46,7 +46,8 @@ let process_term_file rfile =
       try
         let (Term_ast.TermAST terms) =
           Term_parser.start Term_lexer.token (Lexing.from_channel ic) in
-        let rules = Symbols.list_of_rules () in
+	(* tmp fix to compile ;) *)
+        let rules = Symbols.list_of_rules Symbols.empty_system in
         List.iter (fun (_, t) -> Toploop.process_term rules t) terms;
         close_in ic
       with 

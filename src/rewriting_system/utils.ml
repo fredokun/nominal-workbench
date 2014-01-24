@@ -7,7 +7,7 @@ let rec type_to_string = function
 
 let pos_to_string pos =
   let open Lexing in
-  Printf.sprintf " at l.%d, c.%d, %s"
+  Printf.sprintf "l.%d, c.%d, %s"
     pos.pos_lnum (pos.pos_cnum - pos.pos_bol) pos.pos_fname
 
 let warn msg = 

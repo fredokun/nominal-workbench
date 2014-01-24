@@ -20,7 +20,8 @@ let process_term rules t =
 
 
 let execute_phrase print_outcome ppf phr =
-  let rules = Symbols.list_of_rules () in
+  (* tmp *)
+  let rules = Symbols.list_of_rules Symbols.empty_system in
   process_term rules phr;
   ()
 

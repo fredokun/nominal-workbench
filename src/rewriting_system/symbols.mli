@@ -6,30 +6,32 @@
 open Rewriting_ast
 open Lexing
 
+type system
+
+val empty_system : system
+
 (* Add a symbol in the global environment. Warn on symbol redeclaration. *)
-val add_symbol : string * info * rewriting_declaration -> unit
+val add_symbol : system -> string * info * rewriting_declaration -> system
 (* Add a symbol in the global environment. Raise a RewritingSystemError on redeclaration. *)
-val add_symbol_strict : string * info * rewriting_declaration -> unit
+val add_symbol_strict : system -> string * info * rewriting_declaration -> system
 
 (* Set the global environment with the declarations of the AST.
   Warn on symbol redeclaration. *)
-val set_up_environment : rewriting_ast -> unit
+val enter_ast : system -> rewriting_ast -> system
 
 (* Set the global environment with the declarations of the AST.
   Raise a RewritingSystemError on redeclaration. *)
-val set_up_environment_strict : rewriting_ast -> unit
+val enter_ast_strict : system -> rewriting_ast -> system
 
-val clear_symbols : unit -> unit
+val lookup_kind : system -> ?pos:position -> string -> info * kind
+val lookup_const : system -> ?pos:position -> string -> info * constant
+val lookup_op : system -> ?pos:position -> string -> info * operator
+val lookup_rule : system -> ?pos:position -> string -> info * rule
 
-val lookup_kind : ?pos:position -> string -> info * kind
-val lookup_const : ?pos:position -> string -> info * constant
-val lookup_op : ?pos:position -> string -> info * operator
-val lookup_rule : ?pos:position -> string -> info * rule
-
-val is_kind : string -> bool
-val is_const : string -> bool
-val is_op : string -> bool
-val is_rule : string -> bool
+val is_kind : system -> string -> bool
+val is_const : system -> string -> bool
+val is_op : system -> string -> bool
+val is_rule : system -> string -> bool
 
 (* tmp *)
-val list_of_rules : unit -> Rewriting_ast.rule list
+val list_of_rules : system -> rule list
