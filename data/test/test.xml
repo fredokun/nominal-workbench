@@ -41,5 +41,9 @@
     <file>data/test/run-pass/with_forall.nw</file>
   </systemtest>
 
+  <systemtest>
+    <name>Peano axioms</name>
+    <file>data/test/run-pass/peano.nw</file>
+  </systemtest>
 
 </test>
