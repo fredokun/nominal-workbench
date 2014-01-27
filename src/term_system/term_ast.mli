@@ -6,7 +6,7 @@
 
 (** Terms Abstract Syntax Tree *)
 
-(** {2 Types} *)
+(** {1 Types} *)
 
 type info = Lexing.position
 
@@ -14,9 +14,8 @@ type ident = string
 
 type term =
   | Const of ident
-  (* Comment on représente une liste de binder? *)
-  | Abstraction of ident * ident * term list
-  | Call of ident * term list
+  | Binder of ident
+  | Term of ident * term list
   | Var of ident * (term ref) option (* DAG arrow *)
 
 type term_ast = TermAST of (info * term) list

@@ -18,8 +18,7 @@ let raise_placeholder_already_defined id =
 let matching term pattern =
   let rec step term pattern placeholders =
     match term, pattern with
-    | Abstraction (t_id, _, t_terms), POperator (p_id, p_terms)
-    | Call (t_id, t_terms), POperator (p_id, p_terms) ->
+    | Term (t_id, t_terms), POperator (p_id, p_terms) ->
       if t_id = p_id then
         List.fold_left
           (fun (matches, placeholders) (term, pattern) ->

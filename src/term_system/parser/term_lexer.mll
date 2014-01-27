@@ -17,6 +17,8 @@ let number = ['0'-'9']* '.'? ['0'-'9']*
 let rparen = ')'
 let lbracket = '['
 let rbracket = ']'
+let lt = '<'
+let gt = '>'
 let comma = ','
 let space = ' '
 let newline = [ '\n' '\r' ]
@@ -43,6 +45,8 @@ let end_comment = "*)"
     | rparen { RPAREN }
     | lbracket { LBRACKET }
     | rbracket { RBRACKET }
+    | lt { LT }
+    | gt { GT }
     | comma { COMMA }
     | semicol { SEMICOL }
     | newline
