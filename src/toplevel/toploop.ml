@@ -10,12 +10,12 @@ let initialize_toplevel_env () =
 let process_term rules t =
   let open Term_ast in
   try
-    let nt = Rewriting.rewrite rules t in
-    Printf.printf "Term : %s rewrote into %s\n%!" 
+    let nt = Rewriting.rewrite_rec rules t in
+    Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
       (string_of_term nt)
-  with 
-  | _ -> 
+  with
+  | _ ->
     Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t)
 
 
@@ -67,13 +67,13 @@ let parse_toplevel_rule phr =
   Parsing.clear_parser ();
   ast
 
-let parse_toplevel_term phr = 
+let parse_toplevel_term phr =
   let term = Term_parser.toplevel_phrase Term_lexer.token phr in
   if !Config.verbose then
     Printf.printf "%s\n%!" (Term_ast.string_of_term term);
   Parsing.clear_parser ();
   term
-    
+
 let loop ppf =
   Format.fprintf ppf "        NoWork version %s@.@." "0.00.1" (* Config.version *);
   initialize_toplevel_env ();
