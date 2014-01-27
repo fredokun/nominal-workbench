@@ -17,7 +17,7 @@ let rec substitute placeholders effect =
       with Not_found -> raise_unknown_placeholder ident
     end
   | EOperator (ident, operands) ->
-    Term (ident, List.map (substitute placeholders) operands)
+    Term (ident, [], List.map (substitute placeholders) operands)
 
 
 let rewrite rule term =

@@ -12,10 +12,12 @@ type info = Lexing.position
 
 type ident = string
 
+type type_name = string
+
 type term =
   | Const of ident
   | Binder of ident
-  | Term of ident * term list
+  | Term of ident * type_name list * term list
   | Var of ident * (term ref) option (* DAG arrow *)
 
 type term_ast = TermAST of (info * term) list

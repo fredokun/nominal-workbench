@@ -8,10 +8,12 @@ type info = Lexing.position
 
 type ident = string
 
+type type_name = string
+
 type term =
   | Const of ident
   | Binder of ident
-  | Term of ident * term list
+  | Term of ident * type_name list * term list
   | Var of ident * (term ref) option (* DAG arrow *)
 
 type term_ast = TermAST of (info * term) list
@@ -25,5 +27,5 @@ let rec string_of_term : term -> string = function
   | Const id -> id
   | Binder id -> "[" ^ id ^ "]"
   | Var (id, _) -> "$" ^ id
-  | Term (name, expr_l) ->
+  | Term (name, types_l, expr_l) ->
     name ^ "(" ^ String.concat ", " (List.map string_of_term expr_l) ^ ")"

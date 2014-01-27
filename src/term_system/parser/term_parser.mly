@@ -55,7 +55,7 @@ expression:
 | LPAREN expression RPAREN { $2 }
 | LBRACKET IDENT RBRACKET { Binder($2) }
 | IDENT LPAREN expression_params RPAREN
-  { Term($1, $3) }
+  { Term($1, [], $3) }
 | IDENT { Const($1) }
 | VARIDENT { Var($1, None) }
 
