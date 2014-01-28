@@ -2,6 +2,8 @@
   (See accompanying file LICENSE.txt)
   (C) Copyright Roven Gabriel
   (C) Copyright Vincent Botbol
+  (C) Copyright Pierrick Couderc
+  (C) Copyright Matthieu Dien
 *)
 
 (** Terms Abstract Syntax Tree *)
@@ -12,12 +14,9 @@ type info = Lexing.position
 
 type ident = string
 
-type type_name = string
-
 type term =
   | Const of ident
-  | Binder of ident
-  | Term of ident * type_name list * term list
+  | Term of ident * term list
   | Var of ident * (term ref) option (* DAG arrow *)
 
 type term_ast = TermAST of (info * term) list
