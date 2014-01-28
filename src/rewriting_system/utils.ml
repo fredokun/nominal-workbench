@@ -10,5 +10,5 @@ let pos_to_string pos =
   Printf.sprintf "l.%d, c.%d, %s"
     pos.pos_lnum (pos.pos_cnum - pos.pos_bol) pos.pos_fname
 
-let warn msg = 
+let warn msg =
 Printf.printf "Warning : %s.\n" msg

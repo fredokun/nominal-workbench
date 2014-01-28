@@ -6,6 +6,9 @@
 {
   open Hashtbl
   open Parser
+  open Rewriting_parsing_error
+  open Utils
+  open Parsing
 
   let (>>) f h = h f
 
@@ -59,7 +62,11 @@ let end_comment = "*)"
 	{ comments_level := 1 ;
 	  ignore(comment lexbuf) ;
 	  token lexbuf }
-    | end_comment { failwith "Comment already closed"; }
+    | end_comment {
+      raise( RewritingParsingError
+	       (AlreadyClosedComment,
+		pos_to_string (Parsing.symbol_start_pos ()) ))
+    }
     | comment
 	{ token lexbuf }
     | word as s
@@ -102,12 +109,19 @@ let end_comment = "*)"
 	  match !comments_level with
 	  | 0 -> token lexbuf
 	  | n when n > 0 -> comment lexbuf
-	  | _ -> failwith "Comment already closed"
+	  | _ -> raise( RewritingParsingError
+			  (AlreadyClosedComment,
+			   pos_to_string (Parsing.symbol_start_pos ()) ))
 	}
     | newline { Lexing.new_line lexbuf; comment lexbuf }
-    | eof { if !comments_level != 0
-              then failwith "Close your comment"
-              else token lexbuf }
+    | eof {
+      if !comments_level != 0
+      then
+	raise( RewritingParsingError
+		 (UnclosedComment,
+		  pos_to_string (Parsing.symbol_start_pos ()) ))
+      else token lexbuf
+    }
     | _ { comment lexbuf }
 
 {
