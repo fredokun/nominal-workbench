@@ -44,8 +44,9 @@ let rec term_tests_of_xml = function
   | hd::tl -> (term_test_of_xml hd) :: (term_tests_of_xml tl)
 
 let expectation_of_xml xtest =
-  try MustFail(error_of_xml (first_child_node xtest "error"))
-  with _ -> MustPass
+  try
+    MustFail(error_of_xml (List.hd (filter_children xtest "error")))
+  with e -> MustPass
 
 let system_test_of_xml xtest =
   SystemTest(child_data xtest "name", child_data xtest "file",

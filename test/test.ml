@@ -13,7 +13,7 @@ let string_of_error (Error(name, domain)) =
   sprintf "%s.%s" domain name
 
 let equal_error (Error(name1, domain1)) (Error(name2, domain2)) =
-  (name1 == name2) && (domain1 == domain2)
+  (name1 = name2) && (domain1 = domain2)
 
 (* Term rewriting tests. *)
 let check_term_expectation expectation result domain success_cont =
@@ -88,10 +88,13 @@ let check_expectation expectation result domain success_cont =
 let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
   let open Rewriting_system_error in
   try
+    let success_cont = match terms with
+      | [] -> (fun () -> print_success (sprintf "%s passed." name))
+      | _ -> check_terms terms in
     (* tmp *)
     let system = List.fold_left Symbols.enter_ast Symbols.empty_system ast in
     List.iter (Type_checking.check_ast system) ast;
-    check_expectation expectation Passed domain_name (check_terms terms)
+    check_expectation expectation Passed domain_name success_cont
   with
   | RewritingSystemError(code, _) ->
       check_expectation expectation (Failed(Error(string_of_error_code code, domain_name)))
