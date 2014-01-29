@@ -42,7 +42,7 @@
 %%
 
 start:
-| expressions EOF { TermAST $1 }
+| expressions EOF { TermAst $1 }
 
 toplevel_phrase:
 | expression SEMICOL SEMICOL { $1 }
@@ -57,7 +57,7 @@ expression:
 | IDENT LPAREN expression_params RPAREN
   { Term($1, $3) }
 | IDENT { Const($1) }
-| VARIDENT { Var($1, None) }
+| VARIDENT { Var($1) }
 
 expression_params:
 | expression { [$1] }

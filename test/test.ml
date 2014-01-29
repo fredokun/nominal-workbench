@@ -55,7 +55,7 @@ let check_term (TermTest(libs, term, expectation)) =
   let open Term_parsing_error in
   try
     load_library libs;
-    let (Term_ast.TermAST terms) =
+    let (Term_ast.TermAst terms) =
       Term_parser.start Term_lexer.token (Lexing.from_string term) in
     if (List.length terms) <> 1 then
       print_system_error "You can only test one term at a time."

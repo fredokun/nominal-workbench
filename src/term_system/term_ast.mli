@@ -17,9 +17,9 @@ type ident = string
 type term =
   | Const of ident
   | Term of ident * term list
-  | Var of ident * (term ref) option (* DAG arrow *)
+  | Var of ident
 
-type term_ast = TermAST of (info * term) list
+type term_ast = TermAst of (info * term) list
 
 (** {2 Functions} *)
 (*
