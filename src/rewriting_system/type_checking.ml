@@ -9,6 +9,15 @@ open Rewriting_system_error
 open Symbols
 open Utils
 
+let kt_to_string = function
+  | Type -> "Type"
+  | Atom -> "Atom"
+
+let print_kind k =
+  Format.printf "[";
+  List.iter (fun kt -> Format.printf "%s, " (kt_to_string kt)) k;
+  Format.printf "]\n"
+
 (* Error utilities *)
 
 let raise_wrong_arity msg =
@@ -40,6 +49,11 @@ let raise_illegal_type_app ta =
   raise (RewritingSystemError (
     IllegalTypeApp,
     type_to_string ta))
+
+let raise_unknown_placeholder id =
+  raise (RewritingSystemError (
+    UnknownPlaceholder,
+    id))
 
 let my_raise msg =
   raise (RewritingSystemError (
@@ -104,7 +118,7 @@ let rec eff_well_formed sys rule_pos bounded_l eff =
     |EConstant(string)-> ignore (lookup_const sys string)
     |EPlaceholder(string)->
       if not (List.mem string bounded_l) then
-	my_raise ("Unknown placeholder " ^ string)
+	raise_unknown_placeholder string
     |EOperator(string, effect_list)->
       let (pos, Operator(type_binders_list, operator_arg_list, operator_result))
 	= lookup_op sys string in
@@ -226,14 +240,18 @@ let check_type sys tb env ta =
 let check_const sys = function
   | Constant (tb, ta) -> ignore (check_type sys tb [] ta)
 
+let type_check_const sys id (tb, ta) =
+  let (_, Constant (ctb, cta)) = lookup_const sys id in
+  check_types (ctb, cta) (tb, ta)
+
 (* Operator checking *)
 
 let check_op_arg sys tb env op_arg =
   match op_arg with
   | OpTypeArg ta -> check_type sys tb env ta
   | OpBinderArg id ->
-    let (_, k) = lookup_kind sys id in
-    if k = Kind [Atom]
+    let (_, Kind k) = lookup_kind sys id in
+    if k = [Atom]
     then env
     else raise_wrong_binder_kind id
 
@@ -242,12 +260,7 @@ let check_op sys = function
     let env = List.fold_left (check_op_arg sys tb) [] op_args in
     ignore (check_type sys tb env op_res)
 
-
 (* Pattern checking *)
-
-let type_check_const sys id (tb, ta) =
-  let (_, Constant (ctb, cta)) = lookup_const sys id in
-  check_types (ctb, cta) (tb, ta)
 
 let rec type_check_pat sys env pat (tb, ta) =
   match pat with
@@ -268,9 +281,7 @@ let rec type_check_pat sys env pat (tb, ta) =
 and check_pat_op_arg sys tb env pat op_arg =
   match op_arg with
   | OpTypeArg t -> type_check_pat sys env pat (tb, t)
-  | OpBinderArg id -> env (* TODO *)
-    
-  
+  | OpBinderArg id -> type_check_pat sys env pat (tb, TypeName id)
     
 let check_pattern sys pat =
   match pat with
@@ -279,6 +290,11 @@ let check_pattern sys pat =
     List.fold_left2 (check_pat_op_arg sys tb) [] patl args
   | _ -> []
 
+
+let print_env env =
+  Format.printf "[";
+  List.iter (fun (id,(_,ta)) -> Format.printf "%s : %s, " id (type_to_string ta)) env;
+  Format.printf "]"
 
 (* Effect checking *)
 
@@ -296,8 +312,8 @@ let rec type_check_eff sys env eff (tb, ta) =
 and check_eff_op_arg sys tb env eff op_arg =
   match op_arg with
   | OpTypeArg t -> type_check_eff sys env eff (tb, t)
-  | OpBinderArg id -> () (* TODO *)
-    
+  | OpBinderArg id -> type_check_eff sys env eff (tb, TypeName id)
+
 
 let check_effect sys env eff =
   match eff with

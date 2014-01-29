@@ -1,0 +1,4 @@
+kind K1 : atom
+kind K2 : type
+
+operator Op : K1 * [K2] -> K2

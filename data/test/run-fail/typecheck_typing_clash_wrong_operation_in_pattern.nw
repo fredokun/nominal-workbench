@@ -7,4 +7,4 @@ operator Lambda : [Variable]. Term -> Term
 operator Subst : [Variable]. Term * Term -> Term
 
 rule [beta] :
-  App(Lambda(App(?T, ?T), ?T), ?U)  => Subst(?x, ?T, ?U)
+  App(Lambda(App(?T, ?T), ?T), ?U)  => ?T
