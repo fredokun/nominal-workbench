@@ -1,0 +1,11 @@
+kind Term : type
+kind Variable : atom
+
+operator Var : Variable -> Term
+operator App : Term * Term -> Term
+operator Lambda : [Variable]. Term -> Term
+operator Subst : [Variable]. Term * Term -> Term
+
+rule [beta] :
+  App(Lambda(?x, ?T), ?U)  => Subst(?a, ?T, ?U)
+

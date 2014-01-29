@@ -1,0 +1,15 @@
+kind Nat : type
+constant 0 : Nat
+
+operator Successor : Nat -> Nat
+operator Pred : Nat -> Nat
+operator Add : Nat * Nat -> Nat
+
+rule [add-nil-left] :
+  Add(0, ?n) => 1
+
+rule [add] :
+  Add(Successor(?u), ?v) => Successor(Add(?u, ?v))
+
+rule [pred] :
+  Pred(Successor(?u)) => ?u
