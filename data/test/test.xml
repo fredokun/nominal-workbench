@@ -156,4 +156,22 @@
       <domain>RewritingSystemError</domain>
     </error>
   </systemtest>
+
+  <systemtest>
+    <name>Type clash wrong operation in pattern</name>
+    <file>data/test/run-fail/typecheck_placeholder_clash.nw</file>
+    <error>
+      <name>TypeClash</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Generics</name>
+    <file>data/test/run-fail/typecheck_generics.nw</file>
+    <error>
+      <name>TypeClash</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
 </test>
