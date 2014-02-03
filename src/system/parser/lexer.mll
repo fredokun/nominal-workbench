@@ -21,7 +21,7 @@
 	"operator", OPERATOR;
 	"constant", CONSTANT;
 	"rule", RULE;
-	"include", INCLUDE;
+	"open", OPEN;
 	"forall", FORALL;
       ]
 

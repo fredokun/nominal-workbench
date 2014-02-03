@@ -30,7 +30,7 @@
 %token <string> WORD PLACEHOLDER FILENAME
 
 /* keywords */
-%token KIND TYPE ATOM OPERATOR RULE CONSTANT INCLUDE FORALL
+%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
@@ -77,7 +77,7 @@ decl:
 | constant_decl { (Some $1, None) }
 | operator_decl { (Some $1, None) }
 | rule_decl { (Some $1, None) }
-| INCLUDE FILENAME
+| OPEN FILENAME
     { match Include.nw_include $2 with
       | None -> (None, None)
       | Some(f) ->(None, Some f)

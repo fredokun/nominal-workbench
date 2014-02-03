@@ -1,7 +1,7 @@
 (*********************
 #    Include Test    #
 *********************)
-include data/test/run-pass/with_comment
+open data/test/run-pass/with_comment
 
 kind Term : type
 kind Variable : atom
