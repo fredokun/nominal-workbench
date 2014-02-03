@@ -1,0 +1,7 @@
+kind K1 : atom
+kind K2 : type
+
+operator Op : [K1]. K2 -> K2
+
+rule [r] :
+  Op(Op(?x,?y),?z) => ?x

@@ -1,0 +1,4 @@
+kind K : type
+kind L : atom -> type
+
+constant C : forall(A).L<A>
