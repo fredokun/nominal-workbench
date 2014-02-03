@@ -1,5 +1,0 @@
-begin library "parser"
-    sort = true
-    files = [ "lexer.mll" "parser.mly" ]
-    requires = []
-end

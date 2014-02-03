@@ -1,12 +1,8 @@
-######################
-#    test comment    #
-######################
+(*********************
+#    Include Test    #
+*********************)
+include data/test/run-pass/with_comment
 
-(* multiline comment
-   (* with imbrication *)
-*)
-
-# a comment
 kind Term : type
 kind Variable : atom
 

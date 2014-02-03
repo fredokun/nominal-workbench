@@ -1,0 +1,177 @@
+<test>
+  <systemtest>
+    <name>Constant</name>
+    <file>data/test/run-fail/constants.nw</file>
+    <error>
+      <name>RedeclaredSymbol</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>With Comments</name>
+    <file>data/test/run-pass/with_comment.nw</file>
+  </systemtest>
+
+  <systemtest>
+    <name>With Comment not closed</name>
+    <file>data/test/run-fail/comment_fail_not_closed.nw</file>
+    <error>
+      <name>UnclosedComment</name>
+      <domain>RewritingParsingError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>With Comment already closed</name>
+    <file>data/test/run-fail/comment_fail_already_closed.nw</file>
+    <error>
+      <name>AlreadyClosedComment</name>
+      <domain>RewritingParsingError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>With include</name>
+    <file>data/test/run-pass/with_include.nw</file>
+  </systemtest>
+
+  <systemtest>
+    <name>With forall</name>
+    <file>data/test/run-pass/with_forall.nw</file>
+  </systemtest>
+
+  <systemtest>
+    <name>Peano axioms</name>
+    <file>data/test/run-pass/peano.nw</file>
+  </systemtest>
+
+  <systemtest>
+    <name>Arity in effect operation</name>
+    <file>data/test/run-fail/typecheck_cardinality_error_in_effect_operation.nw</file>
+    <error>
+      <name>WrongArity</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Arity in pattern operation</name>
+    <file>data/test/run-fail/typecheck_cardinality_error_in_pattern_operation.nw</file>
+    <error>
+      <name>WrongArity</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Illegal type application</name>
+    <file>data/test/run-fail/typecheck_illegal_type_app.nw</file>
+    <error>
+      <name>IllegalTypeApp</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Unknown constant in effect</name>
+    <file>data/test/run-fail/typecheck_not_declared_constant_in_effect.nw</file>
+    <error>
+      <name>UnboundSymbol</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Unknown constant in pattern</name>
+    <file>data/test/run-fail/typecheck_not_declared_constant_in_pattern.nw</file>
+    <error>
+      <name>UnboundSymbol</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Unknown operation in effect</name>
+    <file>data/test/run-fail/typecheck_not_declared_operation_in_effect.nw</file>
+    <error>
+      <name>UnboundSymbol</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  
+  </systemtest>
+
+  <systemtest>
+    <name>Unknown operation in pattern</name>
+    <file>data/test/run-fail/typecheck_not_declared_operation_in_pattern.nw</file>
+    <error>
+      <name>UnboundSymbol</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  
+  </systemtest>
+
+  <systemtest>
+    <name>Unbound placeholder</name>
+    <file>data/test/run-fail/typecheck_placeholder_unknown_in_effect.nw</file>
+    <error>
+      <name>UnknownPlaceholder</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  
+  </systemtest>
+
+  <systemtest>
+    <name>Type not well formed</name>
+    <file>data/test/run-fail/typecheck_type_ill_formed.nw</file>
+    <error>
+      <name>TypeIllFormed</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Wrong binder kind</name>
+    <file>data/test/run-fail/typecheck_typing_clash_wrong_operation_in_effect.nw</file>
+    <error>
+      <name>TypeClash</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Type clash wrong operation in pattern</name>
+    <file>data/test/run-fail/typecheck_typing_clash_wrong_operation_in_pattern.nw</file>
+    <error>
+      <name>TypeClash</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Type clash wrong operation in pattern</name>
+    <file>data/test/run-fail/typecheck_wrong_binder_kind.nw</file>
+    <error>
+      <name>KindClash</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Type clash wrong operation in pattern</name>
+    <file>data/test/run-fail/typecheck_placeholder_clash.nw</file>
+    <error>
+      <name>TypeClash</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+
+  <systemtest>
+    <name>Generics</name>
+    <file>data/test/run-fail/typecheck_generics.nw</file>
+    <error>
+      <name>TypeClash</name>
+      <domain>RewritingSystemError</domain>
+    </error>
+  </systemtest>
+</test>

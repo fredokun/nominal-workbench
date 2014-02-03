@@ -1,5 +1,7 @@
 begin program "toplevel"
     sort = true
-    files = [ "topmain.ml" "toploop.ml" ]
-    requires = [ "parser" ]
+    files = [ "config.mli" "config.ml" 
+    	      "topmain.mli" "topmain.ml" 
+	      "toploop.mli" "toploop.ml" ]
+    requires = [ "algorithms" "rewriting_system_parser" "term_system_parser" ]
 end
