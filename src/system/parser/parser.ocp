@@ -3,3 +3,9 @@ begin library "rewriting_system_parser"
     files = [ "lexer.mll" "parser.mly" "include.ml" "parser_include.ml" ]
     requires = [ "rewriting_system" ]
 end
+
+begin library "term_system_parser"
+    sort = true
+    files = [ "term_lexer.mll" "term_parser.mly" ]
+    requires = [ "term_system" ]
+end

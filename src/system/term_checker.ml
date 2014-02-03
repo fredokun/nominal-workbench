@@ -32,12 +32,12 @@ Return a couple term_ast_dag * binder_env
 It's an auxiliary function *)
 let rec construct_ast_dag_rec system curr_op binders term pos_in_op =
   match term with
-  | Const(ident) as c ->
+  | Const(ident) ->
     begin
       ignore (Symbols.lookup_const system ident);
       (DConst ident,binders)
     end
-  | Var(ident) as v when Var_map.mem ident binders -> (* We already know this var *)
+  | Var(ident) when Var_map.mem ident binders -> (* We already know this var *)
     let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
     if at_binder_pos then
 	(* A new binder, that owerwrite a previous one *)
@@ -56,7 +56,7 @@ let rec construct_ast_dag_rec system curr_op binders term pos_in_op =
 	sons := (ref new_var) :: (!sons);
 	(new_var,binders)
       end
-  | Var(ident) as v -> (* We don't know this var *)
+  | Var(ident) -> (* We don't know this var *)
     let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
     if at_binder_pos then
 	(* A new binder *)
