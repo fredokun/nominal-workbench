@@ -3,6 +3,8 @@
    (C) Copyright Vincent Botbol
 *)
 
+let system = ref Symbols.empty_system
+
 let initialize_toplevel_env () =
   ()
 
@@ -20,11 +22,9 @@ let process_term rules t =
 
 
 let execute_phrase print_outcome ppf phr =
-  (* tmp *)
-  let rules = Symbols.list_of_rules Symbols.empty_system in
-  process_term rules phr;
-  ()
-
+  let rules = Symbols.list_of_rules !system in
+    process_term rules phr
+      
 let first_line = ref true
 let got_eof = ref false
 

@@ -1,15 +1,22 @@
 kind Nat : type
-constant 0 : Nat
+constant Zero : Nat
+constant Un : Nat
 
 operator Successor : Nat -> Nat
 operator Pred : Nat -> Nat
 operator Add : Nat * Nat -> Nat
 
 rule [add-nil-left] :
-  Add(0, ?n) => ?n
+  Add(Zero, ?n) => ?n
 
 rule [add] :
   Add(Successor(?u), ?v) => Successor(Add(?u, ?v))
 
 rule [pred] :
   Pred(Successor(?u)) => ?u
+
+rule [succZ] :
+  Successor(Zero) => Un
+
+rule [BLI] :
+  Successor(Add(Zero, ?n)) => Successor(?n)

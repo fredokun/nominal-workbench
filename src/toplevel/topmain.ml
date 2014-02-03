@@ -27,9 +27,10 @@ let process_rule_file rfile =
       let ic = open_in rfile in
       try
         let (ast, _) = Parser.start Lexer.token (Lexing.from_channel ic) in
-        let system = Symbols.enter_ast Symbols.empty_system ast in
-        Type_checking.check_ast system ast;
-        close_in ic
+        let new_system = Symbols.enter_ast !Toploop.system ast in
+	  Toploop.system := new_system;
+          Type_checking.check_ast new_system ast;
+          close_in ic
       with
       | _ ->
         Printf.eprintf "[Warning] Unhandled error. Skipping %s\n%!" rfile;

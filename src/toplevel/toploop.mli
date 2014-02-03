@@ -3,6 +3,8 @@
   (C) Copyright Vincent Botbol
 *)
 
+val system : Symbols.system ref
+
 (** Toplevel loop functions *)
 val process_term : Rewriting_ast.rule list -> Term_ast.term -> unit
 
