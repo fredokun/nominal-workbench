@@ -15,6 +15,12 @@ let string_of_error (Error(name, domain)) =
 let equal_error (Error(name1, domain1)) (Error(name2, domain2)) =
   (name1 = name2) && (domain1 = domain2)
 
+let strip_ws str = Str.replace_first (Str.regexp " +") "" str
+
+(* Only a textual equality test. *)
+let equal_term t1 t2 =
+  (strip_ws t1) = (strip_ws t2)
+
 (* Term rewriting tests. *)
 let check_term_expectation expectation result domain success_cont =
   match (expectation, result) with
@@ -28,12 +34,12 @@ let check_term_expectation expectation result domain success_cont =
         (string_of_error e))
   | (TMustFail(_), TFailed(e)) ->
       print_success (sprintf "Failure with %s as expected." (string_of_error e))
-  | (TMustPass(t1), TPassed(t2)) when t1 <> t2 ->
+  | (TMustPass(t1), TPassed(t2)) when not @@ equal_term t1 t2 ->
       print_failure (sprintf "Bad term rewriting, expected %s but got %s." t1 t2)
   | (TMustPass(t1), TPassed(t2)) -> success_cont ()
 
 let rewritten_success t1 t2 () =
-  print_success (sprintf "Term %s correctly rewrote in %s." t1 t2)
+  print_success (sprintf "Term %s has been correctly rewritten in %s." t1 t2)
 
 let check_processed_term term rules expectation =
   let open Rewriting_error in
@@ -70,7 +76,7 @@ let check_term (TermTest(libs, term, expectation)) =
   | e -> print_unknown_exc e "parsing of the terms"
 
 let check_terms terms () =
-  List.iter check_term terms
+  List.iter check_term (List.rev terms)
 
 (* Rewriting System test *)
 let check_expectation expectation result domain success_cont =
