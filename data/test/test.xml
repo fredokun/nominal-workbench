@@ -3,7 +3,7 @@
     <name>Constant</name>
     <file>data/test/run-fail/constants.nw</file>
     <error>
-      <name>RedeclaredSymbol</name>
+      <name>UnboundSymbol</name>
       <domain>RewritingSystemError</domain>
     </error>
   </systemtest>
