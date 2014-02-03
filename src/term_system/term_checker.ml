@@ -90,4 +90,31 @@ let construct_ast_dag system term_ast =
   in
   TermAstDag(info_and_terms_dag)
 
+(**)
+
+let binders_to_TBinds = List.map (fun x -> TBinds x)
+
 (* let rec term_check_types system term = *)
+(*   let TermAstDag(info,term_dag) = term in *)
+(*   match term_dag with *)
+(*     | DConst(ident) -> *)
+(*       let (_,Constant(type_binders,const_type)) = lookup_const system ident in *)
+(*       let gen_binders = binders_to_TBinds type_binders in *)
+(*       TypedConst (gen_binders,const_type) *)
+(*     | DBinder(ident,_) -> *)
+(*       TypedBinder ident *)
+(*     | DVar(ident,_) -> *)
+(*       TypedVar ident *)
+(*     | DTerm(ident,sub_terms) -> *)
+(*       let (_,Operator(type_binders,args,res)) = lookup_op system ident in *)
+(*       let gen_binders = binders_to_TBinds type_binders *)
+(*       let unified_types = List.map2 (unify_op_types gen_binders info) sub_terms args *)
+(*       in None *)
+(* and unify_op_types type_binders info term arg = *)
+(* 	match arg with *)
+(* 	| OpTypeArg(t_app) -> *)
+	  
+(* 	| OpBinderArg(name) ->  *)
+(* 	  match term with *)
+(* 	  | DBinder(ident,_) -> TypedBinder ident *)
+(* 	  | _ -> Term_system_error (BinderClash, pos_to_string info) *)
