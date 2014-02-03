@@ -42,11 +42,6 @@
   </systemtest>
 
   <systemtest>
-    <name>Peano axioms</name>
-    <file>data/test/run-pass/peano.nw</file>
-  </systemtest>
-
-  <systemtest>
     <name>Arity in effect operation</name>
     <file>data/test/run-fail/typecheck_cardinality_error_in_effect_operation.nw</file>
     <error>
@@ -173,5 +168,90 @@
       <name>KindClash</name>
       <domain>RewritingSystemError</domain>
     </error>
+  </systemtest>
+
+  <!-- Peano test  -->
+  <systemtest>
+    <name>Simple Peano</name>
+    <file>data/test/run-pass/simple_peano.nw</file>
+    <!-- Valid test cases -->
+    <termtest>
+      <term>Successor(Zero)</term>
+      <result>Successor(Zero)</result>
+    </termtest>
+    <termtest>
+      <term>Successor(Successor(Zero))</term>
+      <result>Successor(Successor(Zero))</result>
+    </termtest>
+    <termtest>
+      <term>Zero</term>
+      <result>Zero</result>
+    </termtest>
+    <termtest>
+      <term>Add(Zero,Successor(Zero))</term>
+      <result>Successor(Zero)</result>
+    </termtest>
+    <termtest>
+      <term>Add(Zero,Zero)</term>
+      <result>Zero</result>
+    </termtest>
+    <termtest>
+      <term>Add(Successor(Zero),Successor(Zero))</term>
+      <result>Successor(Successor(Zero))</result>
+    </termtest>
+    <termtest>
+      <term>Add(Successor(Zero),Successor(Zero))</term>
+      <result>Successor(Successor(Zero))</result>
+    </termtest>
+    <termtest>
+      <term>Add(Add(Zero, Successor(Zero)), Add(Successor(Zero),Successor(Zero)))</term>
+      <result>Successor(Successor(Successor(Zero)))</result>
+    </termtest>
+    <!-- Erroneous cases -->
+    <termtest>
+      <term>Successor(0)</term>
+      <error>
+        <name>UnknownSymbol</name>
+        <domain>TermSystemError</domain>
+      </error>
+    </termtest>
+
+    <termtest>
+      <term>Successor</term>
+      <error>
+        <name>BadTermArity</name>
+        <domain>TermSystemError</domain>
+      </error>
+    </termtest>
+
+    <termtest>
+      <term>Successor(Zero,Zero)</term>
+      <error>
+        <name>BadTermArity</name>
+        <domain>TermSystemError</domain>
+      </error>
+    </termtest>
+
+    <termtest>
+      <term>Successor(Zero,Zero)</term>
+      <error>
+        <name>BadTermArity</name>
+        <domain>TermSystemError</domain>
+      </error>
+    </termtest>
+
+    <termtest>
+      <term>Successor(TestConstant)</term>
+      <error>
+        <name>WrongParameterKind</name>
+        <domain>TermSystemError</domain>
+      </error>
+    </termtest>
+  </systemtest>
+
+  <!-- Negative Peano test  -->
+  <systemtest>
+    <name>Negative Peano</name>
+    <file>data/test/run-pass/negative_peano.nw</file>
   </systemtest>
 </test>
