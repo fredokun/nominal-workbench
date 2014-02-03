@@ -12,3 +12,19 @@ let pos_to_string pos =
 
 let warn msg =
 Printf.printf "Warning : %s.\n" msg
+
+
+let kt_to_string = function
+  | Type -> "Type"
+  | Atom -> "Atom"
+
+let rec kind_to_string (Kind ((k::rem) as ks)) =
+  assert (ks != []);
+  List.fold_left (fun acc kt ->
+    acc ^ " -> " ^ (kt_to_string kt)) (kt_to_string k) rem
+  
+
+let print_kind k =
+  Format.printf "[";
+  List.iter (fun kt -> Format.printf "%s, " (kt_to_string kt)) k;
+  Format.printf "]\n"

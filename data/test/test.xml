@@ -152,7 +152,7 @@
     <name>Type clash wrong operation in pattern</name>
     <file>data/test/run-fail/typecheck_wrong_binder_kind.nw</file>
     <error>
-      <name>KindClash</name>
+      <name>WrongBinderKind</name>
       <domain>RewritingSystemError</domain>
     </error>
   </systemtest>
@@ -170,7 +170,7 @@
     <name>Generics</name>
     <file>data/test/run-fail/typecheck_generics.nw</file>
     <error>
-      <name>TypeClash</name>
+      <name>KindClash</name>
       <domain>RewritingSystemError</domain>
     </error>
   </systemtest>

@@ -9,15 +9,6 @@ open Rewriting_system_error
 open Symbols
 open Utils
 
-let kt_to_string = function
-  | Type -> "Type"
-  | Atom -> "Atom"
-
-let print_kind k =
-  Format.printf "[";
-  List.iter (fun kt -> Format.printf "%s, " (kt_to_string kt)) k;
-  Format.printf "]\n"
-
 (* Error utilities *)
 
 let raise_wrong_arity msg =
@@ -37,7 +28,7 @@ let raise_type_clash t1 t2 =
 
 let raise_wrong_binder_kind id =
   raise (RewritingSystemError (
-    KindClash,
+    WrongBinderKind,
     id))
 
 let raise_type_ill_formed pos id =
@@ -54,6 +45,11 @@ let raise_unknown_placeholder id =
   raise (RewritingSystemError (
     UnknownPlaceholder,
     id))
+
+let raise_kind_clash ta k =
+  raise (RewritingSystemError (
+    KindClash,
+    Printf.sprintf "Type %s is not of kind %s" (type_to_string ta) (kind_to_string k)))
 
 let my_raise msg =
   raise (RewritingSystemError (
@@ -167,17 +163,19 @@ let kind_check_type sys tb env ta k =
   let rec loop env ta k =
     match ta, k with
     | TypeName id, _ when List.mem id tb ->
+      (* is second test useful ? *)
       if List.mem_assoc id env then
-	if List.assoc id env = ta
-	then env
-	else my_raise "kind clash with param"
+	if List.assoc id env = ta then
+	  env
+	else
+	  loop env (List.assoc id env) k
       else
-	(id , ta) :: env
+	(id, ta) :: env
     | TypeName id, _ ->
       let (_, kind) = lookup_kind sys id in
       if k = kind
       then env
-      else my_raise "kind clash with kind"
+      else raise_kind_clash ta k
     | TypeApplication (id, []), Kind [kind_res] ->
       env
     | TypeApplication (id, arg1::args), Kind (k1 :: ks) ->
