@@ -8,9 +8,6 @@ open Sys
 open Filename
 open List
 
-let files_included = Hashtbl.create 10
-let include_paths = ref [(Sys.getcwd ())]
-
 let rec split_slash str =
   try
     let pos = String.index str '/' in
@@ -45,7 +42,7 @@ let rec find_file_in_include_paths name inc_paths =
 		     find_file_in_include_paths name t
 
 (* Give an absolute path within include_paths *)
-let get_absolute_path name =
+let get_absolute_path include_paths name =
   if Filename.is_relative name then
     match (find_file_in_include_paths name !include_paths) with
       | Some(abspath) -> abspath
@@ -60,7 +57,7 @@ let get_absolute_path name =
       failwith ("Error : '" ^ name ^ "' doesn't exit")
 
 (* add a file to the includes tables *)
-let add_file filename =
+let add_file files_included filename =
   let bname = Filename.basename filename in
   if Hashtbl.mem files_included bname then
     (* For the moment, we don't allow include of two files with same names *)
@@ -72,7 +69,7 @@ let add_file filename =
       Hashtbl.add files_included bname filename
 
 (* add a path to the includes tables *)
-let add_path pathname =
+let add_path include_paths pathname =
   if not (List.mem pathname !include_paths) then
     if (Sys.file_exists pathname) && (Sys.is_directory pathname) then
       include_paths := [pathname] @ !include_paths
@@ -82,15 +79,15 @@ let add_path pathname =
     ()
 
 (* give it a string, it do the job *)
-let nw_include name =
-  let fname = (get_absolute_path name) in
+let nw_include files_included include_paths name =
+  let fname = (get_absolute_path include_paths name) in
   if Filename.check_suffix fname ".nw" then
     begin
-      add_file fname;
+      add_file files_included fname;
       Some(fname)
     end
   else
     begin
-      add_path fname;
+      add_path include_paths fname;
       None
     end

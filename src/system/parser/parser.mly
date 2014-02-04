@@ -5,23 +5,34 @@
   (C) Copyright Vincent Botbol
 *)
 
-  open Parsing
-  open Lexing
-  open Rewriting_ast
-  open Include
+open Parsing
+open Lexing
+open Rewriting_ast
+open Include
+open Hashtbl
+open Sys
 
-  (* let annote_pos item = *)
-  (*   let pos = Parsing.symbol_start_pos () in *)
-  (*   { value = item ; info = pos } *)
+(* let annote_pos item = *)
+(*   let pos = Parsing.symbol_start_pos () in *)
+(*   { value = item ; info = pos } *)
 
-  let get_info x =
-    Parsing.symbol_start_pos ()
+let get_info x =
+  Parsing.symbol_start_pos ()
 
-  let parse_error s =
-    let pos = Parsing.symbol_start_pos () in
-    let msg = "Parsing error line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-    " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)) in
-    print_endline msg
+let parse_error s =
+  let pos = Parsing.symbol_start_pos () in
+  let msg = "Parsing error line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
+  " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)) in
+  print_endline msg
+
+
+let files_included = Hashtbl.create 10
+
+let include_paths = ref [(Sys.getcwd ())]
+
+let reset_parser x =
+    Hashtbl.reset files_included;
+    include_paths := [(Sys.getcwd ())]
 
 %}
 
@@ -49,7 +60,8 @@
 %%
 
 start:
-| decls EOF { let (ast, includes) = $1 in (RewritingAST ast, includes) }
+| decls EOF { reset_parser ();
+  let (ast, includes) = $1 in (RewritingAST ast, includes) }
 
 toplevel_phrase:
 | decls SEMICOL SEMICOL { let (ast, includes) = $1 in (RewritingAST ast, includes) }
@@ -78,7 +90,7 @@ decl:
 | operator_decl { (Some $1, None) }
 | rule_decl { (Some $1, None) }
 | OPEN FILENAME
-    { match Include.nw_include $2 with
+    { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)
       | Some(f) ->(None, Some f)
     }
