@@ -11,7 +11,8 @@ launch_gen: generator
 	$(ERROR_GEN_EXE) -d data/error/ -o $(AUTO_GEN_DIR)/
 
 main: launch_gen
-	ocp-build build main
+	ocp-build build nowork
+	ocp-build build nowork-toplevel
 
 test: launch_gen
 	ocp-build build test

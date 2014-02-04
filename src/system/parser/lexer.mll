@@ -29,8 +29,9 @@
 
 }
 
-let word = ['a'-'z''A'-'Z''0'-'9']['-''a'-'z''A'-'Z''0'-'9']*
-let placeholder = ['?']['-''a'-'z''A'-'Z''0'-'9']*
+let lower_ident = ['a'-'z']['-''a'-'z''A'-'Z''0'-'9']*
+let upper_ident = ['A'-'Z']['-''a'-'z''A'-'Z''0'-'9']*
+let placeholder = '?' ['-''a'-'z''A'-'Z''0'-'9']*
 let filename = ['a'-'z''A'-'Z''0'-'9']['/''-''_''.''a'-'z''A'-'Z''0'-'9']*
 
 let lparen = '('
@@ -69,11 +70,13 @@ let end_comment = "*)"
     }
     | comment
 	{ token lexbuf }
-    | word as s
+    | lower_ident as s
 	{ try
 	    Hashtbl.find keyword_table s
 	  with Not_found ->
-	      WORD(s) }
+	    LIDENT(s) }
+    | upper_ident as s
+	{ UIDENT(s) }
     | filename as f { FILENAME(f) }
     | placeholder as p { PLACEHOLDER(p) }
     | lparen { LPAREN }
@@ -94,7 +97,7 @@ let end_comment = "*)"
     | any { ANY }
     | newline
 	{ Lexing.new_line lexbuf;
-	  NEWLINE
+	  token lexbuf
 	}
     | eof { EOF }
     | _

@@ -20,8 +20,7 @@ let rec substitute placeholders effect =
     Term (ident, List.map (substitute placeholders) operands)
 
 
-let rewrite rule term =
-  let Rule(pattern, effect) = rule in
+let rewrite (pattern, effect) term =
   let matches, ph = Matching.matching term pattern in
   if matches then substitute ph effect else term
 
@@ -29,7 +28,7 @@ let rewrite rule term =
 let rec rewrite_rec rules term =
   let rec find_rule = function
     | [] -> None
-    | (Rule (pattern, effect)) :: tail ->
+    | (pattern, effect) :: tail ->
       let matches, ph = Matching.matching term pattern in
       if matches then Some (ph, effect) else find_rule tail in
   match find_rule rules with

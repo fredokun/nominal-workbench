@@ -6,4 +6,4 @@
 (** Toplevel entry point *)
 
 (** Launches the toplevel *)
-val main : unit -> unit
+val main : (Symbols.system -> unit) -> unit

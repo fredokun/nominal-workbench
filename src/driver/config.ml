@@ -7,6 +7,8 @@ let version = "0.00.1"
 
 let path = ref ["."]
 
+let get_path = !path
+
 let rule_suffix = "nw"
 
 let term_suffix = "nwt"

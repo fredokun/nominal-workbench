@@ -9,7 +9,7 @@ open Arg
 
 val version : string
 
-val path : string list ref
+val get_path : string list
 
 val rule_suffix : string
 
