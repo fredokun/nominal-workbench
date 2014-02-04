@@ -20,4 +20,4 @@ test: launch_gen
 
 clean:
 	ocp-build clean
-	rm $(AUTO_GEN_DIR)/*.ml*
+	rm -f $(AUTO_GEN_DIR)/*.ml*

@@ -7,13 +7,15 @@ let version = "0.00.1"
 
 let path = ref ["."]
 
-let get_path = !path
+let get_path () = List.rev !path
 
 let rule_suffix = "nw"
 
 let term_suffix = "nwt"
 
 let verbose = ref false
+
+let reset_system = ref false
 
 (* functions *)
 let print_version () =
@@ -30,9 +32,11 @@ let add_path p =
 (* module Arg list *)
 let list = 
   let open Arg in
-      [ "--version", Unit print_version, "Print version and exits"
-      ; "--vnum", Unit print_vnum, "Print version number and exits"
-      ; "-I", String add_path, "Include the given directory"
-      ; "-v", Set verbose, "Be more verbose"
-      ]
+  [ "--version", Unit print_version, "Print version and exits"
+  ; "--vnum", Unit print_vnum, "Print version number and exits"
+  ; "-I", String add_path, "Include the given directory"
+  ; "-v", Set verbose, "Be more verbose"
+  ; "--reset-system", Set reset_system, "Start interpreting each file with an empty system instead of populating it"
+  ; "--load-system-file", String (fun _ -> print_endline "'load-system' todo"), "Load the given file as the initial system to used"
+  ]
 

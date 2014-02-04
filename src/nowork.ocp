@@ -7,5 +7,5 @@ end
 begin program "nowork-toplevel"
   sort = true
   files = [ "nowork_toplevel.ml" ]
-  requires = [ "algorithms" "rewriting_system_parser" "driver" ]
+  requires = [ "driver" "algorithms" "rewriting_system_parser" ]
 end
