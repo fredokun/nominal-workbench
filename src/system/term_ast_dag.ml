@@ -10,15 +10,6 @@ type info = Lexing.position
 
 type ident = string
 
-type type_name = string
-type type_binders = type_name list
-
-
-type type_application =
-  | TypeApplication of type_name * type_application list
-  | TypeName of type_name
-
-
 type term_dag =
   | DConst of ident
   | DTerm of ident * term_dag list
@@ -30,15 +21,26 @@ type term_ast_dag = TermAstDag of (info * term_dag) list
 
 
 (* Typed AST *)
-type generic_types =
-| TBinds of type_binders
-| TInst of type_name list
+
+type type_name = string
+type type_binders = type_name list
+
+type type_application =
+  | TypeApplication of type_name * type_application list
+  | TypeName of type_name
+
+(* type generic_type = *)
+(*   | TBinds of type_name *)
+(*   | TInst of type_name *)
+(*   | TNone *)
+
+(* type generic_types = generic_type list *)
 
 type term_type =
-| TypedConst of generic_types * type_application
-| TypedTerm of generic_types * type_application list * type_application
-| TypedBinder of type_name
-| TypedVar of type_name
+  | TypedConst of type_application
+  | TypedTerm of type_name * type_application list * type_application
+  | TypedBinder of type_name
+  | TypedVar of type_name
 
 
 (*
