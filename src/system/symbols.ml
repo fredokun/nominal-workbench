@@ -106,14 +106,13 @@ let add_symbol_impl redeclaration_policy system
 let add_symbol = add_symbol_impl warn_on_redeclaration
 let add_symbol_strict = add_symbol_impl raise_on_redeclaration
 
-let enter_ast_impl add_decl sys = function
-  | decls -> List.fold_left add_decl sys decls
+let enter_decl_impl add_decl sys = add_decl sys
 
-let enter_ast sys ast =
-  enter_ast_impl add_symbol sys ast
+let enter_decl sys decl =
+  enter_decl_impl add_symbol sys decl
 
-let enter_ast_strict sys ast =
-  enter_ast_impl add_symbol_strict sys ast
+let enter_decl_strict sys decl =
+  enter_decl_impl add_symbol_strict sys decl
 
 
 (* System access *)

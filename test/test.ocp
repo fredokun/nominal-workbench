@@ -5,7 +5,8 @@ begin program "test"
     "xml-light"
     "algorithms"
     "rewriting_system_parser"
-    "str" ]
+    "str"
+    "driver" ]
   bytecomp = [ "-g" ]
   bytelink = [ "-g" ]
 end

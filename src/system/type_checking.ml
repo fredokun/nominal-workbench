@@ -81,8 +81,8 @@ let rec type_well_formed sys tb ta =
       raise_type_ill_formed pos id
   
 
-let const_well_formed sys info = function
-  | tb, ta -> type_well_formed sys tb ta
+let const_well_formed sys info (tb, ta) =
+  type_well_formed sys tb ta
 
 let op_arg_well_formed sys tb op_arg =
   match op_arg with
@@ -123,24 +123,18 @@ let rec eff_well_formed sys rule_pos bounded_l eff =
       else
 	raise_wrong_arity (string ^ " in effect, in rule" ^ (pos_to_string rule_pos))
 
-let rule_well_formed sys info = function
-  | pat, eff ->
-    let bounded_l = pat_well_formed sys info [] pat in
+let rule_well_formed sys info (pat, eff) =
+  let bounded_l = pat_well_formed sys info [] pat in
     eff_well_formed sys info bounded_l eff
 
-let decl_list_well_formed sys decls =
-  List.iter (fun decl ->
-    match decl with
-    | {info=info; desc=DConstant c; _} -> 
+let decl_well_formed sys = function
+  | {info=info; desc=DConstant c; _} -> 
       const_well_formed sys info c
-    | {info=info; desc=DOperator op; _} -> 
+  | {info=info; desc=DOperator op; _} -> 
       op_well_formed sys info op
-    | {info=info; desc=DRule r; _} -> 
+  | {info=info; desc=DRule r; _} -> 
       rule_well_formed sys info r
-    | _ -> ()) decls
-
-let ast_well_formed sys = function
-  | decls -> decl_list_well_formed sys decls
+  | _ -> ()
 
 (* Kind checking *)
 
@@ -328,15 +322,16 @@ let check_rule sys (pattern, effect) =
   let env = check_pattern sys pattern in
   check_effect sys env effect
 
-let check_typing sys decls =
+let check_typing sys decl =
   let type_check = function
     | DConstant c -> check_const sys c
     | DOperator op -> check_op sys op
     | DRule r -> check_rule sys r
-    | _ -> () in
-  List.iter (fun decl -> type_check decl.desc) decls
+    | _ -> () 
+  in
+    type_check decl.desc
 
 (* Checking interface *)
-let check_ast sys decls =
-  ast_well_formed sys decls;
-  check_typing sys decls
+let check_decl sys decl =
+  decl_well_formed sys decl;
+  check_typing sys decl

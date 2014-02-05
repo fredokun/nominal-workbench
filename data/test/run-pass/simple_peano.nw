@@ -14,5 +14,8 @@ rule [add-nil-left] :
 rule [add-nil-right] :
   Add(?n, Zero) => ?n
 
-rule [add] :
+rule [add-l] :
   Add(Successor(?u), ?v) => Successor(Add(?u, ?v))
+
+rule [add-r] :
+  Add(?u, Successor(?v)) => Successor(Add(?u, ?v))

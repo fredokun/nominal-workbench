@@ -52,11 +52,11 @@ val add_symbol_strict : system -> rewriting_decl -> system
 
 (* Set the global environment with the declarations of the AST.
   Warn on symbol redeclaration. *)
-val enter_ast : system -> rewriting_decls -> system
+val enter_decl : system -> rewriting_decl -> system
 
 (* Set the global environment with the declarations of the AST.
   Raise a RewritingSystemError on redeclaration. *)
-val enter_ast_strict : system -> rewriting_decls -> system
+val enter_decl_strict : system -> rewriting_decl -> system
 
 val lookup_kind : system -> ?pos:position -> string -> info * kind
 val lookup_const : system -> ?pos:position -> string -> info * constant

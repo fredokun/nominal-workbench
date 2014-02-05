@@ -68,5 +68,3 @@ and rewriting_desc =
   | DConstant of constant
   | DOperator of operator
   | DRule of rule
-
-type rewriting_decls = rewriting_decl list

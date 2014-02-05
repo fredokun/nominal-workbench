@@ -67,7 +67,13 @@ and process_term system t =
 and evaluate_structure_item system = function
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
-    Symbols.enter_ast system [rewriting_decl]
+    Symbols.enter_decl system rewriting_decl
   | PTerm term -> process_term system term
   | PFile_include fname -> process_file system fname
-  
+
+let run_type_check filled_system ast = 
+  List.iter (function
+	       | PDecl d -> 
+		   Type_checking.check_decl filled_system d
+	       | _ -> ())
+    ast

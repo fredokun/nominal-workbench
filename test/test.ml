@@ -15,7 +15,8 @@ let string_of_error (Error(name, domain)) =
 let equal_error (Error(name1, domain1)) (Error(name2, domain2)) =
   (name1 = name2) && (domain1 = domain2)
 
-let strip_ws str = Str.replace_first (Str.regexp " +") "" str
+let strip_ws str =
+  Str.replace_first (Str.regexp " +") "" str
 
 (* Only a textual equality test. *)
 let equal_term t1 t2 =
@@ -70,7 +71,6 @@ let check_term system (TermTest(libs, term, expectation)) =
 	  raise (TermParsingError(SyntaxError, "Expected a term"))
       end
     in
-    (* tmp fix *)
     let rules = List.map (fun (_, (_, v)) -> v)
       (System_map.bindings system.rules)  in
     check_processed_term term rules expectation
@@ -97,14 +97,15 @@ let check_expectation expectation result domain success_cont =
   | (MustPass, Passed) -> success_cont ()
 
 let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
-  (* hotfix *)
   let open Parsetree in
-  let decls = List.map (function PDecl d -> d | _ -> assert false)
-    (List.filter (function PDecl _ -> true | _ -> false) ast) in
+  let decls_and_includes = 
+    List.filter (function PDecl _ | PFile_include _ -> true | _ -> false) 
+      ast in
   let open Rewriting_system_error in
     try 
-      let system = Symbols.enter_ast Symbols.empty_system decls in
-	Type_checking.check_ast system decls;
+      let system = List.fold_left Eval.evaluate_structure_item 
+	Symbols.empty_system decls_and_includes in
+	Eval.run_type_check system ast;
 	let success_cont = match terms with
 	  | [] -> (fun () -> print_success (sprintf "%s passed." name))
 	  | _ -> check_terms system terms 
