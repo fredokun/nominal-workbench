@@ -35,7 +35,7 @@ type type_application =
 
 type term_type =
   | TypedConst of type_application
-  | TypedTerm of type_name * type_application list * type_application
+  | TypedTerm of type_application list * type_application
   | TypedBinder of type_name
   | TypedVar of type_name
 
