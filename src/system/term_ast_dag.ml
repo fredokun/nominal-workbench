@@ -17,9 +17,6 @@ type term_dag =
   | DBinder of ident * (((term_dag ref) list) ref)
   | DVar of ident * ((term_dag ref) option)
 
-type term_ast_dag = TermAstDag of (info * term_dag) list
-
-
 (* Typed AST *)
 
 type type_name = string

@@ -18,7 +18,7 @@ let make_spaces n =
   res
 
 let print_result_line leftline color rightline =
-  let padding = max 0 @@ ncolumns - String.length leftline - String.length rightline in
+  let padding = max 0 (ncolumns - String.length leftline - String.length rightline) in
   let spaces = make_spaces padding in
   printf "%s%s%s%s%s\n" leftline spaces color rightline reset_color
 

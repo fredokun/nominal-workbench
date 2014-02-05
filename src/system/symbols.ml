@@ -74,7 +74,8 @@ let add_rule redeclaration_policy sys id (info, value) =
   else
     {sys with rules = System_map.add id (info, value) sys.rules}
 
-let add_symbol_impl redeclaration_policy system (name, info, desc) =
+let add_symbol_impl redeclaration_policy system 
+    {name=name; info = info; desc=desc} =
   match desc with
   | DKind k ->
     add_kind redeclaration_policy system name (info, k)
@@ -106,7 +107,7 @@ let add_symbol = add_symbol_impl warn_on_redeclaration
 let add_symbol_strict = add_symbol_impl raise_on_redeclaration
 
 let enter_ast_impl add_decl sys = function
-  | RewritingAST decls -> List.fold_left add_decl sys decls
+  | decls -> List.fold_left add_decl sys decls
 
 let enter_ast sys ast =
   enter_ast_impl add_symbol sys ast
@@ -133,7 +134,3 @@ let is_kind sys = exists sys.kinds
 let is_const sys = exists sys.constants
 let is_op sys = exists sys.operators
 let is_rule sys = exists sys.rules
-
-(* tmp *)
-let list_of_rules sys =
-  List.map (fun (_, (_, v)) -> v) (System_map.bindings sys.rules)

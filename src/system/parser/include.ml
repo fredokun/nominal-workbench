@@ -11,9 +11,9 @@ open List
 let rec split_slash str =
   try
     let pos = String.index str '/' in
-    (String.sub str 0 pos)::(split_slash
-			    (String.sub str (pos+1)
-				    ((String.length str)-pos-1)))
+    (String.sub str 0 pos):: 
+      (split_slash (String.sub str (pos+1)
+		      ((String.length str)-pos-1)))
   with
     | Not_found -> [str]
 

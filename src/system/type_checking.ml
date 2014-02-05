@@ -73,7 +73,7 @@ let rec type_well_formed sys tb ta =
   | TypeApplication (id, args) ->
     if List.mem id tb then
       raise_illegal_type_app ta;
-    let (pos, Kind kind_types) = lookup_kind sys id in
+    let (pos, kind_types) = lookup_kind sys id in
     (* TO CHECK : empty kind_types : is it possible ? *)
     if (List.length kind_types - 1 = List.length args) then
       List.iter (type_well_formed sys tb) args
@@ -82,7 +82,7 @@ let rec type_well_formed sys tb ta =
   
 
 let const_well_formed sys info = function
-  | Constant (tb, ta) -> type_well_formed sys tb ta
+  | tb, ta -> type_well_formed sys tb ta
 
 let op_arg_well_formed sys tb op_arg =
   match op_arg with
@@ -90,7 +90,7 @@ let op_arg_well_formed sys tb op_arg =
   | OpBinderArg id -> ignore (lookup_kind sys id)
 
 let op_well_formed sys info = function
-  | Operator (tb, op_args, op_res) ->
+  | tb, op_args, op_res ->
     List.iter (op_arg_well_formed sys tb) op_args;
     type_well_formed sys tb op_res
   
@@ -101,7 +101,7 @@ let rec pat_well_formed sys rule_pos bounded_l pat =
   |PConstant(string)-> ignore (lookup_const sys string); bounded_l
   |PPlaceholder(string)-> string::bounded_l
   |POperator(string,pattern_list)->
-    let (pos, Operator (type_binders_list, operator_arg_list, operator_result))
+    let (pos, (type_binders_list, operator_arg_list, operator_result))
 	= lookup_op sys string in
     List.iter (op_arg_well_formed sys type_binders_list) operator_arg_list;
     if List.length pattern_list = List.length operator_arg_list then
@@ -116,7 +116,7 @@ let rec eff_well_formed sys rule_pos bounded_l eff =
       if not (List.mem string bounded_l) then
 	raise_unknown_placeholder string
     |EOperator(string, effect_list)->
-      let (pos, Operator(type_binders_list, operator_arg_list, operator_result))
+      let (pos, (type_binders_list, operator_arg_list, operator_result))
 	= lookup_op sys string in
       if List.length effect_list = List.length operator_arg_list then 
 	List.iter (eff_well_formed sys rule_pos bounded_l) effect_list
@@ -124,20 +124,23 @@ let rec eff_well_formed sys rule_pos bounded_l eff =
 	raise_wrong_arity (string ^ " in effect, in rule" ^ (pos_to_string rule_pos))
 
 let rule_well_formed sys info = function
-  |Rule(pat, eff)->
+  | pat, eff ->
     let bounded_l = pat_well_formed sys info [] pat in
     eff_well_formed sys info bounded_l eff
 
-let decl_list_well_formed sys decll=
+let decl_list_well_formed sys decls =
   List.iter (fun decl ->
     match decl with
-    | (_, info, DConstant c) -> const_well_formed sys info c
-    | (_, info, DOperator op) -> op_well_formed sys info op
-    | (_, info, DRule r) -> rule_well_formed sys info r
-    | _ -> ()) decll
+    | {info=info; desc=DConstant c; _} -> 
+      const_well_formed sys info c
+    | {info=info; desc=DOperator op; _} -> 
+      op_well_formed sys info op
+    | {info=info; desc=DRule r; _} -> 
+      rule_well_formed sys info r
+    | _ -> ()) decls
 
 let ast_well_formed sys = function
-  | RewritingAST decls -> decl_list_well_formed sys decls
+  | decls -> decl_list_well_formed sys decls
 
 (* Kind checking *)
 
@@ -156,8 +159,8 @@ let rec kind_of_type sys tb env ta =
   | TypeName id ->
     snd (lookup_kind sys id)
   | TypeApplication (id, _) ->
-    let (_, Kind kind_types) = lookup_kind sys id in
-    Kind [last kind_types]
+    let (_, kind_types) = lookup_kind sys id in
+    [last kind_types]
 
 let kind_check_type sys tb env ta k =
   let rec loop env ta k =
@@ -176,11 +179,11 @@ let kind_check_type sys tb env ta k =
       if k = kind
       then env
       else raise_kind_clash ta k
-    | TypeApplication (id, []), Kind [kind_res] ->
+    | TypeApplication (id, []), [kind_res] ->
       env
-    | TypeApplication (id, arg1::args), Kind (k1 :: ks) ->
-      let new_env = loop env arg1 (Kind [k1]) in
-      loop new_env (TypeApplication (id, args)) (Kind ks)
+    | TypeApplication (id, arg1::args), (k1 :: ks) ->
+      let new_env = loop env arg1 [k1] in
+      loop new_env (TypeApplication (id, args)) ks
     | _ -> assert false
   in
   loop env ta k
@@ -236,10 +239,10 @@ let check_type sys tb env ta =
 (* Constant checking *)
 
 let check_const sys = function
-  | Constant (tb, ta) -> ignore (check_type sys tb [] ta)
+  | tb, ta -> ignore (check_type sys tb [] ta)
 
 let type_check_const sys id (tb, ta) =
-  let (_, Constant (ctb, cta)) = lookup_const sys id in
+  let (_, (ctb, cta)) = lookup_const sys id in
   check_types (ctb, cta) (tb, ta)
 
 (* Operator checking *)
@@ -248,13 +251,13 @@ let check_op_arg sys tb env op_arg =
   match op_arg with
   | OpTypeArg ta -> check_type sys tb env ta
   | OpBinderArg id ->
-    let (_, Kind k) = lookup_kind sys id in
+    let (_, k) = lookup_kind sys id in
     if k = [Atom]
     then env
     else raise_wrong_binder_kind id
 
 let check_op sys = function
-  | Operator (tb, op_args, op_res) ->
+  | tb, op_args, op_res ->
     let env = List.fold_left (check_op_arg sys tb) [] op_args in
     ignore (check_type sys tb env op_res)
 
@@ -272,7 +275,7 @@ let rec type_check_pat sys env pat (tb, ta) =
   | PPlaceholder id ->
     (id, (tb, ta)) :: env
   | POperator (id, patl) ->
-    let (_, Operator (tbb, args, result)) = lookup_op sys id in
+    let (_, (tbb, args, result)) = lookup_op sys id in
     check_types (tbb, result) (tb, ta);
     List.fold_left2 (check_pat_op_arg sys tb) env patl args
 
@@ -284,7 +287,7 @@ and check_pat_op_arg sys tb env pat op_arg =
 let check_pattern sys pat =
   match pat with
   | POperator (id, patl) ->
-    let (_, Operator (tb, args, _)) = lookup_op sys id in
+    let (_,  (tb, args, _)) = lookup_op sys id in
     List.fold_left2 (check_pat_op_arg sys tb) [] patl args
   | _ -> []
 
@@ -303,7 +306,7 @@ let rec type_check_eff sys env eff (tb, ta) =
   | EPlaceholder id ->
     check_types (List.assoc id env) (tb, ta)
   | EOperator (id, effl) ->
-    let (_, Operator (tbb, args, result)) = lookup_op sys id in
+    let (_, (tbb, args, result)) = lookup_op sys id in
     check_types (tbb, result) (tb, ta);
     List.iter2 (check_eff_op_arg sys tb env) effl args
 
@@ -316,24 +319,24 @@ and check_eff_op_arg sys tb env eff op_arg =
 let check_effect sys env eff =
   match eff with
   | EOperator (id, effl) ->
-    let (_, Operator (tb, args, _)) = lookup_op sys id in
+    let (_, (tb, args, _)) = lookup_op sys id in
     List.iter2 (check_eff_op_arg sys tb env) effl args
   | _ -> ()
 
 (* Rule checking *)
-let check_rule sys (Rule(pattern, effect)) =
+let check_rule sys (pattern, effect) =
   let env = check_pattern sys pattern in
   check_effect sys env effect
 
-let check_typing sys (RewritingAST(decls)) =
+let check_typing sys decls =
   let type_check = function
     | DConstant c -> check_const sys c
     | DOperator op -> check_op sys op
     | DRule r -> check_rule sys r
     | _ -> () in
-  List.iter (fun (_,_,decl) -> type_check decl) decls
+  List.iter (fun decl -> type_check decl.desc) decls
 
 (* Checking interface *)
-let check_ast sys ast =
-  ast_well_formed sys ast;
-  check_typing sys ast
+let check_ast sys decls =
+  ast_well_formed sys decls;
+  check_typing sys decls

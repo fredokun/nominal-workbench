@@ -1,5 +1,0 @@
-begin program "main"
-  sort = true
-  files = [ "main.ml" ]
-  requires = [ "toplevel" ]
-end

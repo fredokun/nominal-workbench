@@ -17,10 +17,6 @@
     " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
     " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol))
 
-  let annote_pos item : Term_ast.info * Term_ast.term =
-    let pos = Parsing.symbol_start_pos () in
-    pos, item
-
 %}
 
 /* values */
@@ -49,8 +45,8 @@ toplevel_phrase:
 | EOF { raise End_of_file }
 
 expressions:
-| expression { [annote_pos @@ $1] }
-| expression expressions { annote_pos $1::$2 }
+| expression { [annote_term @@ $1] }
+| expression expressions { annote_term $1::$2 }
 
 expression:
 | LPAREN expression RPAREN { $2 }

@@ -25,7 +25,7 @@ let matching term pattern =
              if matches then step term pattern placeholders
              else matches, placeholders)
           (true, placeholders)
-        @@ List.combine t_terms p_terms
+	  ( List.combine t_terms p_terms )
       else false, placeholders
 
     | Const t_id, PConstant p_id -> (t_id = p_id, placeholders)

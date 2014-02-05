@@ -25,16 +25,16 @@ let equal_term t1 t2 =
 let check_term_expectation expectation result domain success_cont =
   match (expectation, result) with
   | (TMustPass(_), TFailed(e)) ->
-    print_failure (sprintf "Failure with error %s." @@ string_of_error e)
+    print_failure (sprintf "Failure with error %s." ( string_of_error e))
   | (TMustFail(e), TPassed(t)) -> print_failure
       (sprintf "Should have failed with %s but passed with %s." (string_of_error e) t)
-  | (TMustFail(expected), TFailed(e)) when not @@ equal_error expected e ->
+  | (TMustFail(expected), TFailed(e)) when not ( equal_error expected e ) ->
       print_failure (sprintf "Expected error %s but failed with %s."
         (string_of_error expected)
         (string_of_error e))
   | (TMustFail(_), TFailed(e)) ->
       print_success (sprintf "Failure with %s as expected." (string_of_error e))
-  | (TMustPass(t1), TPassed(t2)) when not @@ equal_term t1 t2 ->
+  | (TMustPass(t1), TPassed(t2)) when not (equal_term t1 t2) ->
       print_failure (sprintf "Bad term rewriting, expected %s but got %s." t1 t2)
   | (TMustPass(t1), TPassed(t2)) -> success_cont ()
 
@@ -61,14 +61,20 @@ let check_term (TermTest(libs, term, expectation)) =
   let open Term_parsing_error in
   try
     load_library libs;
-    let (Term_ast.TermAst terms) =
-      Term_parser.start Term_lexer.token (Lexing.from_string term) in
-    if (List.length terms) <> 1 then
-      print_system_error "You can only test one term at a time."
-    else
-      (* tmp fix *)
-      let rules = Symbols.list_of_rules Symbols.empty_system in
-      check_processed_term (snd (List.hd terms)) rules expectation
+    let term =
+      begin 
+	match Parser.start Lexer.token (Lexing.from_string term) with
+	| [Parsetree.PTerm t] -> t
+	| (Parsetree.PTerm _)::_ ->
+	  print_system_error "You can only test one item at a time";
+	  raise (TermParsingError(SyntaxError, "Expected one term"))
+	| _ -> print_system_error "This is not a term."; 
+	  raise (TermParsingError(SyntaxError, "Expected a term"))
+      end
+    in
+    (* tmp fix *)
+    let rules = [] in
+    check_processed_term term rules expectation
   with
   | TermParsingError(code, _) ->
     check_term_expectation expectation (TFailed(Error(string_of_error_code code, domain_name)))
@@ -83,7 +89,7 @@ let check_expectation expectation result domain success_cont =
   match (expectation, result) with
   | (MustPass, Failed(e)) -> print_failure (sprintf "Failure with error %s." (string_of_error e))
   | (MustFail(e), Passed) -> print_failure (sprintf "Should have failed with %s." (string_of_error e))
-  | (MustFail(expected), Failed(e)) when not @@ equal_error expected e ->
+  | (MustFail(expected), Failed(e)) when not ( equal_error expected e ) ->
       print_failure (sprintf "Expected error %s but failed with %s."
         (string_of_error expected)
         (string_of_error e))
@@ -92,14 +98,18 @@ let check_expectation expectation result domain success_cont =
   | (MustPass, Passed) -> success_cont ()
 
 let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
+  (* hotfix *)
+  let open Parsetree in
+  let decls = List.map (function PDecl d -> d | _ -> assert false)
+    (List.filter (function PDecl _ -> true | _ -> false) ast) in
   let open Rewriting_system_error in
   try
     let success_cont = match terms with
       | [] -> (fun () -> print_success (sprintf "%s passed." name))
       | _ -> check_terms terms in
     (* tmp *)
-    let system = List.fold_left Symbols.enter_ast Symbols.empty_system ast in
-    List.iter (Type_checking.check_ast system) ast;
+    let system = Symbols.enter_ast Symbols.empty_system decls in
+    Type_checking.check_ast system decls;
     check_expectation expectation Passed domain_name success_cont
   with
   | RewritingSystemError(code, _) ->
@@ -154,5 +164,5 @@ with
 | Xml.File_not_found(s) -> printf "File %s not found.\n" s
 | e ->
     printf "Something got really wrong, here the exception backtrace:\n";
-    printf "Exception: %s.\n" @@ Printexc.to_string e;
+    printf "Exception: %s.\n" ( Printexc.to_string e );
     Printexc.print_backtrace stdout

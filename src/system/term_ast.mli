@@ -14,12 +14,11 @@ type info = Lexing.position
 
 type ident = string
 
+(* todo ajouter les infos *)
 type term =
   | Const of ident
   | Term of ident * term list
   | Var of ident
-
-type term_ast = TermAst of (info * term) list
 
 (** {2 Functions} *)
 (*

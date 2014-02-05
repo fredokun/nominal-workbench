@@ -8,6 +8,8 @@
 open Parsing
 open Lexing
 open Rewriting_ast
+open Term_ast
+open Parsetree
 open Include
 open Hashtbl
 open Sys
@@ -16,8 +18,9 @@ open Sys
 (*   let pos = Parsing.symbol_start_pos () in *)
 (*   { value = item ; info = pos } *)
 
-let get_info x =
-  Parsing.symbol_start_pos ()
+let annote_term item : Term_ast.info * Term_ast.term =
+  let pos = Parsing.symbol_start_pos () in
+  pos, item
 
 let parse_error s =
   let pos = Parsing.symbol_start_pos () in
@@ -34,26 +37,33 @@ let reset_parser x =
     Hashtbl.reset files_included;
     include_paths := [(Sys.getcwd ())]
 
+let create_decl name desc =
+  {
+    name = name;
+    info = Parsing.symbol_start_pos ();
+    desc = desc;
+  }
+
 %}
 
 /* values */
 %token <float> NUM
-%token <string> WORD PLACEHOLDER FILENAME
+%token <string> LIDENT UIDENT PLACEHOLDER FILENAME
 
 /* keywords */
 %token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
-%token DARROW STAR COMMA NEWLINE LT GT DOT ANY
+%token DARROW STAR COMMA LT GT DOT ANY
 
 %token EOF
 
 %start start
-%type <Rewriting_ast.rewriting_ast * string list> start
+%type <Parsetree.structure> start
 
 %start toplevel_phrase
-%type <Rewriting_ast.rewriting_ast * string list> toplevel_phrase
+%type <Parsetree.structure_item> toplevel_phrase
 
 %right STAR DARROW ARROW COLON DOT
 
@@ -61,46 +71,39 @@ let reset_parser x =
 
 start:
 | decls EOF { reset_parser ();
-  let (ast, includes) = $1 in (RewritingAST ast, includes) }
+	      $1 }
 
 toplevel_phrase:
-| decls SEMICOL SEMICOL { let (ast, includes) = $1 in (RewritingAST ast, includes) }
+| decl SEMICOL SEMICOL { $1 }
 | EOF { raise End_of_file }
 ;
 
 decls :
 | decl decls
-    { match $1 with
-      | (None, None) -> $2
-      | (None, Some(f)) -> let (ast, includes) = $2 in (ast, f::includes)
-      | (Some(a), None) -> let (ast, includes) = $2 in (a::ast, includes)
-      | (Some(a), Some(f)) -> let (ast, includes) = $2 in (a::ast, f::includes)
-    }
+    { $1::$2}
 | decl
-   { match $1 with
-    | (None, None) -> ([],[])
-    | (None, Some(f)) -> ([], [f])
-    | (Some(a), None) -> ([a], [])
-    | (Some(a), Some(f)) -> ([a], [f])
-   }
+    { [$1] }
 
 decl:
-| kind_decl { (Some $1, None) }
-| constant_decl { (Some $1, None) }
-| operator_decl { (Some $1, None) }
-| rule_decl { (Some $1, None) }
-| OPEN FILENAME
+| kind_decl { PDecl $1 }
+| constant_decl { PDecl $1 }
+| operator_decl { PDecl $1 }
+| rule_decl { PDecl $1 }
+| OPEN FILENAME { PFile_include $2 }
+| OPEN UIDENT { PFile_include $2 }
+| OPEN LIDENT { PFile_include $2 }
+| term { PTerm $1 }
+/* | OPEN FILENAME
     { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)
       | Some(f) ->(None, Some f)
     }
-| NEWLINE { (None, None) }
-
+*/
 
 /* kinds */
 
 kind_decl:
-| KIND WORD COLON kind_type { ($2, get_info (), (DKind (Kind $4))) }
+| KIND UIDENT COLON kind_type { create_decl $2 (DKind $4) }
 
 kind_type:
 | kind_type ARROW kind_type { $1 @ $3 }
@@ -110,18 +113,18 @@ kind_type:
 /* constants */
 
 constant_decl:
-| CONSTANT WORD COLON type_binders constant_type
-    { ($2, get_info (), DConstant (Constant ($4, $5))) }
-| CONSTANT WORD COLON constant_type
-    { ($2, get_info (), DConstant (Constant ([],$4)))}
+| CONSTANT UIDENT COLON type_binders constant_type
+    { create_decl $2 (DConstant ($4, $5)) }
+| CONSTANT UIDENT COLON constant_type
+    { create_decl $2 (DConstant ([],$4)) }
 
 type_binders:
 | FORALL LPAREN word_list RPAREN DOT { $3 }
 | FORALL LPAREN word_list RPAREN DOT type_binders { $3 @ $6 }
 
 constant_type:
-| WORD application_constant_type_list { TypeApplication ($1, $2) }
-| WORD { TypeName $1 }
+| UIDENT application_constant_type_list { TypeApplication ($1, $2) }
+| UIDENT { TypeName $1 }
 
 application_constant_type_list:
 | LT constant_type_list GT { $2 }
@@ -132,26 +135,27 @@ constant_type_list:
 | constant_type { [$1] }
 
 word_list:
-| WORD COMMA word_list { $1 :: $3 }
-| WORD { [$1] }
-
+| UIDENT COMMA word_list { $1 :: $3 }
+| UIDENT { [$1] }
+| LIDENT COMMA word_list { $1 :: $3 }
+| LIDENT { [$1] }
 
 /* operators */
 
 operator_decl:
-| OPERATOR WORD COLON type_binders operator_type ARROW operator_without_binder_type 
-    { ($2, get_info (), DOperator (Operator ($4, $5, $7))) }
-| OPERATOR WORD COLON operator_type ARROW operator_without_binder_type
-    { ($2, get_info (), DOperator (Operator ([], $4, $6))) }
+| OPERATOR UIDENT COLON type_binders operator_type ARROW operator_without_binder_type 
+    { create_decl $2 (DOperator ($4, $5, $7)) }
+| OPERATOR UIDENT COLON operator_type ARROW operator_without_binder_type
+    { create_decl $2 (DOperator ([], $4, $6)) }
 
 operator_type:
 | operator_without_binder_type { [OpTypeArg $1] }
-| LBRACKET WORD RBRACKET DOT operator_type { (OpBinderArg $2) :: $5 }
+| LBRACKET UIDENT RBRACKET DOT operator_type { (OpBinderArg $2) :: $5 }
 | operator_type STAR operator_type { $1 @ $3 }
 
 operator_without_binder_type:
-| WORD application_operator_without_binder_type_list { TypeApplication ($1, $2) }
-| WORD { TypeName $1 }
+| UIDENT application_operator_without_binder_type_list { TypeApplication ($1, $2) }
+| UIDENT { TypeName $1 }
 
 application_operator_without_binder_type_list:
 | LT operator_without_binder_type_list GT { $2 }
@@ -162,23 +166,21 @@ operator_without_binder_type_list:
 | operator_without_binder_type { [$1] }
 
 
-
-
 /* rules */
 
 rule_decl:
-| rule_head rule_body { ($1, get_info (), DRule $2) }
-| rule_head NEWLINE rule_body { ($1, get_info (), DRule $3) }
+| rule_head rule_body { create_decl $1 (DRule $2) }
 
 rule_head:
-| RULE LBRACKET WORD RBRACKET COLON { $3 }
+| RULE LBRACKET LIDENT RBRACKET COLON { $3 }
+| RULE LBRACKET UIDENT RBRACKET COLON { $3 }
 
 rule_body:
-| rule_side_pattern DARROW rule_side_effect { Rule ($1,$3)  }
+| rule_side_pattern DARROW rule_side_effect { $1,$3 }
 
 rule_side_pattern:
-| WORD { PConstant $1 }
-| WORD LPAREN rule_side_list_pattern RPAREN { POperator ($1, $3) }
+| UIDENT { PConstant $1 }
+| UIDENT LPAREN rule_side_list_pattern RPAREN { POperator ($1, $3) }
 | PLACEHOLDER { PPlaceholder $1 }
 | ANY { PAny }
 
@@ -188,13 +190,26 @@ rule_side_list_pattern:
 | rule_side_pattern { [$1] }
 
 rule_side_effect:
-| WORD { EConstant $1 }
-| WORD LPAREN rule_side_list_effect RPAREN { EOperator ($1, $3) }
+| UIDENT { EConstant $1 }
+| UIDENT LPAREN rule_side_list_effect RPAREN { EOperator ($1, $3) }
 | PLACEHOLDER { EPlaceholder $1 }
 
 rule_side_list_effect:
 | rule_side_effect COMMA rule_side_list_effect { $1 :: $3 }
 | rule_side_effect { [$1] }
 
+
+/* term */
+
+term:
+| LPAREN term RPAREN { $2 }
+| UIDENT LPAREN term_params RPAREN
+    { Term($1, $3) }
+| UIDENT { Const($1) }
+| LIDENT { Var($1) }
+
+term_params:
+| term {  [$1] }
+| term COMMA term_params { $1::$3 }
 
 %%

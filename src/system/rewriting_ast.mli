@@ -15,7 +15,7 @@ type kind_type =
   | Type
   | Atom
 
-type kind = Kind of kind_type list
+type kind = kind_type list
 
 (* Type application *)
 (* A type application is the process to apply a type to another. *)
@@ -26,7 +26,7 @@ type type_application =
 
 (* Constant definition *)
 
-type constant = Constant of type_binders * type_application
+type constant = type_binders * type_application
 
 (* Operator definition *)
 
@@ -37,7 +37,7 @@ type operator_arg =
   | OpTypeArg of type_application
   | OpBinderArg of type_name (* A binder must be of kind atom and thus, cannot be applied to types (List<A>). *)
 
-type operator = Operator of type_binders * operator_arg list * operator_result
+type operator = type_binders * operator_arg list * operator_result
 
 (* Rule definition *)
 
@@ -52,13 +52,21 @@ type effect =
   | EPlaceholder of string
   | EConstant of string
 
-type rule = Rule of pattern * effect
+type rule = pattern * effect
 
-type rewriting_declaration =
+type info = Lexing.position
+
+type rewriting_decl =
+  {
+    name : string;
+    info : info;
+    desc : rewriting_desc;
+  }
+
+and rewriting_desc =
   | DKind of kind
   | DConstant of constant
   | DOperator of operator
   | DRule of rule
 
-type info = Lexing.position
-type rewriting_ast = RewritingAST of (string * info * rewriting_declaration) list
+type rewriting_decls = rewriting_decl list

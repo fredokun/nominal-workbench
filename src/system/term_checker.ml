@@ -19,7 +19,7 @@ let empty_binder_env = Var_map.empty
 (* Return the list of binder positions in the operator op_name *)
 let binders_pos_in_op system op_name =
   let (_,op) = Symbols.lookup_op system op_name in
-  let Operator(_,args,_) = op in
+  let (_,args,_) = op in
   let rec give_pos l n = function
     | [] -> l
     | OpTypeArg(_)::q -> give_pos l (n+1) q
@@ -80,16 +80,9 @@ and construct_sub_term = fun system ident ->
       construct_ast_dag_rec system ident binds sub_term pos in
     (pos+1,new_binds,sub_term_wf::l)
 
-(* Check a term_ast and construct a the new term_ast_dag associated *)
-let construct_ast_dag system term_ast =
-  let TermAst(info_and_terms) = term_ast in
-  let info_and_terms_dag = List.map
-    (fun (info,term) ->
-      let (term_dag,_) = construct_ast_dag_rec system "" empty_binder_env term 0
-      in (info,term_dag))
-    info_and_terms
-  in
-  TermAstDag(info_and_terms_dag)
+(* Check a term_ast and construct the new term_ast_dag associated *)
+let construct_term_dag system term =
+  construct_ast_dag_rec system "" empty_binder_env term 0
 
 (**)
 

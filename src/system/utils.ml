@@ -18,10 +18,12 @@ let kt_to_string = function
   | Type -> "Type"
   | Atom -> "Atom"
 
-let rec kind_to_string (Kind ((k::rem) as ks)) =
-  assert (ks != []);
-  List.fold_left (fun acc kt ->
-    acc ^ " -> " ^ (kt_to_string kt)) (kt_to_string k) rem
+let rec kind_to_string = function
+   [] -> assert false
+  | k::rem ->
+    List.fold_left (fun acc kt ->
+      acc ^ " -> " ^ (kt_to_string kt))
+      (kt_to_string k) rem
   
 
 let print_kind k =
