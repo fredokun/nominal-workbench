@@ -16,7 +16,7 @@ let equal_error (Error(name1, domain1)) (Error(name2, domain2)) =
   (name1 = name2) && (domain1 = domain2)
 
 let strip_ws str =
-  Str.replace_first (Str.regexp " +") "" str
+  Str.global_replace (Str.regexp " +") "" str
 
 (* Only a textual equality test. *)
 let equal_term t1 t2 =
