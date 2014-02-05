@@ -54,13 +54,11 @@ let check_processed_term term rules expectation =
         domain_name ignore
   | e -> print_unknown_exc e "term rewriting"
 
-let load_library term_libs =
-  List.iter (fun lib -> failwith "term library not yet implemented") term_libs
 
-let check_term (TermTest(libs, term, expectation)) =
+let check_term system (TermTest(libs, term, expectation)) =
   let open Term_parsing_error in
+  let open Symbols in
   try
-    load_library libs;
     let term =
       begin 
 	match Parser.start Lexer.token (Lexing.from_string term) with
@@ -73,7 +71,8 @@ let check_term (TermTest(libs, term, expectation)) =
       end
     in
     (* tmp fix *)
-    let rules = [] in
+    let rules = List.map (fun (_, (_, v)) -> v)
+      (System_map.bindings system.rules)  in
     check_processed_term term rules expectation
   with
   | TermParsingError(code, _) ->
@@ -81,8 +80,8 @@ let check_term (TermTest(libs, term, expectation)) =
       domain_name ignore
   | e -> print_unknown_exc e "parsing of the terms"
 
-let check_terms terms () =
-  List.iter check_term (List.rev terms)
+let check_terms system terms () =
+  List.iter (check_term system) (List.rev terms)
 
 (* Rewriting System test *)
 let check_expectation expectation result domain success_cont =
@@ -103,19 +102,19 @@ let check_rewriting_system ast (SystemTest(name, file, expectation, terms)) =
   let decls = List.map (function PDecl d -> d | _ -> assert false)
     (List.filter (function PDecl _ -> true | _ -> false) ast) in
   let open Rewriting_system_error in
-  try
-    let success_cont = match terms with
-      | [] -> (fun () -> print_success (sprintf "%s passed." name))
-      | _ -> check_terms terms in
-    (* tmp *)
-    let system = Symbols.enter_ast Symbols.empty_system decls in
-    Type_checking.check_ast system decls;
-    check_expectation expectation Passed domain_name success_cont
-  with
-  | RewritingSystemError(code, _) ->
-      check_expectation expectation (Failed(Error(string_of_error_code code, domain_name)))
-        domain_name ignore
-  | e -> print_unknown_exc e "check of the rewriting system"
+    try 
+      let system = Symbols.enter_ast Symbols.empty_system decls in
+	Type_checking.check_ast system decls;
+	let success_cont = match terms with
+	  | [] -> (fun () -> print_success (sprintf "%s passed." name))
+	  | _ -> check_terms system terms 
+	in
+	  check_expectation expectation Passed domain_name success_cont
+    with
+      | RewritingSystemError(code, _) ->
+	  check_expectation expectation (Failed(Error(string_of_error_code code, domain_name)))
+            domain_name ignore
+      | e -> print_unknown_exc e "check of the rewriting system"
 
 let test_rewriting_system channel (SystemTest(_,_, expectation, _) as sys_test)  =
   let open Rewriting_parsing_error in

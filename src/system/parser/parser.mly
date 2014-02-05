@@ -57,6 +57,7 @@ let create_decl name desc =
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
 %token DARROW STAR COMMA LT GT DOT ANY
 
+/* comments */
 %token EOF
 
 %start start

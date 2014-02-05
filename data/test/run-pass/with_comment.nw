@@ -2,10 +2,6 @@
 #    test comment    #
 ######################
 
-(* multiline comment
-   (* with imbrication *)
-*)
-
 # a comment
 kind Term : type
 kind Variable : atom

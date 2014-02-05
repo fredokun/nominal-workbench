@@ -1,6 +1,5 @@
-(*********************
 #    Include Test    #
-*********************)
+
 open data/test/run-pass/with_comment
 
 kind Term : type

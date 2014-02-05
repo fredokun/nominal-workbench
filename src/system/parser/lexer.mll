@@ -25,12 +25,10 @@
 	"forall", FORALL;
       ]
 
-  let comments_level = ref 0
-
 }
 
 let lower_ident = ['a'-'z']['-''a'-'z''A'-'Z''0'-'9']*
-let upper_ident = ['A'-'Z']['-''a'-'z''A'-'Z''0'-'9']*
+let upper_ident = ['A'-'Z''0'-'9']['-''a'-'z''A'-'Z''0'-'9']*
 let placeholder = '?' ['-''a'-'z''A'-'Z''0'-'9']*
 let filename = ['a'-'z''A'-'Z''0'-'9']['/''-''_''.''a'-'z''A'-'Z''0'-'9']*
 
@@ -53,21 +51,10 @@ let any = '_'
 let space = ['\t' ' ']*
 let newline = ['\n' '\r']
 let comment = '#' [^ '\n' '\r' ] *
-let begin_comment = "(*"
-let end_comment = "*)"
 
   rule token = parse
     | space
 	{token lexbuf}
-    | begin_comment
-	{ comments_level := 1 ;
-	  ignore(comment lexbuf) ;
-	  token lexbuf }
-    | end_comment {
-      raise( RewritingParsingError
-	       (AlreadyClosedComment,
-		pos_to_string (Parsing.symbol_start_pos ()) ))
-    }
     | comment
 	{ token lexbuf }
     | lower_ident as s
@@ -103,29 +90,6 @@ let end_comment = "*)"
     | _
 	{ failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }
 
-  and comment = parse
-    | begin_comment
-	{ incr comments_level;
-	  comment lexbuf }
-    | end_comment
-	{ decr comments_level;
-	  match !comments_level with
-	  | 0 -> token lexbuf
-	  | n when n > 0 -> comment lexbuf
-	  | _ -> raise( RewritingParsingError
-			  (AlreadyClosedComment,
-			   pos_to_string (Parsing.symbol_start_pos ()) ))
-	}
-    | newline { Lexing.new_line lexbuf; comment lexbuf }
-    | eof {
-      if !comments_level != 0
-      then
-	raise( RewritingParsingError
-		 (UnclosedComment,
-		  pos_to_string (Parsing.symbol_start_pos ()) ))
-      else token lexbuf
-    }
-    | _ { comment lexbuf }
 
 {
 }

@@ -14,24 +14,6 @@
   </systemtest>
 
   <systemtest>
-    <name>With Comment not closed</name>
-    <file>data/test/run-fail/comment_fail_not_closed.nw</file>
-    <error>
-      <name>UnclosedComment</name>
-      <domain>RewritingParsingError</domain>
-    </error>
-  </systemtest>
-
-  <systemtest>
-    <name>With Comment already closed</name>
-    <file>data/test/run-fail/comment_fail_already_closed.nw</file>
-    <error>
-      <name>AlreadyClosedComment</name>
-      <domain>RewritingParsingError</domain>
-    </error>
-  </systemtest>
-
-  <systemtest>
     <name>With include</name>
     <file>data/test/run-pass/with_include.nw</file>
   </systemtest>
