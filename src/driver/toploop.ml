@@ -8,9 +8,9 @@ let env_system = ref Symbols.empty_system
 let execute_phrase print_outcome ppf system item =
   (*
     DIRECTIVE IDEA : Dump the current rules into a file
-  *) 
-  Eval.evaluate_structure_item !env_system item
-      
+  *)
+  env_system := Eval.evaluate_structure_item !env_system item
+
 let first_line = ref true
 let got_eof = ref false
 
@@ -64,7 +64,7 @@ let loop ppf system =
       first_line := true;
       (* TODO : discriminer les termes, des règles.. combinaison des
 	 parsers? *)
-      
+
       let item = parse_toplevel_phrase lb in
       ignore (execute_phrase true ppf system item)
     with
