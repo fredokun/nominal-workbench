@@ -1,0 +1,3 @@
+kind TestKind : type
+
+constant TestConstant : TestKind

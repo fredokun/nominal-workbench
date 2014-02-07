@@ -1,5 +1,5 @@
 constant True: Bool
-constant zero : Nat
+constant Zero : Nat
 
 operator Nat: Bool -> Bool
 operator And: Bool * Bool -> Bool

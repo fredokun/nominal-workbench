@@ -27,9 +27,9 @@ let error_of_xml xdata =
 
 let term_expectation_of_xml xdata =
   try
-    TMustFail(error_of_xml (first_child_node xdata "error"))
+    TMustFail(error_of_xml (List.hd (filter_children xdata "error")))
   with
-  | Failure(_) -> TMustPass(child_data xdata "result")
+  | e -> TMustPass(child_data xdata "result")
 
 let lib_test_of_xml libs =
   List.map (fun xlib -> Xml.pcdata xlib) libs

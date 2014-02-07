@@ -1,0 +1,9 @@
+open data/test/run-pass/simple_peano.nw
+
+operator Predecessor : Nat -> Nat
+
+rule [cancel-pred-succ] :
+  Predecessor(Successor(?n)) => ?n
+
+rule [cancel-succ-pred] :
+  Successor(Predecessor(?n)) => ?n

@@ -1,0 +1,21 @@
+# Not a part of the Peano grammar, just for testing purpose.
+open data/test/tools/test_tool.nw
+
+# Peano grammar.
+kind Nat : type
+constant Zero : Nat
+
+operator Successor : Nat -> Nat
+operator Add : Nat * Nat -> Nat
+
+rule [add-nil-left] :
+  Add(Zero, ?n) => ?n
+
+rule [add-nil-right] :
+  Add(?n, Zero) => ?n
+
+rule [add-l] :
+  Add(Successor(?u), ?v) => Successor(Add(?u, ?v))
+
+rule [add-r] :
+  Add(?u, Successor(?v)) => Successor(Add(?u, ?v))

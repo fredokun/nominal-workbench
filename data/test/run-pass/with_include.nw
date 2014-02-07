@@ -1,27 +1,5 @@
-(*********************
 #    Include Test    #
-*********************)
-include data/test/run-pass/with_comment
 
-kind Term : type
-kind Variable : atom
+open data/test/run-pass/with_comment.nw
 
-operator Var : Variable -> Term
-operator App : Term * Term -> Term
-operator Lambda : [Variable]. Term -> Term
-operator Subst : [Variable]. Term * Term -> Term
-
-rule [beta] :
-  App(Lambda(?x, ?T), ?U)  => Subst(?x, ?T, ?U)
-
-rule [subst-var] :
-  Subst(?x, ?T, Var(?x)) => ?T
-
-rule [subst-nvar] :
-  Subst(?x, ?T, Var(?y)) => Var(?y)
-
-rule [app] :
-  Subst(?x, ?T, App(?M, ?N)) => App(Subst(?x, ?T, ?M), Subst(?x, ?T, ?N))
-
-rule [lambda] :
-  Subst(?x, ?T, Lambda(?y, ?U)) => Lambda(?y, Subst(?x, ?T, ?U))
+Lambda(x,x)
