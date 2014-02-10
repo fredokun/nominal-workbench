@@ -55,7 +55,6 @@ module HTermtbl = Hashtbl.Make(struct
     let hash = hash
   end)
 
-let term_tbl = HTermtbl.create 43
 
 module HListtbl = Hashtbl.Make(struct
     type t = hterm hlist
@@ -81,19 +80,25 @@ and create_cons =
       incr id;
       new_hl
 
-and create_term td =
+and create_term =
+  let binder = HBinder (ref [])
   let open HTermtbl in
-  let term =
-    match td with
-    | DConst i -> HConst i
-    | DVar (id, Some _) -> HVar 42 (* Some computations to do for de Bruijn *)
-    | DVar (id, None) -> HFreeVar id
-    | DTerm (id, l) ->
-      let hl = create_hlist l in
-      HTerm (id, hl)
-    | DBinder (id, _) -> HBinder (ref []) in
-  try find term_tbl term
-  with Not_found ->
-    add term_tbl term term;
-    term
+  let term_tbl = create 43 in
+  fun td ->
+    let term =
+      match td with
+      | DConst i -> HConst i
+      | DVar (id, Some _) -> HVar 42 (* Some computations to do for de Bruijn *)
+      | DVar (id, None) -> HFreeVar id
+      | DTerm (id, l) ->
+        let hl = create_hlist l in
+        HTerm (id, hl)
+
+(* The hashconsing of the binder is a problem for now, since we need its binded
+  variable to instantiate is *)
+      | DBinder (id, _) ->  binder(* HBinder (ref []) *) in
+    try find term_tbl term
+    with Not_found ->
+      add term_tbl term term;
+      term
 (* each constructor has its own hashconsing function to get its equivalent *)
