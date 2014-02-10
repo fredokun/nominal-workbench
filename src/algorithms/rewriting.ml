@@ -26,12 +26,20 @@ let rewrite (pattern, effect) term =
 
 
 let rec rewrite_rec rules term =
-  let rec find_rule = function
-    | [] -> None
-    | (pattern, effect) :: tail ->
-      let matches, ph = Matching.matching term pattern in
-      if matches then Some (ph, effect) else find_rule tail in
-  match find_rule rules with
-  | None -> term
-  | Some (ph, effect) ->
-    rewrite_rec rules (substitute ph effect)
+  let rec replace = function
+    | [], term -> term
+    | ((pattern, effect) as rule :: tail) as all_rules, term ->
+      let rec step term =
+        let matches, ph = Matching.matching term pattern in
+        if matches then
+          (substitute ph effect)
+        else
+          let res = match term with
+          | Term(name, expr_l) -> Term(name, (List.map step expr_l))
+          | other -> other in
+          res in
+      let newterm = step term in
+      replace (tail, newterm) in
+  match replace (rules, term) with
+  | newterm when newterm <> term -> rewrite_rec rules newterm
+  | newterm -> newterm

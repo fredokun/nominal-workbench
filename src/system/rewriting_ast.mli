@@ -70,5 +70,4 @@ and rewriting_desc =
   | DRule of rule
 
 
-
-      
+val print_rule : Format.formatter -> rule -> unit
