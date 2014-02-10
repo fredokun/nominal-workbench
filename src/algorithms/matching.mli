@@ -12,6 +12,6 @@ type placeholders = Term_ast.term SMap.t
     We suppose that the term and the pattern are well-constructed since there is
   a typing phase.
 *)
-val matching : Term_ast.term -> Rewriting_ast.pattern -> bool * placeholders
+val matching : Term_ast.term -> Rewriting_ast.pattern -> placeholders option
 
 
