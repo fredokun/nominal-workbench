@@ -3,6 +3,7 @@
 *)
 
 open Term_ast_dag
+open Term_system_error
 
 type id = int
 type ident = string
@@ -88,7 +89,7 @@ and create_cons =
       incr id;
       new_hl
 
-and create_term_raw : 'a -> 'b -> 'c -> 'e * 'f * 'g =
+and create_term_raw =
   (* let binder = HBinder (ref []) in *)
   let open HTermtbl in
   let term_tbl = create 43 in
@@ -96,7 +97,11 @@ and create_term_raw : 'a -> 'b -> 'c -> 'e * 'f * 'g =
     let term, bind, bindings =
       match td with
       | DConst i -> HConst i, bind, bindings
-      | DVar (id, Some _) -> HVar (SMap.find id bindings), bind, bindings
+      | DVar (id, Some _) ->
+        begin
+          try HVar (SMap.find id bindings), bind, bindings
+          with Not_found -> raise (TermSystemError (VariableUnbound, id))
+        end
       (* Some computations to do for de Bruijn *)
       | DVar (id, None) -> HFreeVar id, bind, bindings
       | DTerm (id, l) ->
@@ -116,9 +121,11 @@ and create_term_raw : 'a -> 'b -> 'c -> 'e * 'f * 'g =
       add term_tbl term term;
       term, bind, bindings
 
+(* Main function to hashcons a term_dag *)
 let create_term td =
   let term, _, _ = create_term_raw 0 SMap.empty td in
   term
+
 
 let rec string_of_hlist hl =
   let rec step acc = function
