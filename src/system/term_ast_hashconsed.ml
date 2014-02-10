@@ -14,14 +14,14 @@ let nil = []
 type hterm =
   | HConst of ident
   | HTerm of ident * hterm hlist
-  | HBinder of hterm list ref
-  | HVar of int
+  | HBinder of id
+  | HVar of id
   | HFreeVar of ident
 
 let rec hash_hlist l =
   let rec step acc = function
     | [] -> acc
-    | (id, hd) :: tl -> step (id + (hash hd) + 17 * acc) tl in
+    | (id, hd) :: tl -> step ((hash hd) + 17 * acc) tl in
   step 1 l
 
 (** The hashtbl's hash function is efficient on string, so we can use it without
@@ -39,7 +39,7 @@ let rec equal_hlist hl1 hl2 =
   | [], [] -> true
     (* We can suppose at the moment we try the equality that tl1 and tl2 are
       already hashconsed *)
-  | (_, hd1) :: tl1, (_, hd2) :: tl2 -> equal hd1 hd2 && tl1 == tl2
+  | (_, hd1) :: tl1, (_, hd2) :: tl2 -> hd1 == hd2 && tl1 == tl2
   | _, _ -> false
 
 and equal ht1 ht2 =
@@ -47,7 +47,7 @@ and equal ht1 ht2 =
   | HConst i1, HConst i2 | HFreeVar i1, HFreeVar i2 -> i1 = i2
   | HTerm (i1, htl1), HTerm (i2, htl2) ->
     i1 = i2 && equal_hlist htl1 htl2
-  | HVar v1, HVar v2 -> v1 = v2
+  | HVar v1, HVar v2 -> v1 == v2
   (* Two binders are equal if their ref is the same *)
   | HBinder b1, HBinder b2 -> b1 == b2
   | _, _ -> false
@@ -69,11 +69,11 @@ module HListtbl = Hashtbl.Make(struct
 module SMap = Map.Make(String)
 
 (* Not tailrec, but an operator doesn't have thousands of subterm *)
-let rec create_hlist bindings = function
+let rec create_hlist bind bindings = function
   | [] -> nil
   | hd :: tl ->
-    let term, bindings = create_term_raw bindings hd in
-    create_cons term (create_hlist bindings tl)
+    let term, bind, bindings = create_term_raw bind bindings hd in
+    create_cons term (create_hlist bind bindings tl)
 
 and create_cons =
   let open HListtbl in
@@ -88,37 +88,36 @@ and create_cons =
       incr id;
       new_hl
 
-and create_term_raw =
-  let binder = HBinder (ref []) in
+and create_term_raw : 'a -> 'b -> 'c -> 'e * 'f * 'g =
+  (* let binder = HBinder (ref []) in *)
   let open HTermtbl in
   let term_tbl = create 43 in
-  fun bindings td ->
-    let term, bindings =
+  fun bind bindings td ->
+    let term, bind, bindings =
       match td with
-      | DConst i -> HConst i, bindings
-      | DVar (id, Some _) -> HVar (SMap.find id bindings), bindings
+      | DConst i -> HConst i, bind, bindings
+      | DVar (id, Some _) -> HVar (SMap.find id bindings), bind, bindings
       (* Some computations to do for de Bruijn *)
-      | DVar (id, None) -> HFreeVar id, bindings
+      | DVar (id, None) -> HFreeVar id, bind, bindings
       | DTerm (id, l) ->
-        let hl = create_hlist bindings l in
-        HTerm (id, hl), bindings
+        let hl = create_hlist bind bindings l in
+        HTerm (id, hl), bind, bindings
 
       (* The hashconsing of the binder is a problem for now, since we need its binded
          variable to instantiate is *)
       | DBinder (id, _) ->
-        let bindings = SMap.add id 0 @@
-          SMap.map (fun i -> i + 1) bindings in
-        binder, bindings in
+        let bindings = SMap.add id bind bindings in
+        HBinder bind, bind+1, bindings in
 
     (* Should we add the current bindings in the hashtbl ? Technically no, we
        need some case were it is mandatory *)
-    try find term_tbl term, bindings
+    try find term_tbl term, bind, bindings
     with Not_found ->
       add term_tbl term term;
-      term, bindings
+      term, bind, bindings
 
 let create_term td =
-  let term, _ = create_term_raw SMap.empty td in
+  let term, _, _ = create_term_raw 0 SMap.empty td in
   term
 
 let rec string_of_hlist hl =
@@ -133,7 +132,7 @@ and string_of_hterm = function
   | HConst i -> i
   | HVar i -> string_of_int i
   | HFreeVar i -> i
-  | HBinder _ -> ".\\"
+  | HBinder i -> Format.sprintf "[%d]" i
   | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl)
 
 
