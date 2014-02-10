@@ -40,7 +40,8 @@ type system = {
   kinds :  (info * kind) System_map.t;
   constants : (info * constant) System_map.t;
   operators : (info * operator) System_map.t;
-  rules :(info * rule) System_map.t
+  rules :(info * rule) System_map.t;
+  strategies : strategy System_map.t;
 }
 
 val empty_system : system

@@ -52,7 +52,7 @@ and process_term system t =
     let rules = List.map (fun (_, (_, v)) -> v)
       (System_map.bindings system.rules)
     in
-    let nt = Rewriting.rewrite_rec Rewriting.top_bottom rules t in
+    let nt = Rewriting.rewrite_rec Rewriting.top_down rules t in
     Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
       (string_of_term nt);
@@ -62,12 +62,38 @@ and process_term system t =
     Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t);
     system
 
+and process_reduce system term strategy =
+  let open Term_ast in 
+  let open Symbols in
+  let open Rewriting_ast in
+  try
+    let rules = List.map (fun (_, (_, v)) -> v)
+      (System_map.bindings system.rules)
+    in
+    let strategy = match strategy with
+    | TopDown -> Rewriting.top_down
+    | BottomUp -> Rewriting.bottom_up
+    | Strategy s ->
+        let _strategy = begin try System_map.find s system.strategies with
+        | Not_found -> assert false end in assert false
+    in
+    let nt = Rewriting.rewrite_rec strategy rules term in
+    Printf.printf "Term : %s rewrote into %s\n%!"
+      (string_of_term term)
+      (string_of_term nt);
+    system
+  with
+  | _ ->
+    Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term term);
+    system
+
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
 and evaluate_structure_item system = function
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
+  | PReduce (term, strategy) -> process_reduce system term strategy
   | PTerm term -> process_term system term
   | PFile_include fname -> process_file system fname
 
