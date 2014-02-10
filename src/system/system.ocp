@@ -1,6 +1,6 @@
 begin library "rewriting_system"
   sort = true
-  files = [ "rewriting_ast.ml" "utils.ml" "symbols.ml" "type_checking.ml"]
+  files = [ "rewriting_ast.mli" "pretty.ml" "utils.ml" "symbols.ml" "type_checking.ml"]
   requires = [ "error" ]
 end
 
@@ -8,4 +8,11 @@ begin library "term_system"
   sort = true
   files = [ "term_ast.mli" "term_ast.ml" "term_checker.ml" "term_ast_dag.ml" ]
   requires = [ "error" "rewriting_system" ]
+end
+
+
+begin test "test_term_system"
+  sort = true
+  files = [ "test.ml" ]
+  requires = [ "term_system" ]
 end

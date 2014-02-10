@@ -53,12 +53,14 @@ let process_file system fname =
       let structure = 
 	Parser.start Lexer.token (Lexing.from_channel ic) 
       in
+
       
       let new_system = 
 	List.fold_left
 	  Eval.evaluate_structure_item
 	  system structure 
       in
+      Pretty.print_system Format.std_formatter new_system;
       close_in ic;
       (* todo type check. before or after ? *)
       new_system
