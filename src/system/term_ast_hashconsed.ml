@@ -30,13 +30,14 @@ and hash = function
   | HConst i -> Hashtbl.hash i
   | HFreeVar i -> 2 + Hashtbl.hash i
   | HTerm (i, htl) -> (3 + Hashtbl.hash i) + hash_hlist htl
-  | HVar _ | HBinder _ -> assert false (* to determine *)
+  | HVar i -> 4 + Hashtbl.hash i
+  | HBinder b -> 5 + Hashtbl.hash b
 
 
 let rec equal_hlist hl1 hl2 =
   match hl1, hl2 with
   | [], [] -> true
-    (* We can suppose at the moment we try the equality that tl1 and 2 are
+    (* We can suppose at the moment we try the equality that tl1 and tl2 are
       already hashconsed *)
   | (_, hd1) :: tl1, (_, hd2) :: tl2 -> equal hd1 hd2 && tl1 == tl2
   | _, _ -> false
@@ -46,7 +47,10 @@ and equal ht1 ht2 =
   | HConst i1, HConst i2 | HFreeVar i1, HFreeVar i2 -> i1 = i2
   | HTerm (i1, htl1), HTerm (i2, htl2) ->
     i1 = i2 && equal_hlist htl1 htl2
-  | _, _ -> assert false
+  | HVar v1, HVar v2 -> v1 = v2
+  (* Two binders are equal if their ref is the same *)
+  | HBinder b1, HBinder b2 -> b1 == b2
+  | _, _ -> false
 
 
 module HTermtbl = Hashtbl.Make(struct
@@ -68,7 +72,7 @@ module SMap = Map.Make(String)
 let rec create_hlist bindings = function
   | [] -> nil
   | hd :: tl ->
-    let term, bindings = create_term bindings hd in
+    let term, bindings = create_term_raw bindings hd in
     create_cons term (create_hlist bindings tl)
 
 and create_cons =
@@ -84,7 +88,7 @@ and create_cons =
       incr id;
       new_hl
 
-and create_term =
+and create_term_raw =
   let binder = HBinder (ref []) in
   let open HTermtbl in
   let term_tbl = create 43 in
@@ -112,3 +116,5 @@ and create_term =
     with Not_found ->
       add term_tbl term term;
       term, bindings
+
+let create_term = create_term_raw SMap.empty
