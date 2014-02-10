@@ -12,24 +12,32 @@
 
   let (>>) f h = h f
 
-  let keyword_table = Hashtbl.create 8
-  let _ =
+  let keyword_table = Hashtbl.create 16
+  let () =
     List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok)
-      [ "kind", KIND;
-	"type", TYPE;
-	"atom", ATOM;
-	"operator", OPERATOR;
-	"constant", CONSTANT;
-	"rule", RULE;
-	"open", OPEN;
-	"forall", FORALL;
+      [ "kind", KIND
+      ; "type", TYPE
+      ; "atom", ATOM
+      ; "operator", OPERATOR
+      ; "constant", CONSTANT
+      ; "rule", RULE
+      ; "open", OPEN
+      ; "forall", FORALL
+      ; "reduce", REDUCE
+      ]
+
+  let directive_table = Hashtbl.create 16
+  let () =
+    List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok)
+      [ ":help", HELP
+      ; 
       ]
 
 }
 
 let lower_ident = ['a'-'z']['-''a'-'z''A'-'Z''0'-'9']*
 let upper_ident = ['A'-'Z''0'-'9']['-''a'-'z''A'-'Z''0'-'9']*
-let placeholder = '?' ['-''a'-'z''A'-'Z''0'-'9']*
+let placeholder = '?' ['-''a'-'z''A'-'Z''0'-'9'] +
 let filename = ['a'-'z''A'-'Z''0'-'9']['/''-''_''.''a'-'z''A'-'Z''0'-'9']*
 
 let lparen = '('
@@ -52,6 +60,8 @@ let space = ['\t' ' ']*
 let newline = ['\n' '\r']
 let comment = '#' [^ '\n' '\r' ] *
 
+let directive = colon lower_ident
+
   rule token = parse
     | space
 	{token lexbuf}
@@ -62,6 +72,12 @@ let comment = '#' [^ '\n' '\r' ] *
 	    Hashtbl.find keyword_table s
 	  with Not_found ->
 	    LIDENT(s) }
+    | directive as s
+	{ try
+	    Hashtbl.find directive_table s
+	  with Not_found ->
+	    assert false (* todo *)
+	}
     | upper_ident as s
 	{ UIDENT(s) }
     | filename as f { FILENAME(f) }
