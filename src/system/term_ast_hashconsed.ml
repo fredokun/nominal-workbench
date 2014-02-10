@@ -117,4 +117,25 @@ and create_term_raw =
       add term_tbl term term;
       term, bindings
 
-let create_term = create_term_raw SMap.empty
+let create_term td =
+  let term, _ = create_term_raw SMap.empty td in
+  term
+
+let rec string_of_hlist hl =
+  let rec step acc = function
+  | [] -> ""
+  | [(_, ht)] -> Format.sprintf "%s %s" acc (string_of_hterm ht)
+  | (_, ht) :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm ht)) tl
+  in
+  step "" hl
+
+and string_of_hterm = function
+  | HConst i -> i
+  | HVar i -> string_of_int i
+  | HFreeVar i -> i
+  | HBinder _ -> ".\\"
+  | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl)
+
+
+let pretty_print hterm =
+  print_endline @@ string_of_hterm hterm
