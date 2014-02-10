@@ -19,27 +19,34 @@ let rec substitute placeholders effect =
   | EOperator (ident, operands) ->
     Term (ident, List.map (substitute placeholders) operands)
 
+      
 
-let rewrite (pattern, effect) term =
-  let matches, ph = Matching.matching term pattern in
-  if matches then substitute ph effect else term
+let rewrite (pattern, effect) ifmatch elsef term =
+  match Matching.matching term pattern with None -> elsef term
+  | Some ph -> ifmatch ph effect
 
 
-let rec rewrite_rec rules term =
+let rec bottom_up rule term =
+  match term with
+  | Term(name, expr_l) -> rewrite rule substitute (fun x -> x)
+      (Term(name, (List.map (bottom_up rule) expr_l)))
+  | _ -> term
+
+
+let rec top_bottom rule term =
+  rewrite rule substitute (function
+  | Term(name, expr_l) -> Term(name, (List.map (top_bottom rule) expr_l))
+  | other -> other
+  ) term
+
+
+let rec rewrite_rec strategy rules term =
   let rec replace = function
-    | [], term -> term
-    | ((pattern, effect) as rule :: tail) as all_rules, term ->
-      let rec step term =
-        let matches, ph = Matching.matching term pattern in
-        if matches then
-          (substitute ph effect)
-        else
-          let res = match term with
-          | Term(name, expr_l) -> Term(name, (List.map step expr_l))
-          | other -> other in
-          res in
-      let newterm = step term in
-      replace (tail, newterm) in
+  | [], term -> term
+  | (pattern, effect) as rule :: tail, term ->
+      let newterm = strategy rule term in
+      replace (tail, newterm)
+  in
   match replace (rules, term) with
-  | newterm when newterm <> term -> rewrite_rec rules newterm
+  | newterm when newterm <> term -> rewrite_rec strategy rules newterm
   | newterm -> newterm

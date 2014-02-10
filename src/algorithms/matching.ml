@@ -21,22 +21,28 @@ let matching term pattern =
     | Term (t_id, t_terms), POperator (p_id, p_terms) ->
       if t_id = p_id then
         List.fold_left
-          (fun (matches, placeholders) (term, pattern) ->
-             if matches then step term pattern placeholders
-             else matches, placeholders)
-          (true, placeholders)
+          (fun placeholders (term, pattern) ->
+            match placeholders with
+            | Some ph -> step term pattern placeholders
+            | None -> None)
+          placeholders
 	  ( List.combine t_terms p_terms )
-      else false, placeholders
+      else None
 
-    | Const t_id, PConstant p_id -> (t_id = p_id, placeholders)
+    | Const t_id, PConstant p_id ->
+        if t_id = p_id then placeholders else None
 
     | _, PPlaceholder id ->
+        let ph = match placeholders with None -> SMap.empty
+        | Some ph -> ph in
       (* Testing placeholder unicity at typing phase ? *)
-      if SMap.mem id placeholders then raise_placeholder_already_defined id
-      else (true, SMap.add id term placeholders)
+      if SMap.mem id ph then raise_placeholder_already_defined id
+      else Some (SMap.add id term ph)
 
-    | _, PAny -> (true, placeholders)
-    | _, _ -> (false, placeholders)
+    | _, PAny -> placeholders
+    | _, _ -> None
   in
-  let matches, pl = step term pattern SMap.empty in
-  (matches, if matches then pl else SMap.empty)
+  step term pattern (Some SMap.empty)
+
+
+

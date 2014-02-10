@@ -52,7 +52,7 @@ and process_term system t =
     let rules = List.map (fun (_, (_, v)) -> v)
       (System_map.bindings system.rules)
     in
-    let nt = Rewriting.rewrite_rec rules t in
+    let nt = Rewriting.rewrite_rec Rewriting.top_bottom rules t in
     Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
       (string_of_term nt);
