@@ -17,10 +17,10 @@ type system = {
   constants : (info * constant) System_map.t;
   operators : (info * operator) System_map.t;
   rules :(info * rule) System_map.t;
-  strategies : (info * strategy) System_map.t;
+  strategies : (info * strategy_def) System_map.t;
 }
 
-(* TODO : reintroduce after *)
+(* TODO : reintroduce later *)
 let builtin_strategies m = m
               |> System_map.add "topdown" TopDown
               |> System_map.add "top-down" TopDown

@@ -89,7 +89,7 @@ and process_reduce system term strategy =
     | TopDown -> topdown any_rule
     | BottomUp -> bottomup any_rule
     | Strategy s ->
-        let _, strategy = begin try System_map.find s system.strategies with
+        let _, (_, strategy) = begin try System_map.find s system.strategies with
         | Not_found -> assert false end in strategy
     in 
     process_term system strategy term 

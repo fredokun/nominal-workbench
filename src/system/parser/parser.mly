@@ -217,10 +217,14 @@ rule_side_list_effect:
 /* strategies */
 
 strategy_decl:
-| strategy_head strategy_expression { create_decl $1 (DStrategy $2) }
+| strategy_head strategy_expression 
+  { 
+    let name, signature = $1 in
+    create_decl name (DStrategy (signature, $2))
+  }
 
 strategy_head:
-| STRATEGY LIDENT COLON { $2 }
+| STRATEGY LIDENT COLON { ($2, []) }
 
 strategy_expression :
 | LPAREN strategy_expression RPAREN { $2 }

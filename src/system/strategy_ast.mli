@@ -1,5 +1,3 @@
-
-
 type strategy = 
   | SId
   | SFail
@@ -13,4 +11,4 @@ type strategy =
   | SRule of string option
   | SCall of string * strategy list
 
-
+type strategy_def = string list * strategy 

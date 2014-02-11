@@ -236,42 +236,4 @@
     <name>Negative Peano</name>
     <file>data/test/run-pass/negative_peano.nw</file>
   </systemtest>
-
-  <!-- Peano test with strategies -->
-  <systemtest>
-    <name>Simple Peano</name>
-    <file>data/test/run-pass/simple_peano_strats.nw</file>
-    <!-- Valid test cases -->
-    <termtest>
-      <term>Successor(Zero)</term>
-      <result>Successor(Zero)</result>
-    </termtest>
-    <termtest>
-      <term>Successor(Successor(Zero))</term>
-      <result>Successor(Successor(Zero))</result>
-    </termtest>
-    <termtest>
-      <term>Zero</term>
-      <result>Zero</result>
-    </termtest>
-    <termtest>
-      <term>Add(Zero,Successor(Zero))</term>
-      <result>Successor(Zero)</result>
-    </termtest>
-    <termtest>
-      <term>Add(Zero,Zero)</term>
-      <result>Zero</result>
-    </termtest>
-    <termtest>
-      <term>Add(Successor(Zero),Successor(Zero))</term>
-      <result>Successor(Successor(Zero))</result>
-    </termtest>
-    <termtest>
-      <term>Add(Successor(Zero),Successor(Zero))</term>
-      <result>Successor(Successor(Zero))</result>
-    </termtest>
-    <termtest>
-      <term>Add(Add(Zero, Successor(Zero)), Add(Successor(Zero),Successor(Zero)))</term>
-      <result>Successor(Successor(Successor(Zero)))</result>
-    </termtest>
 </test>
