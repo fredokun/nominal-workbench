@@ -42,24 +42,14 @@ let process_file system fname =
     else if Sys.file_exists fname then
       fname
     else 
-      eprint_and_exit 
-	(sprintf "[Error] Cannot find the file %s\n%!" fname) 1
-  in
+      eprint_and_exit (sprintf "[Error] Cannot find the file %s\n%!" fname) 1 in
   begin
     if !Config.verbose then 
       printf "Evaluating file %s...\n%!" fname;
     let ic = open_in fpath in
     try
-      let structure = 
-	Parser.start Lexer.token (Lexing.from_channel ic) 
-      in
-
-      
-      let new_system = 
-	List.fold_left
-	  Eval.evaluate_structure_item
-	  system structure 
-      in
+      let structure = Parser.start Lexer.token (Lexing.from_channel ic) in
+      let new_system = List.fold_left Eval.evaluate_structure_item system structure in
       (* Pretty.print_system Format.std_formatter new_system; *)
       close_in ic;
       (* todo type check. before or after ? *)
@@ -80,22 +70,15 @@ let main k =
     (* Parse & Eval the files *)
     let system = 
       if !Config.reset_system then
-	begin
-	  List.iter 
-	    (fun fname -> 
-	      ignore (process_file empty_system fname))
-	    (List.rev !files);
-	  empty_system
-	end
-      else 
-	List.fold_left 
-	  (fun acc fname -> process_file acc fname)
-	  empty_system
-	  (* evaluate in the given order *)
-	  (List.rev !files)
-    in
-
-    (* Continuation, might be a 'Read-Eval-Print-Loop' *)
-    k system
+      begin
+        List.iter (fun fname -> ignore (process_file empty_system fname))
+          (List.rev !files);
+        empty_system
+      end
+      else
+        List.fold_left (fun acc fname -> process_file acc fname) empty_system
+          (List.rev !files) in
+    if !Config.no_repl then
+      (* Continuation, might be a 'Read-Eval-Print-Loop' *)
+      k system
   end
-    

@@ -15,6 +15,8 @@ val rule_suffix : string
 
 val term_suffix : string
 
+val no_repl : bool ref
+
 val verbose : bool ref
 
 val reset_system : bool ref

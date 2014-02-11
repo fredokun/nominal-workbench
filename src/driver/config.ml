@@ -10,11 +10,9 @@ let path = ref ["."]
 let get_path () = List.rev !path
 
 let rule_suffix = "nw"
-
 let term_suffix = "nwt"
-
 let verbose = ref false
-
+let no_repl = ref false
 let reset_system = ref false
 
 (* functions *)
@@ -36,6 +34,7 @@ let list =
   ; "--vnum", Unit print_vnum, "Print version number and exits"
   ; "-I", String add_path, "Include the given directory"
   ; "-v", Set verbose, "Be more verbose"
+  ; "--no-repl", Set no_repl, "Read files and then exit without launching the top-level."
   ; "--reset-system", Set reset_system, "Start interpreting each file with an empty system instead of populating it"
   ; "--load-system-file", String (fun _ -> print_endline "'load-system' todo"), "Load the given file as the initial system to used"
   ]
