@@ -68,11 +68,9 @@ and subst_vars system =
 and process_term system strategy t =
   let open Term_ast in 
   let open Symbols in
+  let open Strategies in
   try
-    let rule_names = List.map (fun (n, (_, _)) -> n)
-      (System_map.bindings system.rules)
-    in
-    let strategy = Strategies.(topdown @@ seq_all_rules rule_names) in
+    let strategy = topdown any_rule in
     let nt = Rewriting.rewrite_rec strategy system.rules t in
     Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
@@ -86,29 +84,28 @@ and process_term system strategy t =
 and process_reduce system term strategy =
   let open Rewriting_ast in
   let open Symbols in
-  let open Strategy in
-  (* TODO ADAPT : 
+  let open Strategies in
     let strategy = match strategy with
-    | TopDown -> Rewriting.top_down
-    | BottomUp -> Rewriting.bottom_up
+    | TopDown -> topdown any_rule
+    | BottomUp -> bottomup any_rule
     | Strategy s ->
-        let _strategy = begin try System_map.find s system.strategies with
+        let strategy = begin try System_map.find s system.strategies with
         | Not_found -> assert false end in assert false
-    in *)
-    process_term system Id term 
+    in 
+    process_term system strategy term 
 
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
 and evaluate_structure_item system =
     let open Rewriting_ast in
-    let open Strategy in
+    let open Strategies in
     function
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
   | PReduce (term, strategy) ->
       process_reduce system term strategy
-  | PTerm term -> process_term system Id term  (* TODO ADAPT *)
+  | PTerm term -> process_term system  (topdown any_rule) term
   | PFile_include fname -> process_file system fname
   | PTermDecl (id, term) -> 
       term_env := Term_env.add id term !term_env;

@@ -9,7 +9,7 @@ type strategy =
   | Test of strategy
   | Not of strategy
   | Var of string
-  | Rule of string
+  | Rule of string option
   | All of strategy
 
 

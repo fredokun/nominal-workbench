@@ -82,13 +82,14 @@ let rec apply_strategy rules rec_env strategy term =
           apply_strategy rec_strat term
         with Not_found -> assert false
       end
-    | Rule(name) ->
+    | Rule(Some(name)) ->
       begin
         try
           let (_, rule) = System_map.find name rules in
           rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
         with Not_found -> assert false
       end
+    | Rule(None) -> apply_strategy (Strategies.seq_all rules) term
     | All(s) -> apply_to_children rules rec_env s term
   in
   apply_strategy strategy term
