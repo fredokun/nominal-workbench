@@ -44,8 +44,13 @@ let rewritten_success t1 t2 () =
 
 let check_processed_term term rules expectation =
   let open Rewriting_error in
+  let open Symbols in
   try
-    let rewritten_term = Rewriting.rewrite_rec Rewriting.top_bottom rules term in
+    let rule_names = List.map (fun (n, (_, _)) -> n)
+      (System_map.bindings rules)
+    in
+    let strategy = Strategies.(bottomup @@ seq_all_rules rule_names) in
+    let rewritten_term = Rewriting.rewrite_rec strategy rules term in
     let srewritten_term = Term_ast.string_of_term rewritten_term in
     check_term_expectation expectation (TPassed(srewritten_term)) domain_name
      (rewritten_success (Term_ast.string_of_term term) srewritten_term)
@@ -71,9 +76,7 @@ let check_term system (TermTest(libs, term, expectation)) =
 	  raise (TermParsingError(SyntaxError, "Expected a term"))
       end
     in
-    let rules = List.map (fun (_, (_, v)) -> v)
-      (System_map.bindings system.rules)  in
-    check_processed_term term rules expectation
+    check_processed_term term system.rules expectation
   with
   | TermParsingError(code, _) ->
     check_term_expectation expectation (TFailed(Error(string_of_error_code code, domain_name)))

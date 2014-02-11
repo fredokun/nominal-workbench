@@ -1,5 +1,5 @@
 begin library "algorithms"
   sort = true
-  files = [ "matching.ml" "rewriting.ml" ]
+  files = [ "matching.ml" "strategy.mli" "strategies.ml" "rewriting.ml" ]
   requires = [ "error" "rewriting_system" "term_system" ]
 end

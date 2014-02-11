@@ -10,6 +10,6 @@ type strategy =
   | Not of strategy
   | Var of string
   | Rule of string
+  | All of strategy
 
-type outcome = Sucess | Fail
 

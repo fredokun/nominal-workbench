@@ -49,10 +49,11 @@ and process_term system t =
   let open Term_ast in 
   let open Symbols in
   try
-    let rules = List.map (fun (_, (_, v)) -> v)
+    let rule_names = List.map (fun (n, (_, _)) -> n)
       (System_map.bindings system.rules)
     in
-    let nt = Rewriting.rewrite_rec Rewriting.top_bottom rules t in
+    let strategy = Strategies.(topdown @@ seq_all_rules rule_names) in
+    let nt = Rewriting.rewrite_rec strategy system.rules t in
     Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
       (string_of_term nt);
