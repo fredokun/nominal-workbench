@@ -2,6 +2,7 @@ open Term_ast_dag
 open Term_ast_hashconsed
 
 let create_tests () =
+  Format.printf "Create tests@.";
   (* Testing for Const *)
 
   let c1 = DConst "A" in
@@ -14,6 +15,8 @@ let create_tests () =
 
   assert (not (hc1 == hc2));
   assert (hc2 == hc3);
+
+  Format.printf "Const OK@.";
 
   (* Testing for FreeVars *)
 
@@ -28,6 +31,8 @@ let create_tests () =
   assert (not (hfv1 == hfv2));
   assert (hfv1 == hfv3);
 
+  Format.printf "FreeVars OK@.";
+
   (* Testing for Vars *)
 
   let b1 = DBinder ("a", ref []) in
@@ -36,28 +41,30 @@ let create_tests () =
   let v2 = DVar ("b", Some (ref b2)) in
   let v3 = DVar ("b", Some (ref b2)) in
 
-  (* We must bind the binders in order to have a correct index *)
-  let hb1, n, bindings = create_term_raw 0 SMap.empty b1 in
-  let hb2, n, bindings = create_term_raw n bindings b2 in
+  (* We have to encapsulate the binders and variables into lsits to have a
+    correct binded function *)
 
-  let hv1, n, bindings = create_term_raw n bindings v1 in
-  let hv2, n, bindings = create_term_raw n bindings v2 in
-  let hv3, n, bindings = create_term_raw n bindings v3 in
+  let l1 = [b1; b1; b2; v1; v2; v3] in
+  let l2 = [b1; b1; b2; v1; v2; v3] in
 
-  assert (not (hv1 == hv2));
-  assert (hv2 == hv3);
+  let hl1 = create_hlist [] l1 in
+  let hl2 = create_hlist [] l2 in
 
-  (* Term_list tests *)
-  (* We create hlists using previously defined terms (which can be correctly
-    hashconsed) *)
+  (* pretty_print_list hl1; *)
+  (* pretty_print_list hl2; *)
 
-  let l1 = [v1; v2] in
-  let l2 = [v1; v2] in
-
-  let hl1 = create_hlist n bindings l1 in
-  let hl2 = create_hlist n bindings l2 in
+  List.iter2 (fun (_, t1) (_, t2) ->
+      (* Format.printf "Comparing two terms@."; *)
+      (* pretty_print t1; *)
+      (* pretty_print t2; *)
+      match t1, t2 with
+      | HBinder b1, HBinder b2 -> assert (b1 == b2)
+      | _ -> ()
+    ) hl1 hl2;
 
   assert(hl1 == hl2);
+
+  Format.printf "Binded variables OK@.";
 
   (* We now test term creation, since other constructs and lists can be
      correctly hashconsed. *)
@@ -77,7 +84,8 @@ let create_tests () =
   let ht1 = create_term t1 in
   let ht2 = create_term t2 in
 
-  assert (ht1 == ht2)
+  assert (ht1 == ht2);
+  Format.printf "Terms OK@."
 
 let peano_tests () =
   (* Tests with more complex terms *)
@@ -115,6 +123,7 @@ let lambda_tests () =
      - Subst : [Variable]. Term * Term -> Term
   *)
 
+
   (* First, we try on two identical id functions, modulo apha-conversion *)
   let bx = DBinder ("x", ref []) in
   let id1 = DTerm ("Lambda", [bx; DVar ("x", Some (ref bx))]) in
@@ -124,7 +133,24 @@ let lambda_tests () =
   let hid1 = create_term id1 in
   let hid2 = create_term id2 in
 
-  assert (hid1 == hid2)
+  assert (hid1 == hid2);
+
+  (* Term for getting the second element of a pair in lambda calculus, which is
+  also the encoding for "false". *)
+  let lsnd = DTerm ("Lambda",
+                   [bx; DTerm ("Lambda", [by; DVar ("y", Some (ref by))])]) in
+  let hsnd = create_term lsnd in
+
+  (* We open the term and get the second lambda, which is basically id *)
+  let hid3 = match hsnd with
+    | HTerm (_, hl) ->
+      snd @@ List.hd @@ List.tl hl
+    | _ -> assert false in
+
+  (* pretty_print hid2; *)
+  (* pretty_print hid3; *)
+
+  assert (hid2 == hid3)
 
 let _ =
   create_tests ();
