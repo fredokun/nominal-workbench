@@ -13,4 +13,4 @@ val rewrite_rec: (Rewriting_ast.rule -> Term_ast.term -> Term_ast.term) ->
                                          
   (* stratgies *)
 val bottom_up: (Rewriting_ast.rule -> Term_ast.term -> Term_ast.term)
-val top_bottom: (Rewriting_ast.rule -> Term_ast.term -> Term_ast.term)
+val top_down: (Rewriting_ast.rule -> Term_ast.term -> Term_ast.term)

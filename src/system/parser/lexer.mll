@@ -24,6 +24,7 @@
       ; "open", OPEN
       ; "forall", FORALL
       ; "reduce", REDUCE
+      ; "with", WITH
       ]
 
   let directive_table = Hashtbl.create 16

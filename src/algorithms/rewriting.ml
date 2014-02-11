@@ -33,9 +33,9 @@ let rec bottom_up rule term =
   | _ -> term
 
 
-let rec top_bottom rule term =
+let rec top_down rule term =
   rewrite rule substitute (function
-  | Term(name, expr_l) -> Term(name, (List.map (top_bottom rule) expr_l))
+  | Term(name, expr_l) -> Term(name, (List.map (top_down rule) expr_l))
   | other -> other
   ) term
 

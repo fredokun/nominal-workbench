@@ -51,7 +51,7 @@ let create_decl name desc =
 %token <string> LIDENT UIDENT PLACEHOLDER FILENAME
 
 /* keywords */
-%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE
+%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
@@ -82,21 +82,27 @@ toplevel_phrase:
 | EOF { raise End_of_file }
 ;
 
-decls :
+decls:
 | decl decls
     { $1::$2}
 | decl
     { [$1] }
 
+
+strategy:
+| UIDENT { Strategy $1 }
+;
+    
 decl:
 | kind_decl { PDecl $1 }
 | constant_decl { PDecl $1 }
 | operator_decl { PDecl $1 }
 | rule_decl { PDecl $1 }
+| REDUCE term WITH strategy { PReduce ($2, $4) }
 | OPEN FILENAME { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }
-| term { PTerm $1 }
+/* | term { PTerm $1 } */
 /* | OPEN FILENAME
     { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)

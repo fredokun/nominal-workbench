@@ -45,7 +45,7 @@ let rewritten_success t1 t2 () =
 let check_processed_term term rules expectation =
   let open Rewriting_error in
   try
-    let rewritten_term = Rewriting.rewrite_rec Rewriting.top_bottom rules term in
+    let rewritten_term = Rewriting.rewrite_rec Rewriting.top_down rules term in
     let srewritten_term = Term_ast.string_of_term rewritten_term in
     check_term_expectation expectation (TPassed(srewritten_term)) domain_name
      (rewritten_success (Term_ast.string_of_term term) srewritten_term)
