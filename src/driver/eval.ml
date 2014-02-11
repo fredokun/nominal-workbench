@@ -97,9 +97,9 @@ and process_reduce system term strategy =
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
 and evaluate_structure_item system =
-    let open Rewriting_ast in
-    let open Strategies in
-    function
+  let open Rewriting_ast in
+  let open Strategies in
+  function
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
@@ -113,9 +113,9 @@ and evaluate_structure_item system =
 
 let run_type_check filled_system ast = 
   List.iter (function
-	       | PDecl d -> 
-		   Type_checking.check_decl filled_system d
-	       | _ -> ())
+    | PDecl d -> 
+      Type_checking.check_decl filled_system d
+    | _ -> ())
     ast
 
 

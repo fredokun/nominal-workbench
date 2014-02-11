@@ -10,7 +10,6 @@ let path = ref ["."]
 let get_path () = List.rev !path
 
 let rule_suffix = "nw"
-let term_suffix = "nwt"
 let verbose = ref false
 let no_repl = ref false
 let reset_system = ref false

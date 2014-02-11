@@ -7,7 +7,7 @@ open Printf
 
 open Rewriting_ast
 
-let usage = "Usage: nowork [options] <rules files> <terms files>\noptions are:"
+let usage = "Usage: nowork [options] <rules files> \noptions are:"
 
 let eprint_and_exit msg err_code =  
   eprintf "%s\n%!" msg;
@@ -16,8 +16,7 @@ let eprint_and_exit msg err_code =
 let files : string list ref = ref []
 
 let file_argument name =
-  if Filename.check_suffix name Config.rule_suffix 
-    ||  Filename.check_suffix name Config.term_suffix
+  if Filename.check_suffix name Config.rule_suffix
   then
     files := name :: !files
   else
