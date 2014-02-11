@@ -8,4 +8,5 @@ and structure_item =
 | PReduce of term * strategy
 | PTerm of term
 | PFile_include of string
+| PTermDecl of string * term
 (* | Strategy *)
