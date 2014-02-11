@@ -108,20 +108,6 @@ and apply_to_children rules rec_env strategy = function
   | t -> Some(t)
     
 
-let rec bottom_up rule term =
-  match term with
-  | Term(name, expr_l) -> rewrite rule substitute (fun x -> x)
-      (Term(name, (List.map (bottom_up rule) expr_l)))
-  | _ -> term 
-
-
-let rec top_bottom rule term =
-  rewrite rule substitute (function
-  | Term(name, expr_l) -> Term(name, (List.map (top_bottom rule) expr_l))
-  | other -> other
-  ) term
-
-
 let rec rewrite_rec strategy rules term =
   let rec_env = Hashtbl.create 3 in
   match apply_strategy rules rec_env strategy term with
