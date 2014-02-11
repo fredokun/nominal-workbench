@@ -4,6 +4,7 @@
 *)
 
 open Rewriting_ast
+open Strategy_ast
 open Rewriting_system_error
 open Utils
 
@@ -16,9 +17,10 @@ type system = {
   constants : (info * constant) System_map.t;
   operators : (info * operator) System_map.t;
   rules :(info * rule) System_map.t;
-  strategies : strategy System_map.t;
+  strategies : (info * strategy) System_map.t;
 }
 
+(* TODO : reintroduce after *)
 let builtin_strategies m = m
               |> System_map.add "topdown" TopDown
               |> System_map.add "top-down" TopDown
@@ -31,7 +33,7 @@ let empty_system = {
   constants = System_map.empty;
   operators = System_map.empty;
   rules = System_map.empty;
-  strategies = builtin_strategies System_map.empty;
+  strategies = System_map.empty;
 }
 
 
@@ -85,6 +87,16 @@ let add_rule redeclaration_policy sys id (info, value) =
   else
     {sys with rules = System_map.add id (info, value) sys.rules}
 
+let add_strategy redeclaration_policy sys id (info, value) =
+  if System_map.mem id sys.strategies then
+    begin
+      redeclaration_policy "strategy" id info; sys
+    end
+  else
+    {sys with strategies = System_map.add id (info, value) sys.strategies}
+
+
+
 let add_symbol_impl redeclaration_policy system 
     {name=name; info = info; desc=desc} =
   match desc with
@@ -96,6 +108,8 @@ let add_symbol_impl redeclaration_policy system
     add_operator redeclaration_policy system name (info, op)
   | DRule r ->
     add_rule redeclaration_policy system name (info, r)
+  | DStrategy s ->
+    add_strategy redeclaration_policy system name (info, s)
 
 (*let add_symbol_impl redeclaration_policy system (name, info, desc) =
   let aux (map : (info * 'a) System_map.t) symbol_category value : (info * 'a) System_map.t =
@@ -138,9 +152,11 @@ let lookup_kind sys = lookup sys.kinds "kind"
 let lookup_const sys = lookup sys.constants "const"
 let lookup_op sys = lookup sys.operators "operator"
 let lookup_rule sys = lookup sys.rules "rule"
+let lookup_strategy sys = lookup sys.strategies "strategy"
 
 let exists map id = System_map.mem id map
 let is_kind sys = exists sys.kinds
 let is_const sys = exists sys.constants
 let is_op sys = exists sys.operators
 let is_rule sys = exists sys.rules
+let is_strategy sys = exists sys.strategies

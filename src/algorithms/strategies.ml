@@ -1,16 +1,16 @@
-open Strategy
+open Strategy_ast
 
-let try_app s = Either(s, Id)
-let repeat s = Rec("x", Seq(try_app s, Var("x")))
-let topdown s = Rec("x", Seq(s, All(Var("x"))))
-let bottomup s = Rec("x", Seq(All(Var("x")), s))
-let any_rule = Rule(None)
+let try_app s = SEither(s, SId)
+let repeat s = SRec("x", SSeq(try_app s, SVar("x")))
+let topdown s = SRec("x", SSeq(s, SAll(SVar("x"))))
+let bottomup s = SRec("x", SSeq(SAll(SVar("x")), s))
+let any_rule = SRule(None)
 
 let seq_all rules =
   let rec seq_all_rules = function
-  | [] -> Id
-  | head :: [] -> try_app @@ Rule(Some(head))
-  | head :: tail -> Seq(try_app @@ Rule(Some(head)), seq_all_rules tail)
+  | [] -> SId
+  | head :: [] -> try_app @@ SRule(Some(head))
+  | head :: tail -> SSeq(try_app @@ SRule(Some(head)), seq_all_rules tail)
   in
   let rule_names = List.map (fun (n, (_, _)) -> n)
     (Symbols.System_map.bindings rules)
@@ -19,16 +19,19 @@ let seq_all rules =
   
 
 let rec string_of_strategy = function
-  | Id -> "id"
-  | Fail -> "fail"
-  | Seq(s1, s2) -> 
+  | SId -> "id"
+  | SFail -> "fail"
+  | SSeq(s1, s2) -> 
     (string_of_strategy s1) ^ "; " ^ (string_of_strategy s2)
-  | Either(s1, s2) ->
+  | SEither(s1, s2) ->
     (string_of_strategy s1) ^ " +> " ^ (string_of_strategy s2)
-  | Rec(var, s) -> var ^ "." ^ (string_of_strategy s)
-  | Test(s) -> "test(" ^ (string_of_strategy s) ^ ")"
-  | Not(s) -> "not(" ^ (string_of_strategy s) ^ ")"
-  | Var(name) -> name
-  | Rule(Some(name)) -> name
-  | Rule(None) -> "$any"
-  | All(s) -> "all(" ^ (string_of_strategy s) ^ ")"
+  | SRec(var, s) -> "rec(" ^ var ^ ", " ^ (string_of_strategy s) ^ ")"
+  | STest(s) -> "test(" ^ (string_of_strategy s) ^ ")"
+  | SNot(s) -> "not(" ^ (string_of_strategy s) ^ ")"
+  | SVar(name) -> name
+  | SRule(Some(name)) -> "rule(" ^ name ^ ")"
+  | SRule(None) -> "rule()"
+  | SAll(s) -> "all(" ^ (string_of_strategy s) ^ ")"
+  | SCall(name, params) -> 
+    let params = List.map string_of_strategy params in
+    name ^ "(" ^ (String.concat "," params) ^ ")"
