@@ -17,6 +17,11 @@ type kind_type =
 
 type kind = kind_type list
 
+type strategy =
+  | Strategy of string
+  | TopDown
+  | BottomUp
+    
 (* Type application *)
 (* A type application is the process to apply a type to another. *)
 (* Example: forall(A).List<Pair<A,B> > *)
@@ -56,6 +61,7 @@ type rule = pattern * effect
 
 type info = Lexing.position
 
+    
 type rewriting_decl =
   {
     name : string;
@@ -68,6 +74,3 @@ and rewriting_desc =
   | DConstant of constant
   | DOperator of operator
   | DRule of rule
-
-
-val print_rule : Format.formatter -> rule -> unit

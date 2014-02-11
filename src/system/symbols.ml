@@ -15,16 +15,27 @@ type system = {
   kinds :  (info * kind) System_map.t;
   constants : (info * constant) System_map.t;
   operators : (info * operator) System_map.t;
-  rules :(info * rule) System_map.t
+  rules :(info * rule) System_map.t;
+  strategies : strategy System_map.t;
 }
 
+let builtin_strategies m = m
+              |> System_map.add "topdown" TopDown
+              |> System_map.add "top-down" TopDown
+              |> System_map.add "bottomup" BottomUp
+              |> System_map.add "bottom-up" BottomUp
+
+    
 let empty_system = {
   kinds = System_map.empty;
   constants = System_map.empty;
   operators = System_map.empty;
-  rules = System_map.empty
+  rules = System_map.empty;
+  strategies = builtin_strategies System_map.empty;
 }
 
+
+  
 (* Error utilities *)
 
 let raise_unknown_symbol pos sym_kind id =
