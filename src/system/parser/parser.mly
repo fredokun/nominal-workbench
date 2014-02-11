@@ -102,7 +102,7 @@ decl:
 | OPEN FILENAME { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }
-/* | term { PTerm $1 } */
+| term { PTerm $1 }
 /* | OPEN FILENAME
     { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)
