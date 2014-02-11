@@ -86,26 +86,29 @@ and process_term system strategy t =
 and process_reduce system term strategy =
   let open Rewriting_ast in
   let open Symbols in
+  let open Strategy in
+  (* TODO ADAPT : 
     let strategy = match strategy with
     | TopDown -> Rewriting.top_down
     | BottomUp -> Rewriting.bottom_up
     | Strategy s ->
         let _strategy = begin try System_map.find s system.strategies with
         | Not_found -> assert false end in assert false
-    in
-    process_term system strategy term 
+    in *)
+    process_term system Id term 
 
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
 and evaluate_structure_item system =
     let open Rewriting_ast in
+    let open Strategy in
     function
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
   | PReduce (term, strategy) ->
       process_reduce system term strategy
-  | PTerm term -> process_term system Rewriting.top_down term  
+  | PTerm term -> process_term system Id term  (* TODO ADAPT *)
   | PFile_include fname -> process_file system fname
   | PTermDecl (id, term) -> 
       term_env := Term_env.add id term !term_env;
