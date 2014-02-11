@@ -43,9 +43,7 @@ let rec replace ident new_strategy = function
   | Rule(name) -> Rule(name)
   | All(s) -> All(replace ident new_strategy s)
 
-let rec apply_strategy rules strategy term =
-  Printf.printf "applying strat : %s\n" (Strategies.string_of_strategy strategy);
-  (* Printf.printf "on term : %s\n" (string_of_term term); *)
+let rec apply_strategy rules rec_env strategy term =
   let rec apply_strategy strategy term =
     match strategy with
     | Id -> Some(term)
@@ -63,7 +61,8 @@ let rec apply_strategy rules strategy term =
         | res -> res
       end
     | Rec(var, s) as rec_strat ->
-      apply_strategy (replace var rec_strat s) term
+      Hashtbl.add rec_env var rec_strat;
+      apply_strategy s term
     | Test(s) ->
       begin
         match apply_strategy s term with
@@ -76,7 +75,13 @@ let rec apply_strategy rules strategy term =
         | None -> Some(term)
         | Some _ -> None
       end
-    | Var _ -> assert false 
+    | Var(name) -> 
+      begin
+        try
+          let rec_strat = Hashtbl.find rec_env name in
+          apply_strategy rec_strat term
+        with Not_found -> assert false
+      end
     | Rule(name) ->
       begin
         try
@@ -84,17 +89,17 @@ let rec apply_strategy rules strategy term =
           rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
         with Not_found -> assert false
       end
-    | All(s) -> apply_to_children rules s term
+    | All(s) -> apply_to_children rules rec_env s term
   in
   apply_strategy strategy term
 
-and apply_to_children rules strategy = function
+and apply_to_children rules rec_env strategy = function
   | Term(name, terms) ->
     let rec apply_to_children acc = function
       | [] -> Some(Term(name, List.rev acc))
       | head :: tail -> 
         begin
-          match apply_strategy rules strategy head with
+          match apply_strategy rules rec_env strategy head with
           | None -> None
           | Some(t) -> apply_to_children (t::acc) tail
         end
@@ -118,7 +123,8 @@ let rec top_bottom rule term =
 
 
 let rec rewrite_rec strategy rules term =
-  match apply_strategy rules strategy term with
+  let rec_env = Hashtbl.create 3 in
+  match apply_strategy rules rec_env strategy term with
   | Some(newterm) when newterm <> term -> rewrite_rec strategy rules newterm
   | Some(newterm) -> newterm
   | None -> assert false
