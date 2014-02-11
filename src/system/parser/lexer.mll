@@ -25,6 +25,7 @@
       ; "forall", FORALL
       ; "reduce", REDUCE
       ; "with", WITH
+      ; "term", TERM
       ]
 
   let directive_table = Hashtbl.create 16
@@ -52,6 +53,7 @@ let gt = '>'
 let dot = '.'
 let semicol = ';'
 let colon = ':'
+let equal = '='
 let arrow = "->"
 let doublearrow = "=>"
 let star = '*'
@@ -93,6 +95,7 @@ let directive = colon lower_ident
     | gt { GT }
     | dot { DOT }
     | semicol { SEMICOL }
+    | equal { EQUAL }
     | colon { COLON }
     | arrow { ARROW }
     | doublearrow { DARROW }

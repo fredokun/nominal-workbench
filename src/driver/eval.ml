@@ -2,6 +2,11 @@ open Parsetree
 
 (* TODO : mli !! *)
 
+module Term_env = Map.Make(String)
+
+(* Todo : virer la ref global *)
+let term_env = ref Term_env.empty
+  
 let find_file fname =
   let is_file_in_dir dir =
     Sys.file_exists (dir ^ "/" ^ fname)
@@ -46,10 +51,26 @@ let rec process_file system fname =
       system
   end
 
+and subst_vars system = 
+  let open Term_ast in
+    function
+      | Term (id, tlist) -> Term(id, List.map (subst_vars system) tlist)
+      | Var id as term -> 
+	  begin
+	    try
+	      Term_env.find id !term_env 
+	    with 
+	      | Not_found -> term
+	  end
+      | term -> term
+
+
 and process_term system strategy t =
   let open Term_ast in 
   let open Symbols in
   try
+    let t = subst_vars system t in
+    
     let rules = List.map (fun (_, (_, v)) -> v)
       (System_map.bindings system.rules)
     in
@@ -87,6 +108,9 @@ and evaluate_structure_item system =
       process_reduce system term strategy
   | PTerm term -> process_term system Rewriting.top_down term  
   | PFile_include fname -> process_file system fname
+  | PTermDecl (id, term) -> 
+      term_env := Term_env.add id term !term_env;
+      system
 
 let run_type_check filled_system ast = 
   List.iter (function

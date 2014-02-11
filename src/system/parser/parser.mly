@@ -28,15 +28,6 @@ let parse_error s =
   " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)) in
   print_endline msg
 
-
-let files_included = Hashtbl.create 10
-
-let include_paths = ref [(Sys.getcwd ())]
-
-let reset_parser x =
-    Hashtbl.reset files_included;
-    include_paths := [(Sys.getcwd ())]
-
 let create_decl name desc =
   {
     name = name;
@@ -51,7 +42,7 @@ let create_decl name desc =
 %token <string> LIDENT UIDENT PLACEHOLDER FILENAME
 
 /* keywords */
-%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH
+%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH TERM
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
@@ -74,8 +65,7 @@ let create_decl name desc =
 %%
 
 start:
-| decls EOF { reset_parser ();
-	      $1 }
+| decls EOF { $1 }
 
 toplevel_phrase:
 | decl SEMICOL SEMICOL { $1 }
@@ -98,6 +88,7 @@ decl:
 | constant_decl { PDecl $1 }
 | operator_decl { PDecl $1 }
 | rule_decl { PDecl $1 }
+| TERM LIDENT EQUAL term { PTermDecl ($2, $4) }
 | REDUCE term WITH strategy { PReduce ($2, $4) }
 | OPEN FILENAME { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
@@ -209,7 +200,7 @@ rule_side_list_effect:
 | rule_side_effect { [$1] }
 
 
-/* term */
+/* terms */
 
 term:
 | LPAREN term RPAREN { $2 }
@@ -221,5 +212,5 @@ term:
 term_params:
 | term {  [$1] }
 | term COMMA term_params { $1::$3 }
-
+    
 %%
