@@ -6,7 +6,7 @@ open Interactive_ast
 type term_expr = 
 | PTermLet of string * term_expr
 | PTermRewrite of term_expr * strategy
-| PTerm of term
+| PTerm of term_ast
 
 type structure = structure_item list
 

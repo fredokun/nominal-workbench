@@ -5,13 +5,13 @@
 
 module SMap : Map.S with type key = string
 
-type placeholders = Term_ast.term SMap.t
+type placeholders = Term_ast.term_ast SMap.t
 
 (** [matching term pattern] returns a boolean and a map containing the possible
   placeholders if the term matches the pattern given.
     We suppose that the term and the pattern are well-constructed since there is
   a typing phase.
 *)
-val matching : Term_ast.term -> Rewriting_ast.pattern -> placeholders option
+val matching : Term_ast.term_ast -> Rewriting_ast.pattern -> placeholders option
 
 

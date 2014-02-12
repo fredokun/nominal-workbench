@@ -49,16 +49,17 @@ let rec process_file system fname =
 
 and subst_vars system = 
   let open Term_ast in
-    function
-      | Term (id, tlist) -> Term(id, List.map (subst_vars system) tlist)
-      | Var id as term -> 
+    fun term ->
+      match term.desc with
+      | Term (tlist) -> create_term_info term.name (Term (List.map (subst_vars system) tlist)) term.info
+      | Var -> 
       begin
         try
-          Term_env.find id !term_env 
+          Term_env.find term.name !term_env 
         with 
         | Not_found -> term
       end
-      | term -> term
+      | _ -> term
 
 and process_term system strategy t =
   let open Term_ast in 

@@ -6,6 +6,7 @@
 open Printf
 open Display_test
 open Interactive_ast
+open Parsetree
 
 (* Test framework. *)
 let string_of_error (Error(domain, name)) =

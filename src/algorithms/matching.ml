@@ -9,17 +9,17 @@ open Rewriting_ast
 (* Placeholders bindings *)
 module SMap = Map.Make(String)
 
-type placeholders = Term_ast.term SMap.t
+type placeholders = Term_ast.term_ast SMap.t
 
 let raise_placeholder_already_defined id =
   let open Rewriting_error in
   raise (RewritingError(PlaceholderAlreadyDefined, id))
 
-let matching term pattern =
-  let rec step term pattern placeholders =
-    match term, pattern with
-    | Term (t_id, t_terms), POperator (p_id, p_terms) ->
-      if t_id = p_id then
+let matching (term : Term_ast.term_ast) pattern =
+  let rec step (term : Term_ast.term_ast) pattern placeholders =
+    match term.desc, pattern with
+    | Term (t_terms), POperator (p_id, p_terms) ->
+      if term.name = p_id then
         List.fold_left
           (fun placeholders (term, pattern) ->
             match placeholders with
@@ -29,8 +29,8 @@ let matching term pattern =
 	  ( List.combine t_terms p_terms )
       else None
 
-    | Const t_id, PConstant p_id ->
-        if t_id = p_id then placeholders else None
+    | Const , PConstant p_id ->
+        if term.name = p_id then placeholders else None
 
     | _, PPlaceholder id ->
         let ph = match placeholders with None -> SMap.empty

@@ -16,26 +16,26 @@ open Hashtbl
 open Sys
 open Interactive_ast
 
-(* let annote_pos item = *)
-(*   let pos = Parsing.symbol_start_pos () in *)
-(*   { value = item ; info = pos } *)
-
-let annote_term item : Term_ast.info * Term_ast.term =
-  let pos = Parsing.symbol_start_pos () in
-  pos, item
-
 let parse_error s =
   let pos = Parsing.symbol_start_pos () in
   let msg = "Parsing error line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
   " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)) in
   print_endline msg
 
-let create_decl name desc =
+let create_decl (name : string) (desc : rewriting_desc) : rewriting_decl =
   {
     name = name;
     info = Parsing.symbol_start_pos ();
     desc = desc;
   }
+
+let create_term (name : string) (desc : term_desc) : term_ast =
+  {
+    name = name;
+    info = Parsing.symbol_start_pos ();
+    desc = desc;
+  }
+    
 
 let create_strat name content =
   match name with
@@ -270,9 +270,9 @@ term_expr:
 | term { PTerm $1 }
 
 term:
-| UIDENT LPAREN term_params RPAREN { Term($1, $3) }
-| UIDENT { Const($1) }
-| LIDENT { Var($1) }
+| UIDENT LPAREN term_params RPAREN { create_term $1 (Term $3) }
+| UIDENT { create_term $1 Const }
+| LIDENT { create_term $1 Var }
 
 term_params:
 | term {  [$1] }

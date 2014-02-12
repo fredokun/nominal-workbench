@@ -14,15 +14,18 @@ type info = Lexing.position
 
 type ident = string
 
-(* todo ajouter les infos *)
-type term =
-  | Const of ident
-  | Term of ident * term list
-  | Var of ident
+type term_desc =
+  | Const
+  | Term of term_ast list
+  | Var
+and term_ast = 
+  {
+    name : string;
+    info : info;
+    desc : term_desc;
+  }
 
-(** {2 Functions} *)
-(*
-val mk_dummy : 'a -> ('a, unit) annotated
-val mk_node : 'a -> 'b -> ('a, 'b) annotated
-*)
-val string_of_term : term -> string
+val string_of_term : term_ast -> string
+
+val create_term : string -> term_desc -> term_ast
+val create_term_info : string -> term_desc -> info -> term_ast

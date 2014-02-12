@@ -14,8 +14,8 @@ type term_dag =
   | DConst of ident
   | DTerm of ident * term_dag list
   (* Because when you find a binder, you don't know its sons *)
-  | DBinder of ident * (((term_dag ref) list) ref)
-  | DVar of ident * ((term_dag ref) option)
+  | DBinder of ident
+  | DVar of ident
 
 (* Typed AST *)
 
@@ -34,7 +34,7 @@ type term_type =
 
 let rec string_of_term : term_dag -> string = function
   | DConst id -> id
-  | DVar (id,_) -> "$" ^ id
-  | DBinder (id,_) -> "l" ^ id
+  | DVar id -> "$" ^ id
+  | DBinder id -> "l" ^ id
   | DTerm (name, expr_l) ->
     name ^ "(" ^ String.concat ", " (List.map string_of_term expr_l) ^ ")"

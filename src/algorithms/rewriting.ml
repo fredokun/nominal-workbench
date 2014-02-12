@@ -8,20 +8,17 @@ let raise_unknown_placeholder ident =
   let open Rewriting_error in
   raise (RewritingError(UnknownPlaceholder, ident))
 
-
-
 let rec substitute placeholders effect =
   match effect with
-  | EConstant ident -> Const ident
+  | EConstant ident -> Term_ast.create_term ident Const
   | EPlaceholder ident ->
     begin
       try Matching.SMap.find ident placeholders
       with Not_found -> raise_unknown_placeholder ident
     end
   | EOperator (ident, operands) ->
-    Term (ident, List.map (substitute placeholders) operands)
+    Term_ast.create_term ident (Term (List.map (substitute placeholders) operands))
 
- 
 
 let rewrite (pattern, effect) ifmatch elsef term =
   match Matching.matching term pattern with None -> elsef term
@@ -125,9 +122,9 @@ let rec apply_strategy system rec_env strategy term =
   apply_strategy strategy term
 
 and apply_to_children system rec_env strategy = function
-  | Term(name, terms) ->
+  | {name=name; desc=Term(terms); _} ->
     let rec apply_to_children acc = function
-      | [] -> Some(Term(name, List.rev acc))
+      | [] -> Some(Term_ast.create_term name (Term ( List.rev acc)))
       | head :: tail -> 
         begin
           match apply_strategy system rec_env strategy head with

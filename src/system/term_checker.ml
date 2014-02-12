@@ -28,67 +28,30 @@ let binders_pos_in_op system op_name =
   give_pos [] 0 args
 
 
-(* Check if a term is well defined and construct term_ast_dag from a term_ast
-   Return a couple term_ast_dag * binder_env
-   It's an auxiliary function *)
-let rec construct_ast_dag_rec system curr_op binders term pos_in_op =
-  match term with
-    | Const(ident) ->
-      begin
-	ignore (Symbols.lookup_const system ident);
-	(DConst ident,binders)
-      end
-    | Var(ident) when Var_map.mem ident binders -> (* We already know this var *)
-      let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
-      if at_binder_pos then
-      (* A new binder, that owerwrite a previous one *)
-	let new_binder = DBinder(ident,ref []) in
-	let new_binders = Var_map.add ident (ref new_binder) binders in
-	(new_binder, new_binders)
-      else
-      (* A new bounded variable *)
-	begin
-	  let (sons,father) =
-	    match !(Var_map.find ident binders) with
-	      | DBinder(_,sons) as father -> (sons,father)
-	      | _ -> assert false
-	  in
-	  let new_var = DVar(ident, Some(ref father)) in
-	  sons := (ref new_var) :: (!sons);
-	  (new_var,binders)
-	end
-    | Var(ident) -> (* We don't know this var *)
-      let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
-      if at_binder_pos then
-      (* A new binder *)
-	let new_binder = DBinder(ident, ref []) in
-	(new_binder, Var_map.add ident (ref new_binder) binders)
-      else
-      (* A new free variable *)
-	let new_var = DVar(ident, None) in
-	(new_var, binders)
-    | Term(ident,terms) as t ->
-      begin
-	let (_,(_,args,_)) = lookup_op system ident in
-	if List.length args != List.length terms then
-	  raise (TermSystemError(WrongTermArity, Term_ast.string_of_term t))
-	;
-	let (_,new_binders,terms_well_formed) =
-	  List.fold_left
-	    (construct_sub_term system ident)
-	      (0,binders,[])
-	    terms
-	in (DTerm(ident,List.rev terms_well_formed),binders)
-      end
-and construct_sub_term = fun system ident ->
-  fun (pos,binds,l) sub_term ->
-    let (sub_term_wf,new_binds) =
-      construct_ast_dag_rec system ident binds sub_term pos in
-    (pos+1,new_binds,sub_term_wf::l)
+let rec construct_ast_dag_rec system curr_op pos_in_op (term : Term_ast.term_ast) =
+  match term.desc with
+  | Const ->
+    begin
+      ignore (Symbols.lookup_const system term.name);
+      DConst term.name
+    end
+  | Var ->
+    let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
+    if at_binder_pos then
+      DBinder term.name
+    else
+      DVar term.name
+  | Term(terms) ->
+    begin
+      let (_,(_,args,_)) = lookup_op system term.name in
+      if List.length args != List.length terms then
+	raise (TermSystemError(WrongTermArity, Term_ast.string_of_term term));
+      DTerm (term.name, List.map (construct_ast_dag_rec system term.name 0) terms)
+    end
 
-(* Check a term_ast and construct the new term_ast_dag associated *)
+
 let construct_term_dag system term =
-  construct_ast_dag_rec system "" empty_binder_env term 0
+  construct_ast_dag_rec system "" 0 term
 
 (**)
 

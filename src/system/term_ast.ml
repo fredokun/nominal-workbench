@@ -10,20 +10,27 @@ type info = Lexing.position
 
 type ident = string
 
-type term =
-  | Const of ident
-  | Term of ident * term list
-  | Var of ident
+type term_desc =
+  | Const
+  | Term of term_ast list
+  | Var
+and term_ast = 
+  {
+    name : string;
+    info : info;
+    desc : term_desc;
+  }
 
-type term_ast = TermAst of (info * term) list
+let rec string_of_term : term_ast -> string = fun t ->
+  let {name=name;desc=desc;_} = t in
+  match desc with
+  | Const -> name
+  | Var -> "$" ^ name
+  | Term (term_list) ->
+    name ^ "(" ^ String.concat ", " (List.map string_of_term term_list) ^ ")"
 
-(*
-let mk_node e t = { value = e; info = t}
-let mk_dummy e = { value = e; info = ()}
-*)
+let create_term name desc =
+  {desc=desc;name=name;info=Lexing.dummy_pos}
 
-let rec string_of_term : term -> string = function
-  | Const id -> id
-  | Var (id) -> "$" ^ id
-  | Term (name, expr_l) ->
-    name ^ "(" ^ String.concat ", " (List.map string_of_term expr_l) ^ ")"
+let create_term_info name desc info =
+  {desc=desc;name=name;info=info}
