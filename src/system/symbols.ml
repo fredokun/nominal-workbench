@@ -20,20 +20,20 @@ type system = {
   strategies : (info * strategy_def) System_map.t;
 }
 
-(* TODO : reintroduce later *)
-let builtin_strategies m = m
-              |> System_map.add "topdown" TopDown
-              |> System_map.add "top-down" TopDown
-              |> System_map.add "bottomup" BottomUp
-              |> System_map.add "bottom-up" BottomUp
+let builtin_strategies m = 
+  let dummy_info = Lexing.dummy_pos in
+  let entry_of_fun f = (dummy_info, strategy_def_of_fun f) in
+  m |> System_map.add "Try" @@ entry_of_fun try_app
+    |> System_map.add "Topdown" @@ entry_of_fun topdown
+    |> System_map.add "Bottomup" @@ entry_of_fun bottomup
 
-    
+
 let empty_system = {
   kinds = System_map.empty;
   constants = System_map.empty;
   operators = System_map.empty;
   rules = System_map.empty;
-  strategies = System_map.empty;
+  strategies = builtin_strategies System_map.empty;
 }
 
 

@@ -8,5 +8,4 @@ val rewrite:
 
   
 val rewrite_rec: Strategy_ast.strategy ->
-  ('a * (Rewriting_ast.pattern * Rewriting_ast.effect)) Symbols.System_map.t  -> 
-  Term_ast.term -> Term_ast.term
+  Symbols.system -> Term_ast.term -> Term_ast.term

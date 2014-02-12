@@ -27,6 +27,17 @@ let rewrite (pattern, effect) ifmatch elsef term =
   match Matching.matching term pattern with None -> elsef term
   | Some ph -> ifmatch ph effect
 
+let seq_all rules =
+  let rec seq_all_rules = function
+  | [] -> SId
+  | head :: [] -> try_app @@ SRule(Some(head))
+  | head :: tail -> SSeq(try_app @@ SRule(Some(head)), seq_all_rules tail)
+  in
+  let rule_names = List.map (fun (n, (_, _)) -> n)
+    (Symbols.System_map.bindings rules)
+  in
+  seq_all_rules rule_names
+
 let rec replace ident new_strategy = function
   | SId -> SId
   | SFail -> SFail
@@ -45,7 +56,7 @@ let rec replace ident new_strategy = function
   | SCall(name, s_list) -> 
     SCall(name, List.map (replace ident new_strategy) s_list)
 
-let rec apply_strategy rules rec_env strategy term =
+let rec apply_strategy system rec_env strategy term =
   let rec apply_strategy strategy term =
     match strategy with
     | SId -> Some(term)
@@ -87,23 +98,39 @@ let rec apply_strategy rules rec_env strategy term =
     | SRule(Some(name)) ->
       begin
         try
-          let (_, rule) = System_map.find name rules in
+          let (_, rule) = System_map.find name system.rules in
           rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
         with Not_found -> assert false
       end
-    | SRule(None) -> apply_strategy (Strategies.seq_all rules) term
-    | SAll(s) -> apply_to_children rules rec_env s term
-    | SCall _ -> assert false (* TODO *)
+    | SRule(None) -> apply_strategy (seq_all system.rules) term
+    | SAll(s) -> apply_to_children system rec_env s term
+    | SCall(name, s_list) ->
+      begin
+        try
+          let rec replace_params acc = function
+            | [], [] -> acc
+            | [], _ -> assert false
+            | _, [] -> assert false
+            | ident :: id_tail, s :: s_tail ->
+              let new_s = replace ident s acc in
+              replace_params new_s (id_tail, s_tail)
+          in
+          let (_, (signature, body)) = System_map.find name system.strategies in
+          let new_s = replace_params body (signature, s_list) in
+          apply_strategy new_s term
+        with Not_found -> assert false
+      end
+          
   in
   apply_strategy strategy term
 
-and apply_to_children rules rec_env strategy = function
+and apply_to_children system rec_env strategy = function
   | Term(name, terms) ->
     let rec apply_to_children acc = function
       | [] -> Some(Term(name, List.rev acc))
       | head :: tail -> 
         begin
-          match apply_strategy rules rec_env strategy head with
+          match apply_strategy system rec_env strategy head with
           | None -> None
           | Some(t) -> apply_to_children (t::acc) tail
         end
@@ -112,10 +139,10 @@ and apply_to_children rules rec_env strategy = function
   | t -> Some(t)
     
 
-let rec rewrite_rec strategy rules term =
+let rec rewrite_rec strategy system term =
   let rec_env = Hashtbl.create 3 in
-  match apply_strategy rules rec_env strategy term with
-  | Some(newterm) when newterm <> term -> rewrite_rec strategy rules newterm
+  match apply_strategy system rec_env strategy term with
+  | Some(newterm) when newterm <> term -> rewrite_rec strategy system newterm
   | Some(newterm) -> newterm
   | None -> assert false
 

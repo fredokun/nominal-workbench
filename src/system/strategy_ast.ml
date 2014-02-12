@@ -1,4 +1,17 @@
-open Strategy_ast
+type strategy = 
+  | SId
+  | SFail
+  | STest of strategy
+  | SNot of strategy
+  | SAll of strategy
+  | SSeq of strategy * strategy
+  | SEither of strategy * strategy
+  | SRec of string * strategy
+  | SVar of string
+  | SRule of string option
+  | SCall of string * strategy list
+
+type strategy_def = string list * strategy 
 
 let try_app s = SEither(s, SId)
 let repeat s = SRec("x", SSeq(try_app s, SVar("x")))
@@ -6,17 +19,9 @@ let topdown s = SRec("x", SSeq(s, SAll(SVar("x"))))
 let bottomup s = SRec("x", SSeq(SAll(SVar("x")), s))
 let any_rule = SRule(None)
 
-let seq_all rules =
-  let rec seq_all_rules = function
-  | [] -> SId
-  | head :: [] -> try_app @@ SRule(Some(head))
-  | head :: tail -> SSeq(try_app @@ SRule(Some(head)), seq_all_rules tail)
-  in
-  let rule_names = List.map (fun (n, (_, _)) -> n)
-    (Symbols.System_map.bindings rules)
-  in
-  seq_all_rules rule_names
-  
+let strategy_def_of_fun f = 
+  let var = "_s" in
+  ([var], f @@ SVar(var))
 
 let rec string_of_strategy = function
   | SId -> "id"

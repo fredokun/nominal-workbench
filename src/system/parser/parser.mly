@@ -93,10 +93,6 @@ decls:
     { [$1] }
 
 
-strategy:
-| UIDENT { Strategy $1 }
-;
-    
 decl:
 | kind_decl { PDecl $1 }
 | constant_decl { PDecl $1 }
@@ -104,7 +100,7 @@ decl:
 | rule_decl { PDecl $1 }
 | strategy_decl { PDecl $1 }
 | TERM LIDENT EQUAL term { PTermDecl ($2, $4) }
-| REDUCE term WITH strategy { PReduce ($2, $4) }
+| REDUCE term WITH strategy_expression { PReduce ($2, $4) }
 | OPEN FILENAME { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }

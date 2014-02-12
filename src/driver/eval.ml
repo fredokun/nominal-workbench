@@ -68,10 +68,10 @@ and subst_vars system =
 and process_term system strategy t =
   let open Term_ast in 
   let open Symbols in
-  let open Strategies in
+  let open Strategy_ast in
   try
     let strategy = topdown any_rule in
-    let nt = Rewriting.rewrite_rec strategy system.rules t in
+    let nt = Rewriting.rewrite_rec strategy system t in
     Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
       (string_of_term nt);
@@ -84,21 +84,13 @@ and process_term system strategy t =
 and process_reduce system term strategy =
   let open Rewriting_ast in
   let open Symbols in
-  let open Strategies in
-    let strategy = match strategy with
-    | TopDown -> topdown any_rule
-    | BottomUp -> bottomup any_rule
-    | Strategy s ->
-        let _, (_, strategy) = begin try System_map.find s system.strategies with
-        | Not_found -> assert false end in strategy
-    in 
-    process_term system strategy term 
+  process_term system strategy term 
 
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
 and evaluate_structure_item system =
     let open Rewriting_ast in
-    let open Strategies in
+    let open Strategy_ast in
     function
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
