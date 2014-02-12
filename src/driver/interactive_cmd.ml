@@ -96,7 +96,6 @@ let check_expectation expectation result domain success_cont =
 
 let system_name filename = (Filename.chop_extension (Filename.basename filename))
 
-
 let check_rewriting_system eval_ast ast (RewritingTest(filename, expectation)) =
   let open Rewriting_system_error in
   try 
@@ -131,15 +130,12 @@ let launch_test eval_ast (RewritingTest(filename, _) as test) =
         close_in f
     with
     | Sys_error(e) -> print_system_error e
-    | e ->
-      printf "Something got really wrong, here the exception backtrace:\n";
-      printf "Exception: %s.\n" ( Printexc.to_string e );
-      Printexc.print_backtrace stdout in
+    | e -> print_unknown_exc e "launching of the test" in
   Printexc.record_backtrace true;
   launch ();
   Printexc.record_backtrace false
 
 let eval_interactive_cmd eval_system system = function
-| LoadTest(filename, expectation) ->
+| LoadTest(filename, expectation) -> 
   launch_test (eval_system system) (RewritingTest(filename, expectation));
   system
