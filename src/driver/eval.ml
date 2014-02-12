@@ -1,5 +1,5 @@
 open Parsetree
-open Test
+open Interactive_cmd
 
 (* TODO : mli !! *)
 

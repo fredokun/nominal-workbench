@@ -3,7 +3,7 @@ begin library "driver"
   files = [ 
     "config.mli" "config.ml" 
     "eval.ml"
-    "test.ml" "display_test.ml" 
+    "interactive_cmd.ml" "display_test.ml" 
     "toploop.mli" "toploop.ml"
     "main.ml"
   ]
