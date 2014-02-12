@@ -14,13 +14,6 @@ open Parsetree
 open Include
 open Hashtbl
 open Sys
-open Interactive_ast
-
-let parse_error s =
-  let pos = Parsing.symbol_start_pos () in
-  let msg = "Parsing error line " ^ (string_of_int (pos.Lexing.pos_lnum)) ^ ", col \
-  " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)) in
-  print_endline msg
 
 let create_decl (name : string) (desc : rewriting_desc) : rewriting_decl =
   {
@@ -47,7 +40,8 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %token STRATEGY REC
 
 /* interactive commands */
-%token LOAD_TEST FAILWITH HELP QUIT
+%token LOAD_TEST FAILWITH HELP QUIT TEST
+%token IN_CMD_OPTION EQUAL_CMD_OPTION
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
@@ -104,7 +98,13 @@ decl:
 
 interactive_command:
 | LOAD_TEST FILENAME expectation { LoadTest ($2, $3) }
+| TEST test_term_predicate { TermTest(TMustPass($2)) }
+| TEST term_expr FAILWITH domain_error { TermTest(TMustFail($2, $4)) }
 | QUIT { Quit }
+
+test_term_predicate:
+| term_expr IN_CMD_OPTION term_expr { InPredicate($1, $3) }
+| term_expr EQUAL_CMD_OPTION term_expr { EqualPredicate($1, $3) }
 
 expectation:
 | FAILWITH domain_error { MustFail ($2) }

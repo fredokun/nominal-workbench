@@ -5,7 +5,6 @@
 
 open Printf
 open Display_test
-open Interactive_ast
 open Parsetree
 
 (* Test framework. *)
@@ -23,7 +22,7 @@ let equal_term t1 t2 =
   (strip_ws t1) = (strip_ws t2)
 
 (* Term rewriting tests. *)
-let check_term_expectation expectation result domain success_cont =
+(* let check_term_expectation expectation result domain success_cont =
   match (expectation, result) with
   | (TMustPass(_), TFailed(e)) ->
     print_failure (sprintf "Failure with error %s." ( string_of_error e))
@@ -79,7 +78,7 @@ let check_term system (TermTest(libs, term, expectation)) =
   | e -> print_unknown_exc e "parsing of the terms"
 
 let check_terms system terms () =
-  List.iter (check_term system) (List.rev terms)
+  List.iter (check_term system) (List.rev terms) *)
 
 (* Rewriting System test *)
 let check_expectation expectation result domain success_cont =
@@ -139,4 +138,5 @@ let eval_interactive_cmd eval_system system = function
 | LoadTest(filename, expectation) -> 
   launch_test (eval_system system) (RewritingTest(filename, expectation));
   system
+| TermTest(term) -> failwith "not implemented yet."
 | Quit -> exit 0
