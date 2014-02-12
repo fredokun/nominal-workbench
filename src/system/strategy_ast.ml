@@ -40,3 +40,15 @@ let rec string_of_strategy = function
   | SCall(name, params) -> 
     let params = List.map string_of_strategy params in
     name ^ "(" ^ (String.concat "," params) ^ ")"
+
+let base_strat name content =
+  match name with
+  | "test" -> STest content
+  | "not" -> SNot content
+  | "all" -> SAll content
+  | _ -> assert false
+
+let base_strat_simple = function
+  | "id" -> SId
+  | "fail" -> SFail
+  | _ -> assert false

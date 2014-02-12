@@ -22,3 +22,6 @@ val any_rule : strategy
 val strategy_def_of_fun : (strategy -> strategy) -> strategy_def
 
 val string_of_strategy : strategy -> string
+
+val base_strat : string -> strategy -> strategy
+val base_strat_simple : string -> strategy

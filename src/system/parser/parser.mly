@@ -36,19 +36,6 @@ let create_term (name : string) (desc : term_desc) : term_ast =
     desc = desc;
   }
     
-
-let create_strat name content =
-  match name with
-  | "test" -> STest content
-  | "not" -> SNot content
-  | "all" -> SAll content
-  | _ -> assert false
-
-let create_strat_simple = function
-  | "id" -> SId
-  | "fail" -> SFail
-  | _ -> assert false
-
 %}
 
 /* values */
@@ -232,8 +219,13 @@ strategy_decl:
     create_decl name (DStrategy (signature, $2))
   }
 
-strategy_head:
+strategy_head :
 | STRATEGY LIDENT COLON { ($2, []) }
+| STRATEGY LIDENT LPAREN strategy_param_list RPAREN COLON { ($2, $4) }
+
+strategy_param_list :
+| LIDENT { [$1] }
+| LIDENT COMMA strategy_param_list { $1 :: $3 }
 
 strategy_expression :
 | LPAREN strategy_expression RPAREN { $2 }
@@ -242,8 +234,8 @@ strategy_expression :
 | strategy_advanced_expression { $1 }
 
 strategy_simple_expression :
-| LIDENT LPAREN RPAREN { create_strat_simple $1 }
-| LIDENT LPAREN strategy_expression RPAREN { create_strat $1 $3 }
+| LIDENT LPAREN RPAREN { base_strat_simple $1 }
+| LIDENT LPAREN strategy_expression RPAREN { base_strat $1 $3 }
 
 strategy_operator :
 | strategy_expression SEITHER strategy_expression { SEither ($1, $3) }
