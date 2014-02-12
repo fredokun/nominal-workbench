@@ -7,7 +7,7 @@ open Printf
 
 open Rewriting_ast
 
-let usage = "Usage: nowork [options] <rules files> <terms files>\noptions are:"
+let usage = "Usage: nowork [options] <rules files> \noptions are:"
 
 let eprint_and_exit msg err_code =  
   eprintf "%s\n%!" msg;
@@ -16,8 +16,7 @@ let eprint_and_exit msg err_code =
 let files : string list ref = ref []
 
 let file_argument name =
-  if Filename.check_suffix name Config.rule_suffix 
-    ||  Filename.check_suffix name Config.term_suffix
+  if Filename.check_suffix name Config.rule_suffix
   then
     files := name :: !files
   else
@@ -42,23 +41,15 @@ let process_file system fname =
     else if Sys.file_exists fname then
       fname
     else 
-      eprint_and_exit 
-	(sprintf "[Error] Cannot find the file %s\n%!" fname) 1
-  in
+      eprint_and_exit (sprintf "[Error] Cannot find the file %s\n%!" fname) 1 in
   begin
     if !Config.verbose then 
       printf "Evaluating file %s...\n%!" fname;
     let ic = open_in fpath in
     try
-      let structure = 
-	Parser.start Lexer.token (Lexing.from_channel ic) 
-      in
-      
-      let new_system = 
-	List.fold_left
-	  Eval.evaluate_structure_item
-	  system structure 
-      in
+      let structure = Parser.start Lexer.token (Lexing.from_channel ic) in
+      let new_system = List.fold_left Eval.evaluate_structure_item system structure in
+      (* Pretty.print_system Format.std_formatter new_system; *)
       close_in ic;
       (* todo type check. before or after ? *)
       new_system
@@ -78,22 +69,15 @@ let main k =
     (* Parse & Eval the files *)
     let system = 
       if !Config.reset_system then
-	begin
-	  List.iter 
-	    (fun fname -> 
-	      ignore (process_file empty_system fname))
-	    (List.rev !files);
-	  empty_system
-	end
-      else 
-	List.fold_left 
-	  (fun acc fname -> process_file acc fname)
-	  empty_system
-	  (* evaluate in the given order *)
-	  (List.rev !files)
-    in
-
-    (* Continuation, might be a 'Read-Eval-Print-Loop' *)
-    k system
+      begin
+        List.iter (fun fname -> ignore (process_file empty_system fname))
+          (List.rev !files);
+        empty_system
+      end
+      else
+        List.fold_left (fun acc fname -> process_file acc fname) empty_system
+          (List.rev !files) in
+    if !Config.no_repl then
+      (* Continuation, might be a 'Read-Eval-Print-Loop' *)
+      k system
   end
-    

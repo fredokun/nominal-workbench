@@ -1,11 +1,11 @@
 begin library "rewriting_system"
   sort = true
-  files = [ "rewriting_ast.ml" "utils.ml" "symbols.ml" "type_checking.ml"]
+  files = [ "strategy_ast.mli" "strategy_ast.ml" "rewriting_ast.mli" "pretty.ml" "utils.ml" "symbols.ml" "type_checking.ml"]
   requires = [ "error" ]
 end
 
 begin library "term_system"
   sort = true
-  files = [ "term_ast.mli" "term_ast.ml" "term_checker.ml" "term_ast_dag.ml" ]
+  files = [ "term_ast.mli" "term_ast.ml" "term_checker.ml" "term_ast_dag.ml" "term_ast_hashconsed.ml" ]
   requires = [ "error" "rewriting_system" ]
 end

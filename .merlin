@@ -1,0 +1,16 @@
+PRJ nowork
+S src/.
+S src/system
+S src/driver
+S src/generator
+S src/algorithms
+S src/auto_gen
+B _obuild/algorithms
+B _obuild/error_gen
+B _obuild/nowork-toplevel
+B _obuild/term_system
+B _obuild/rewriting_system
+B _obuild/rewriting_system_parser
+B _obuild/nowork
+B _obuild/driver
+PKG tyxml

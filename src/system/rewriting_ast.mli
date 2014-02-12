@@ -3,6 +3,8 @@
    (C) Copyright Pierre Talbot
 *)
 
+open Strategy_ast
+
 (* Auxiliary types *)
 type type_name = string
 type type_binders = type_name list
@@ -56,6 +58,7 @@ type rule = pattern * effect
 
 type info = Lexing.position
 
+    
 type rewriting_decl =
   {
     name : string;
@@ -68,7 +71,4 @@ and rewriting_desc =
   | DConstant of constant
   | DOperator of operator
   | DRule of rule
-
-
-
-      
+  | DStrategy of strategy_def

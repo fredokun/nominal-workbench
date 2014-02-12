@@ -6,7 +6,7 @@
 type filename = string
 type name = string
 type domain = string
-type error = Error of name * domain
+type error = Error of domain * name
 
 type expected_term = string
 
@@ -21,9 +21,7 @@ type expectation =
   | MustPass
   | MustFail of error
 
-type system_test = SystemTest of name * filename * expectation * term_test list
-
-type test = Test of system_test list
+type system_test = SystemTest of filename * expectation
 
 type result =
   | Passed
@@ -32,3 +30,6 @@ type result =
 type term_result =
   | TPassed of string
   | TFailed of error
+
+type interactive_ast =
+| LoadTest of filename * expectation

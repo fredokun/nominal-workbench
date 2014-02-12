@@ -13,7 +13,8 @@ val get_path : unit -> string list
 
 val rule_suffix : string
 
-val term_suffix : string
+(* If True, do not launch the REPL after having evaluated the files. *)
+val no_repl : bool ref
 
 val verbose : bool ref
 
