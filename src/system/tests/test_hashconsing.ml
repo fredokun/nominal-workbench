@@ -20,9 +20,9 @@ let create_tests () =
 
   (* Testing for FreeVars *)
 
-  let fv1 = DVar ("v", None) in
-  let fv2 = DVar ("u", None) in
-  let fv3 = DVar ("v", None) in
+  let fv1 = DVar "v" in
+  let fv2 = DVar "u" in
+  let fv3 = DVar "v" in
 
   let hfv1 = create_term fv1 in
   let hfv2 = create_term fv2 in
@@ -35,14 +35,14 @@ let create_tests () =
 
   (* Testing for Vars *)
 
-  let b1 = DBinder ("a", ref []) in
-  let b2 = DBinder ("b", ref []) in
-  let v1 = DVar ("a", Some (ref b1)) in
-  let v2 = DVar ("b", Some (ref b2)) in
-  let v3 = DVar ("b", Some (ref b2)) in
+  let b1 = DBinder "a"in
+  let b2 = DBinder "b" in
+  let v1 = DVar "a" in
+  let v2 = DVar "b" in
+  let v3 = DVar "b" in
 
   (* We have to encapsulate the binders and variables into lsits to have a
-    correct binded function *)
+    correctly binded term *)
 
   let l1 = [b1; b1; b2; v1; v2; v3] in
   let l2 = [b1; b1; b2; v1; v2; v3] in
@@ -50,13 +50,7 @@ let create_tests () =
   let hl1 = create_hlist [] l1 in
   let hl2 = create_hlist [] l2 in
 
-  (* pretty_print_list hl1; *)
-  (* pretty_print_list hl2; *)
-
   List.iter2 (fun (_, t1) (_, t2) ->
-      (* Format.printf "Comparing two terms@."; *)
-      (* pretty_print t1; *)
-      (* pretty_print t2; *)
       match t1, t2 with
       | HBinder b1, HBinder b2 -> assert (b1 == b2)
       | _ -> ()
@@ -111,7 +105,9 @@ let peano_tests () =
 
   assert(ha1 == ha2);
   assert(ha2 == ha3);
-  assert(ha3 == ha4)
+  assert(ha3 == ha4);
+
+  Format.printf "Peano OK@."
 
 let lambda_tests () =
   (* The lambda calculus uses binders, it can be more tricky.
@@ -125,10 +121,10 @@ let lambda_tests () =
 
 
   (* First, we try on two identical id functions, modulo apha-conversion *)
-  let bx = DBinder ("x", ref []) in
-  let id1 = DTerm ("Lambda", [bx; DVar ("x", Some (ref bx))]) in
-  let by = DBinder ("y", ref []) in
-  let id2 = DTerm ("Lambda", [by; DVar ("y", Some (ref by))]) in
+  let bx = DBinder "x" in
+  let id1 = DTerm ("Lambda", [bx; DVar "x"]) in
+  let by = DBinder "y" in
+  let id2 = DTerm ("Lambda", [by; DVar "y"]) in
 
   let hid1 = create_term id1 in
   let hid2 = create_term id2 in
@@ -138,7 +134,7 @@ let lambda_tests () =
   (* Term for getting the second element of a pair in lambda calculus, which is
   also the encoding for "false". *)
   let lsnd = DTerm ("Lambda",
-                   [bx; DTerm ("Lambda", [by; DVar ("y", Some (ref by))])]) in
+                   [bx; DTerm ("Lambda", [by; DVar "y"])]) in
   let hsnd = create_term lsnd in
 
   (* We open the term and get the second lambda, which is basically id *)
@@ -150,10 +146,15 @@ let lambda_tests () =
   (* pretty_print hid2; *)
   (* pretty_print hid3; *)
 
-  dot hsnd "graph.dot";
+  (* dot hsnd "graphsnd.dot"; *)
 
-  assert (hid2 == hid3)
+  assert (hid2 == hid3);
 
+  (* let app = DTerm ("App", [id1; id2]) in *)
+  (* let happ = create_term app in *)
+  (* dot happ "graphapp.dot" *)
+
+  Format.printf "Lambda calculs OK@."
 
 let _ =
   create_tests ();

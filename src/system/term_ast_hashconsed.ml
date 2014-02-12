@@ -97,23 +97,23 @@ type bindings = (ident * id list ref) list
 
 let add_binder t bindings =
   match t with
-  | DBinder (id, _) -> (id, ref []) :: bindings
+  | DBinder id -> (id, ref []) :: bindings
   | _ -> bindings
 
 let remove_binder t bindings =
   match t with
-  | DBinder (id, _) -> List.remove_assoc id bindings
+  | DBinder id -> List.remove_assoc id bindings
   | _ -> bindings
 
 let string_of_bindings b =
   List.fold_left (fun acc (i, _) -> Format.sprintf "%s, %s" acc i) "" b
 
 let is_var = function
-  | DVar (_, Some _) -> true
+  | DVar _ -> true
   | _ -> false
 
 let get_var_id = function
-  | DVar (id, Some _) -> id
+  | DVar id -> id
   | _ -> assert false
 
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
@@ -133,7 +133,7 @@ let rec create_hlist bindings = function
 
     (* we create a new list with our term *)
     let res = create_cons term htl in
-    if is_var hd then
+    if is_var hd && List.mem_assoc (get_var_id hd) bindings then
       begin
         let (id, _) = List.hd res in
         let r = try List.assoc (get_var_id hd) bindings
@@ -167,12 +167,12 @@ and create_term_raw =
     let term, bindings =
       match td with
       | DConst i -> HConst i, bindings
-      | DVar (id, Some _) -> hvar, bindings
-      | DVar (id, None) -> HFreeVar id, bindings
+      | DVar id when not (List.mem_assoc id bindings) -> HFreeVar id, bindings
+      | DVar id -> hvar, bindings
       | DTerm (id, l) ->
         let hl = create_hlist bindings l in
         HTerm (id, hl), bindings
-      | DBinder (id, _) ->
+      | DBinder id ->
         let binded : id list = !(List.assoc id bindings) in
         let binded : (id * id) list = create_id_list binded in
         HBinder binded, remove_binder td bindings
