@@ -13,7 +13,6 @@ launch_gen: generator
 
 main: launch_gen
 	ocp-build build nowork
-	ocp-build build nowork-toplevel
 	cp $(NOWORK_BIN) nowork
 
 test: launch_gen
