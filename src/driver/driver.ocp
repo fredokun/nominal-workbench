@@ -1,9 +1,13 @@
 begin library "driver"
   sort = true
-  files = [ "config.mli" "config.ml" 
-  	    "eval.ml" 
-	    "toploop.mli" "toploop.ml"
-	    "main.ml"
-	  ]
-  requires = [ "algorithms" "rewriting_system_parser" ]
+  files = [ 
+    "config.mli" "config.ml" 
+    "eval.ml"
+    "test.ml" "display_test.ml" 
+    "toploop.mli" "toploop.ml"
+    "main.ml"
+  ]
+  requires = [ "algorithms" "rewriting_system_parser" "str" ]
+  bytecomp = [ "-g" ]
+  bytelink = [ "-g" ]
 end

@@ -1,4 +1,5 @@
 open Parsetree
+open Test
 
 (* TODO : mli !! *)
 
@@ -26,22 +27,17 @@ let rec process_file system fname =
     else if Sys.file_exists fname then
       fname
     else 
-      begin
-	Printf.eprintf "[Error] Cannot find the file %s\n%!" fname;
-	exit 1
-      end
+    begin
+      Printf.eprintf "[Error] Cannot find the file %s\n%!" fname;
+      exit 1
+    end
   in
   begin
     let ic = open_in fpath in
     try
-      let structure = 
-	Parser.start Lexer.token (Lexing.from_channel ic) 
-      in
+      let structure = Parser.start Lexer.token (Lexing.from_channel ic) in
       let new_system = 
-	List.fold_left
-	  evaluate_structure_item
-	  system structure 
-      in
+        List.fold_left evaluate_structure_item system structure in
       close_in ic;
       new_system
     with
@@ -56,14 +52,13 @@ and subst_vars system =
     function
       | Term (id, tlist) -> Term(id, List.map (subst_vars system) tlist)
       | Var id as term -> 
-	  begin
-	    try
-	      Term_env.find id !term_env 
-	    with 
-	      | Not_found -> term
-	  end
+      begin
+        try
+          Term_env.find id !term_env 
+        with 
+        | Not_found -> term
+      end
       | term -> term
-
 
 and process_term system strategy t =
   let open Term_ast in 
@@ -100,6 +95,7 @@ and evaluate_structure_item system =
   let open Rewriting_ast in
   let open Strategies in
   function
+  | PInteractiveCmd cmd -> eval_interactive_cmd system cmd
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
@@ -117,9 +113,3 @@ let run_type_check filled_system ast =
       Type_checking.check_decl filled_system d
     | _ -> ())
     ast
-
-
-
-
-
-
