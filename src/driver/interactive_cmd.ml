@@ -139,3 +139,4 @@ let eval_interactive_cmd eval_system system = function
 | LoadTest(filename, expectation) -> 
   launch_test (eval_system system) (RewritingTest(filename, expectation));
   system
+| Quit -> exit 0

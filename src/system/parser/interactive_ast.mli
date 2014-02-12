@@ -33,3 +33,4 @@ type term_result =
 
 type interactive_ast =
 | LoadTest of filename * expectation
+| Quit

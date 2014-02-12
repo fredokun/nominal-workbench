@@ -34,7 +34,11 @@
   let () =
     List.iter (fun (kwd, tok) -> Hashtbl.add directive_table kwd tok)
       [ ":help", HELP
+      ; ":?", HELP
       ; ":load-test", LOAD_TEST
+      ; ":quit", QUIT
+      ; ":exit", QUIT
+      ; ":q", QUIT
       ]
 
   let directive_option_table = Hashtbl.create 16

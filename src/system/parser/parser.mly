@@ -47,7 +47,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %token STRATEGY REC
 
 /* interactive commands */
-%token LOAD_TEST FAILWITH HELP
+%token LOAD_TEST FAILWITH HELP QUIT
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
@@ -104,6 +104,7 @@ decl:
 
 interactive_command:
 | LOAD_TEST FILENAME expectation { LoadTest ($2, $3) }
+| QUIT { Quit }
 
 expectation:
 | FAILWITH domain_error { MustFail ($2) }
