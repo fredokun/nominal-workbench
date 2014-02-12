@@ -9,6 +9,7 @@ open Parsing
 open Lexing
 open Rewriting_ast
 open Term_ast
+open Strategy_ast
 open Parsetree
 open Include
 open Hashtbl
@@ -28,21 +29,24 @@ let parse_error s =
   " ^ (string_of_int (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)) in
   print_endline msg
 
-
-let files_included = Hashtbl.create 10
-
-let include_paths = ref [(Sys.getcwd ())]
-
-let reset_parser x =
-    Hashtbl.reset files_included;
-    include_paths := [(Sys.getcwd ())]
-
 let create_decl name desc =
   {
     name = name;
     info = Parsing.symbol_start_pos ();
     desc = desc;
   }
+
+let create_strat name content =
+  match name with
+  | "test" -> STest content
+  | "not" -> SNot content
+  | "all" -> SAll content
+  | _ -> assert false
+
+let create_strat_simple = function
+  | "id" -> SId
+  | "fail" -> SFail
+  | _ -> assert false
 
 %}
 
@@ -51,11 +55,12 @@ let create_decl name desc =
 %token <string> LIDENT UIDENT PLACEHOLDER FILENAME
 
 /* keywords */
-%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH
+%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH TERM 
+%token STRATEGY REC
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
-%token DARROW STAR COMMA LT GT DOT ANY
+%token DARROW STAR COMMA LT GT DOT ANY SEITHER
 
 /* directives */
 %token HELP
@@ -69,13 +74,12 @@ let create_decl name desc =
 %start toplevel_phrase
 %type <Parsetree.structure_item> toplevel_phrase
 
-%right STAR DARROW ARROW COLON DOT
+%right STAR DARROW ARROW COLON DOT EITHER
 
 %%
 
 start:
-| decls EOF { reset_parser ();
-	      $1 }
+| decls EOF { $1 }
 
 toplevel_phrase:
 | decl SEMICOL SEMICOL { $1 }
@@ -98,11 +102,13 @@ decl:
 | constant_decl { PDecl $1 }
 | operator_decl { PDecl $1 }
 | rule_decl { PDecl $1 }
+| strategy_decl { PDecl $1 }
+| TERM LIDENT EQUAL term { PTermDecl ($2, $4) }
 | REDUCE term WITH strategy { PReduce ($2, $4) }
 | OPEN FILENAME { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }
-/* | term { PTerm $1 } */
+| term { PTerm $1 }
 /* | OPEN FILENAME
     { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)
@@ -208,8 +214,45 @@ rule_side_list_effect:
 | rule_side_effect COMMA rule_side_list_effect { $1 :: $3 }
 | rule_side_effect { [$1] }
 
+/* strategies */
 
-/* term */
+strategy_decl:
+| strategy_head strategy_expression 
+  { 
+    let name, signature = $1 in
+    create_decl name (DStrategy (signature, $2))
+  }
+
+strategy_head:
+| STRATEGY LIDENT COLON { ($2, []) }
+
+strategy_expression :
+| LPAREN strategy_expression RPAREN { $2 }
+| strategy_simple_expression { $1 }
+| strategy_operator { $1 }
+| strategy_advanced_expression { $1 }
+
+strategy_simple_expression :
+| LIDENT LPAREN RPAREN { create_strat_simple $1 }
+| LIDENT LPAREN strategy_expression RPAREN { create_strat $1 $3 }
+
+strategy_operator :
+| strategy_expression SEITHER strategy_expression { SEither ($1, $3) }
+| strategy_expression SEMICOL strategy_expression { SSeq ($1, $3) }
+
+strategy_advanced_expression :
+| LIDENT { SVar $1 }
+| REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) }
+| RULE LPAREN RPAREN { SRule None }
+| RULE LPAREN UIDENT RPAREN { SRule (Some $3) } 
+| UIDENT LPAREN RPAREN { SCall ($1, []) }
+| UIDENT LPAREN strategy_expression_list RPAREN { SCall ($1, $3) }
+
+strategy_expression_list :
+| strategy_expression { [$1] }
+| strategy_expression COMMA strategy_expression_list { $1 :: $3 }
+
+/* terms */
 
 term:
 | LPAREN term RPAREN { $2 }
@@ -221,5 +264,5 @@ term:
 term_params:
 | term {  [$1] }
 | term COMMA term_params { $1::$3 }
-
+    
 %%
