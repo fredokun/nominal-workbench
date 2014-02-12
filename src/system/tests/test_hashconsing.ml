@@ -150,7 +150,10 @@ let lambda_tests () =
   (* pretty_print hid2; *)
   (* pretty_print hid3; *)
 
+  dot hsnd "graph.dot";
+
   assert (hid2 == hid3)
+
 
 let _ =
   create_tests ();

@@ -7,6 +7,9 @@ open Term_system_error
 
 type id = int
 type ident = string
+type hash = int
+
+(* type 'a hashed = { id : int; hash : int; value : 'a} *)
 
 type 'a hlist = (id * 'a) list
 
@@ -34,7 +37,7 @@ and hash = function
   | HFreeVar i -> 2 + Hashtbl.hash i
   | HTerm (i, htl) -> (3 + Hashtbl.hash i) + hash_hlist htl
   | HVar -> 4 (* a var is unique and defined by its binder *)
-  | HBinder b -> 5 + Hashtbl.hash b
+  | HBinder b -> 5 + Hashtbl.hash b (* Hashing a int list is efficient *)
 
 
 let rec equal_hlist hl1 hl2 =
@@ -114,7 +117,8 @@ let get_var_id = function
   | _ -> assert false
 
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
-   from right to left actually, to retrieve the binded variables. *)
+   from right to left actually, to retrieve the binded variables before
+   hashconsing the binder. *)
 let rec create_hlist bindings = function
   | [] -> nil
   | hd :: tl ->
@@ -132,7 +136,9 @@ let rec create_hlist bindings = function
     if is_var hd then
       begin
         let (id, _) = List.hd res in
-        let r = List.assoc (get_var_id hd) bindings in
+        let r = try List.assoc (get_var_id hd) bindings
+          with Not_found ->
+            raise (TermSystemError (VariableUnbound, get_var_id hd)) in
         r := id :: !r;
         res
       end
@@ -235,3 +241,61 @@ let pretty_print_list hl =
 
 let pretty_print hterm =
   print_endline @@ string_of_hterm hterm
+
+
+(* Dot representation, which is well suited to show sharing *)
+
+module ReprH = Hashtbl.Make (struct
+    type t = hterm
+    let hash = hash
+    let equal = (==)
+  end)
+
+let dot t filename =
+  let term_tbl = Hashtbl.create 19 in
+  let repr_tbl = ReprH.create 19 in
+  let is_binder = function HBinder _ -> true | _ -> false in
+  let is_var = function HVar -> true | _ -> false in
+  let binder_id = ref 0 in
+  let term_id = ref 0 in
+  let repr t =
+    try
+      ReprH.find repr_tbl t
+    with Not_found ->
+      let r = match t with
+        | HVar -> "var"
+        | HFreeVar ident -> ident
+        | HBinder _ ->
+          let res = Format.sprintf "[binder:%d]" !binder_id in
+          incr binder_id;
+          res
+        | HConst ident -> ident
+        | HTerm (n, _) ->
+          let res = Format.sprintf "%s:%d" n !term_id in
+          incr term_id;
+          res in
+      ReprH.add repr_tbl t r;
+      r
+  in
+  let rec browse id t =
+    let key = repr t in
+    if not (Hashtbl.mem term_tbl key) || is_binder t then
+      match t with
+      | HTerm (n, args) -> let value = List.fold_left (fun acc (id, t) ->
+          let r = if is_var t then Format.sprintf "%s:%d" (repr t) id
+            else repr t in
+          Format.sprintf "%s\"%s\" -> \"%s\";@\n" acc key r) "" args in
+        Hashtbl.add term_tbl key value;
+        List.iter (fun (id, t) -> browse id t) args
+      | HBinder binded -> let value = List.fold_left (fun acc (_, id) ->
+          Format.sprintf "%s\"%s\" -> \"var:%d\"[style=dotted]@\n" acc key id)
+          "" binded in
+        Hashtbl.add term_tbl key value
+      | _ -> Hashtbl.add term_tbl key ""
+  in
+  browse (-1) t;
+  let f = open_out filename in
+  output_string f "digraph output {\n";
+  Hashtbl.iter (fun _ value -> output_string f value) term_tbl;
+  output_string f "}\n";
+  close_out f
