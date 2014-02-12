@@ -3,11 +3,10 @@ begin library "driver"
   files = [ 
     "config.mli" "config.ml" 
     "eval.ml"
-    "interactive_cmd.ml" "display_test.ml" 
+    "display_test.ml"
+    "interactive_cmd.ml"
     "toploop.mli" "toploop.ml"
     "main.ml"
   ]
-  requires = [ "algorithms" "rewriting_system_parser" "str" ]
-  bytecomp = [ "-g" ]
-  bytelink = [ "-g" ]
+  requires = [ "algorithms" "rewriting_system_parser" ]
 end

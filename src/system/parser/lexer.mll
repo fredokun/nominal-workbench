@@ -23,9 +23,9 @@
       ; "rule", RULE
       ; "open", OPEN
       ; "forall", FORALL
-      ; "reduce", REDUCE
+      ; "rewrite", REWRITE
       ; "with", WITH
-      ; "term", TERM
+      ; "let", LET
       ; "strategy", STRATEGY
       ; "rec", REC
       ]

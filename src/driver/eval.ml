@@ -1,5 +1,6 @@
 open Parsetree
 open Interactive_cmd
+open Printf
 
 (* TODO : mli !! *)
 
@@ -89,6 +90,17 @@ and process_reduce system term strategy =
     in 
     process_term system strategy term 
 
+and process_term_expr system = function
+  | PTermLet (ident, term_expr) -> 
+    let rewritten_term = process_term_expr system term_expr in
+    term_env := Term_env.add ident rewritten_term !term_env;
+    rewritten_term
+  | PTermRewrite (term_expr, strategy) ->
+    let rewritten_subterm = process_term_expr system term_expr in
+    let rewritten_term = process_reduce rewritten_subterm strategy in
+    rewritten_term 
+  | PTerm (term) -> term
+
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
 and evaluate_structure_item system =
@@ -99,13 +111,8 @@ and evaluate_structure_item system =
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
-  | PReduce (term, strategy) ->
-      process_reduce system term strategy
-  | PTerm term -> process_term system  (topdown any_rule) term
+  | PTermExpr term -> ignore (process_term_expr system term); system
   | PFile_include fname -> process_file system fname
-  | PTermDecl (id, term) -> 
-      term_env := Term_env.add id term !term_env;
-      system
 
 let run_type_check filled_system ast = 
   List.iter (function

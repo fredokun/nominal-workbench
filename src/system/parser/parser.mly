@@ -56,7 +56,7 @@ let create_strat_simple = function
 %token <string> LIDENT UIDENT EIDENT PLACEHOLDER FILENAME
 
 /* keywords */
-%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH TERM 
+%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REWRITE WITH LET
 %token STRATEGY REC
 
 /* interactive commands */
@@ -105,12 +105,11 @@ decl:
 | operator_decl { PDecl $1 }
 | rule_decl { PDecl $1 }
 | strategy_decl { PDecl $1 }
-| TERM LIDENT EQUAL term { PTermDecl ($2, $4) }
-| REDUCE term WITH strategy { PReduce ($2, $4) }
+| term_expr { PTermExpr $1 }
 | OPEN FILENAME { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }
-| term { PTerm $1 }
+
 /* | OPEN FILENAME
     { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)
@@ -268,10 +267,14 @@ strategy_expression_list :
 
 /* terms */
 
+term_expr:
+| LPAREN term_expr RPAREN { $2 }
+| LET LIDENT EQUAL term_expr { PTermLet ($2, $4) }
+| REWRITE term_expr WITH strategy { PTermRewrite ($2, $4) }
+| term { PTerm $1 }
+
 term:
-| LPAREN term RPAREN { $2 }
-| UIDENT LPAREN term_params RPAREN
-    { Term($1, $3) }
+| UIDENT LPAREN term_params RPAREN { Term($1, $3) }
 | UIDENT { Const($1) }
 | LIDENT { Var($1) }
 
