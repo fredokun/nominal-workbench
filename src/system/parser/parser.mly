@@ -14,6 +14,7 @@ open Parsetree
 open Include
 open Hashtbl
 open Sys
+open Interactive_ast
 
 (* let annote_pos item = *)
 (*   let pos = Parsing.symbol_start_pos () in *)
@@ -52,18 +53,18 @@ let create_strat_simple = function
 
 /* values */
 %token <float> NUM
-%token <string> LIDENT UIDENT PLACEHOLDER FILENAME
+%token <string> LIDENT UIDENT EIDENT PLACEHOLDER FILENAME
 
 /* keywords */
-%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH TERM 
+%token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REWRITE WITH LET
 %token STRATEGY REC
+
+/* interactive commands */
+%token LOAD_TEST FAILWITH HELP
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
 %token DARROW STAR COMMA LT GT DOT ANY SEITHER
-
-/* directives */
-%token HELP
 
 /* comments */
 %token EOF
@@ -94,23 +95,35 @@ decls:
 
 
 decl:
+| interactive_command { PInteractiveCmd $1 }
 | kind_decl { PDecl $1 }
 | constant_decl { PDecl $1 }
 | operator_decl { PDecl $1 }
 | rule_decl { PDecl $1 }
 | strategy_decl { PDecl $1 }
-| TERM LIDENT EQUAL term { PTermDecl ($2, $4) }
-| REDUCE term WITH strategy_expression { PReduce ($2, $4) }
+| term_expr { PTermExpr $1 }
 | OPEN FILENAME { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }
-| term { PTerm $1 }
+
 /* | OPEN FILENAME
     { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)
       | Some(f) ->(None, Some f)
     }
 */
+
+/* Top-level commands */
+
+interactive_command:
+| LOAD_TEST FILENAME expectation { LoadTest ($2, $3) }
+
+expectation:
+| FAILWITH domain_error { MustFail ($2) }
+| { MustPass }
+
+domain_error:
+| EIDENT DOT EIDENT { Error($1, $3) }
 
 /* kinds */
 
@@ -250,10 +263,14 @@ strategy_expression_list :
 
 /* terms */
 
+term_expr:
+| LPAREN term_expr RPAREN { $2 }
+| LET LIDENT EQUAL term_expr { PTermLet ($2, $4) }
+| REWRITE term_expr WITH strategy_expression { PTermRewrite ($2, $4) }
+| term { PTerm $1 }
+
 term:
-| LPAREN term RPAREN { $2 }
-| UIDENT LPAREN term_params RPAREN
-    { Term($1, $3) }
+| UIDENT LPAREN term_params RPAREN { Term($1, $3) }
 | UIDENT { Const($1) }
 | LIDENT { Var($1) }
 

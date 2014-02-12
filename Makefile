@@ -1,6 +1,8 @@
 TEMPORARY_DIR=_obuild
 AUTO_GEN_DIR=src/auto_gen
 ERROR_GEN_EXE=./$(TEMPORARY_DIR)/error_gen/error_gen.byte
+NOWORK_BIN_TMP=$(TEMPORARY_DIR)/nowork/nowork.byte
+NOWORK_BIN=nowork
 
 all: main
 
@@ -12,11 +14,10 @@ launch_gen: generator
 
 main: launch_gen
 	ocp-build build nowork
-	ocp-build build nowork-toplevel
+	cp $(NOWORK_BIN_TMP) $(NOWORK_BIN)
 
-test: launch_gen
-	ocp-build build test
-	./$(TEMPORARY_DIR)/test/test.byte
+test: main
+	./$(NOWORK_BIN) --no-repl data/test/test.nw
 
 clean:
 	ocp-build clean

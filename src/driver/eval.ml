@@ -1,4 +1,5 @@
 open Parsetree
+open Printf
 
 (* TODO : mli !! *)
 
@@ -26,22 +27,17 @@ let rec process_file system fname =
     else if Sys.file_exists fname then
       fname
     else 
-      begin
-	Printf.eprintf "[Error] Cannot find the file %s\n%!" fname;
-	exit 1
-      end
+    begin
+      Printf.eprintf "[Error] Cannot find the file %s\n%!" fname;
+      exit 1
+    end
   in
   begin
     let ic = open_in fpath in
     try
-      let structure = 
-	Parser.start Lexer.token (Lexing.from_channel ic) 
-      in
+      let structure = Parser.start Lexer.token (Lexing.from_channel ic) in
       let new_system = 
-	List.fold_left
-	  evaluate_structure_item
-	  system structure 
-      in
+        List.fold_left evaluate_structure_item system structure in
       close_in ic;
       new_system
     with
@@ -56,14 +52,13 @@ and subst_vars system =
     function
       | Term (id, tlist) -> Term(id, List.map (subst_vars system) tlist)
       | Var id as term -> 
-	  begin
-	    try
-	      Term_env.find id !term_env 
-	    with 
-	      | Not_found -> term
-	  end
+      begin
+        try
+          Term_env.find id !term_env 
+        with 
+        | Not_found -> term
+      end
       | term -> term
-
 
 and process_term system strategy t =
   let open Term_ast in 
@@ -75,43 +70,45 @@ and process_term system strategy t =
     Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
       (string_of_term nt);
-    system
+    nt
   with
   | _ ->
     Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t);
-    system
+    t
 
 and process_reduce system term strategy =
   let open Rewriting_ast in
   let open Symbols in
   process_term system strategy term 
 
+and process_term_expr system = function
+  | PTermLet (ident, term_expr) -> 
+    let rewritten_term = process_term_expr system term_expr in
+    term_env := Term_env.add ident rewritten_term !term_env;
+    rewritten_term
+  | PTermRewrite (term_expr, strategy) ->
+    let rewritten_subterm = process_term_expr system term_expr in
+    let rewritten_term = process_reduce system rewritten_subterm strategy in
+    rewritten_term 
+  | PTerm (term) -> term
+
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
 and evaluate_structure_item system =
-    let open Rewriting_ast in
-    let open Strategy_ast in
-    function
+  let open Rewriting_ast in
+  let open Strategy_ast in
+  function
+  | PInteractiveCmd cmd -> 
+    assert false (* eval_interactive_cmd system cmd : circular dependeny FIXME *) 
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
-  | PReduce (term, strategy) ->
-      process_reduce system term strategy
-  | PTerm term -> process_term system  (topdown any_rule) term
+  | PTermExpr term -> ignore (process_term_expr system term); system
   | PFile_include fname -> process_file system fname
-  | PTermDecl (id, term) -> 
-      term_env := Term_env.add id term !term_env;
-      system
 
 let run_type_check filled_system ast = 
   List.iter (function
-	       | PDecl d -> 
-		   Type_checking.check_decl filled_system d
-	       | _ -> ())
+    | PDecl d -> 
+      Type_checking.check_decl filled_system d
+    | _ -> ())
     ast
-
-
-
-
-
-
