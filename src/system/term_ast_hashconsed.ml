@@ -1,5 +1,6 @@
-(** Highly experimental version of the hashconsed Term_ast /!\
-    For now, it's only for testing and design purpose, please
+(* Distributed under the MIT License.
+  (See accompanying file LICENSE.txt)
+  (C) Copyright Pierrick Couderc
 *)
 
 open Term_ast_dag
@@ -7,7 +8,7 @@ open Term_system_error
 
 type id = int
 type ident = string
-type hash = int
+(* type hash = int *)
 
 (* type 'a hashed = { id : int; hash : int; value : 'a} *)
 
@@ -116,20 +117,29 @@ let get_var_id = function
   | DVar id -> id
   | _ -> assert false
 
+let add_binder_name t l =
+  match t with
+  | DBinder id -> id :: l
+  | _ -> l
+
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
    from right to left actually, to retrieve the binded variables before
    hashconsing the binder. *)
-let rec create_hlist bindings = function
-  | [] -> nil
+let rec create_hlist bindings (names : string list) (* : bindings -> ident list -> *)
+   (* term_dag list -> 'a * 'b  *)= function
+  | [] -> nil, names
   | hd :: tl ->
     (* If it's a binder, we add it in our bindings *)
     let bindings = add_binder hd bindings in
 
     (* We evaluate the rest of the list *)
-    let htl = create_hlist bindings tl in
+    let htl, names = create_hlist bindings names tl in
+    let names = add_binder_name hd names in
 
     (* we can evaluate the actual term *)
-    let term, (bindings : bindings) = create_term_raw bindings hd in
+    let term, bindings, names = create_term_raw bindings names hd in
+
+    (* Format.printf "[%s]@." @@ String.concat ", " names; *)
 
     (* we create a new list with our term *)
     let res = create_cons term htl in
@@ -140,9 +150,9 @@ let rec create_hlist bindings = function
           with Not_found ->
             raise (TermSystemError (VariableUnbound, get_var_id hd)) in
         r := id :: !r;
-        res
+        res, names
       end
-    else res
+    else res, names
 
 
 and create_cons =
@@ -158,32 +168,33 @@ and create_cons =
       incr id;
       new_hl
 
-and create_term_raw =
+and create_term_raw : bindings -> string list -> term_dag -> hterm * bindings *
+  string list =
   let open HTermtbl in
   let term_tbl = create 43 in
   let hvar = HVar in
   add term_tbl hvar hvar;
-  fun (bindings : bindings) td ->
-    let term, bindings =
+  fun (bindings : bindings) names td ->
+    let term, bindings, names =
       match td with
-      | DConst i -> HConst i, bindings
-      | DVar id when not (List.mem_assoc id bindings) -> HFreeVar id, bindings
-      | DVar id -> hvar, bindings
+      | DConst i -> HConst i, bindings, names
+      | DVar id when not (List.mem_assoc id bindings) -> HFreeVar id, bindings, names
+      | DVar id -> hvar, bindings, names
       | DTerm (id, l) ->
-        let hl = create_hlist bindings l in
-        HTerm (id, hl), bindings
+        let hl, names = create_hlist bindings names l in
+        HTerm (id, hl), bindings, names
       | DBinder id ->
         let binded : id list = !(List.assoc id bindings) in
         let binded : (id * id) list = create_id_list binded in
-        HBinder binded, remove_binder td bindings
+        HBinder binded, remove_binder td bindings, names
     in
 
     (* Should we add the current bindings in the hashtbl ? Technically no, we
        need some case were it is mandatory in case this is needed *)
-    try find term_tbl term, bindings
+    try find term_tbl term, bindings, names
     with Not_found ->
       add term_tbl term term;
-      term, bindings
+      term, bindings, names
 
 and create_id_list_raw : id -> (id * id) list -> (id * id) list =
   let open IdListtbl in
@@ -207,17 +218,20 @@ and create_id_list (l : id list) : (id * id) list =
 
 (* Main function to hashcons a term_dag *)
 let create_term td =
-  let term, _ = create_term_raw [] td in
+  let term, _, _ = create_term_raw [] [] td in
   term
 
+let create_term_with_names td =
+  let term, _, names = create_term_raw [] [] td in
+  term, names
 
 (* Pretty printing function *)
 
-let rec string_of_hlist hl =
+let rec string_of_hlist hl names =
   let rec step acc = function
   | [] -> ""
-  | [(_, ht)] -> Format.sprintf "%s%s" acc (string_of_hterm ht)
-  | (_, ht) :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm ht)) tl
+  | [(_, ht)] -> Format.sprintf "%s%s" acc (string_of_hterm names ht)
+  | (_, ht) :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm names ht)) tl
   in
   step "" hl
 
@@ -229,19 +243,20 @@ and string_of_idlist il =
   in
   step "" il
 
-and string_of_hterm = function
+and string_of_hterm names = function
   | HConst i -> i
   | HVar -> "#"
   | HFreeVar i -> i
   | HBinder binded -> Format.sprintf "[.\\{%s}]" @@ string_of_idlist binded
-  | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl)
+  | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl names)
 
 let pretty_print_list hl =
-  Format.printf "[%s]@." @@ string_of_hlist hl
+  Format.printf "[%s]@." @@ string_of_hlist hl []
 
 let pretty_print hterm =
-  print_endline @@ string_of_hterm hterm
+  print_endline @@ string_of_hterm [] hterm
 
+let pretty_print_with_names names term = assert false
 
 (* Dot representation, which is well suited to show sharing *)
 

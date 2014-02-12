@@ -47,8 +47,8 @@ let create_tests () =
   let l1 = [b1; b1; b2; v1; v2; v3] in
   let l2 = [b1; b1; b2; v1; v2; v3] in
 
-  let hl1 = create_hlist [] l1 in
-  let hl2 = create_hlist [] l2 in
+  let hl1, _ = create_hlist [] [] l1 in
+  let hl2, _ = create_hlist [] [] l2 in
 
   List.iter2 (fun (_, t1) (_, t2) ->
       match t1, t2 with
@@ -156,7 +156,33 @@ let lambda_tests () =
 
   Format.printf "Lambda calculs OK@."
 
+let naming_tests () =
+  (* Tests the naming capture, to be able to recreate a term_dag after
+     hashconsing it. We reuse some previously defined terms, especially in the
+     lambda calculus examples.  *)
+
+  let bx = DBinder "x" in
+  let id1 = DTerm ("Lambda", [bx; DVar "x"]) in
+  let by = DBinder "y" in
+  let id2 = DTerm ("Lambda", [by; DVar "y"]) in
+
+  let lsnd = DTerm ("Lambda",
+                    [bx; DTerm ("Lambda", [by; DVar "y"])]) in
+
+  let hsnd, hsnd_names = create_term_with_names lsnd in
+
+  pretty_print hsnd;
+  Format.printf "[%s]@." @@ String.concat ", " hsnd_names;
+
+  let app = DTerm ("App", [lsnd; id1]) in
+  let happ, happ_names = create_term_with_names app in
+
+  pretty_print happ;
+  Format.printf "[%s]@." @@ String.concat ", " happ_names
+
+
 let _ =
   create_tests ();
   peano_tests ();
-  lambda_tests ()
+  lambda_tests ();
+  naming_tests ()
