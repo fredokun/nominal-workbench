@@ -31,5 +31,5 @@ type term_result =
   | TPassed of string
   | TFailed of error
 
-type interactive_cmd =
+type interactive_ast =
 | LoadTest of filename * expectation
