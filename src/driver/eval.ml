@@ -1,5 +1,6 @@
 open Parsetree
 open Printf
+open Interactive_cmd
 
 (* TODO : mli !! *)
 
@@ -99,17 +100,20 @@ and evaluate_structure_item system =
   let open Rewriting_ast in
   let open Strategy_ast in
   function
-  | PInteractiveCmd cmd -> 
-    assert false (* eval_interactive_cmd system cmd : circular dependeny FIXME *) 
+  | PInteractiveCmd cmd -> eval_interactive_cmd eval_and_check system cmd
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
   | PTermExpr term -> ignore (process_term_expr system term); system
   | PFile_include fname -> process_file system fname
 
-let run_type_check filled_system ast = 
+and run_type_check filled_system ast = 
   List.iter (function
     | PDecl d -> 
       Type_checking.check_decl filled_system d
     | _ -> ())
     ast
+
+and eval_and_check system ast = 
+  let new_system = List.fold_left evaluate_structure_item system ast in
+  run_type_check new_system ast

@@ -96,13 +96,12 @@ let check_expectation expectation result domain success_cont =
 
 let system_name filename = (Filename.chop_extension (Filename.basename filename))
 
-(*
-let check_rewriting_system ast RewritingTest(filename, expectation) =
+
+let check_rewriting_system eval_ast ast (RewritingTest(filename, expectation)) =
   let open Rewriting_system_error in
   try 
-    let system = Eval.evaluate_structure_item Symbols.empty_system ast in
-    Eval.run_type_check system ast;
     let success_cont () = print_success (sprintf "%s passed." (system_name filename)) in
+    ignore (eval_ast ast);
     check_expectation expectation Passed domain_name success_cont
   with
   | RewritingSystemError(code, _) ->
@@ -110,17 +109,17 @@ let check_rewriting_system ast RewritingTest(filename, expectation) =
       domain_name ignore
   | e -> print_unknown_exc e "check of the rewriting system"
 
-let test_rewriting_system channel (RewritingTest(_, expectation) as test) =
+let test_rewriting_system eval_ast channel (RewritingTest(_, expectation) as test) =
   let open Rewriting_parsing_error in
   try
-    check_rewriting_system (Parser_include.parse_rewriting_system channel) test
+    check_rewriting_system eval_ast (Parser_include.parse_rewriting_system channel) test
   with
   | RewritingParsingError(code,_) ->
       check_expectation expectation (Failed(Error(domain_name, string_of_error_code code)))
         domain_name ignore
   | e -> print_unknown_exc e "parsing of the rewriting system"
 
-let launch_test (RewritingTest(filename, _) as test) =
+let launch_test eval_ast (RewritingTest(filename, _) as test) =
   let launch () = 
     (* print_test no name file; *)
     try
@@ -128,7 +127,7 @@ let launch_test (RewritingTest(filename, _) as test) =
         print_system_error (sprintf "%s: is a directory" filename)
       else
         let f = open_in filename in
-        test_rewriting_system f test;
+        test_rewriting_system eval_ast f test;
         close_in f
     with
     | Sys_error(e) -> print_system_error e
@@ -140,8 +139,7 @@ let launch_test (RewritingTest(filename, _) as test) =
   launch ();
   Printexc.record_backtrace false
 
-let eval_interactive_cmd system = function
-| LoadTest(filename, expectation) -> 
-  launch_test (RewritingTest(filename, expectation)); system
-
-*)
+let eval_interactive_cmd eval_system system = function
+| LoadTest(filename, expectation) ->
+  launch_test (eval_system system) (RewritingTest(filename, expectation));
+  system

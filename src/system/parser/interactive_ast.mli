@@ -21,7 +21,7 @@ type expectation =
   | MustPass
   | MustFail of error
 
-type system_test = SystemTest of filename * expectation
+type rewriting_test = RewritingTest of filename * expectation
 
 type result =
   | Passed

@@ -8,5 +8,5 @@ begin library "driver"
     "toploop.mli" "toploop.ml"
     "main.ml"
   ]
-  requires = [ "algorithms" "rewriting_system_parser" ]
+  requires = [ "algorithms" "rewriting_system_parser" "str" ]
 end

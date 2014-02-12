@@ -77,7 +77,7 @@ let main k =
       else
         List.fold_left (fun acc fname -> process_file acc fname) empty_system
           (List.rev !files) in
-    if !Config.no_repl then
+    if not !Config.no_repl then
       (* Continuation, might be a 'Read-Eval-Print-Loop' *)
       k system
   end
