@@ -26,24 +26,11 @@ type type_application =
   | TypeApplication of type_name * type_application list
   | TypeName of type_name
 
-(* type generic_type = *)
-(*   | TBinds of type_name *)
-(*   | TInst of type_name *)
-(*   | TNone *)
-
-(* type generic_types = generic_type list *)
-
 type term_type =
   | TypedConst of type_application
   | TypedTerm of type_application list * type_application
   | TypedBinder of type_name
   | TypedVar of type_name
-
-
-(*
-let mk_node e t = { value = e; info = t}
-let mk_dummy e = { value = e; info = ()}
-*)
 
 let rec string_of_term : term_dag -> string = function
   | DConst id -> id

@@ -67,13 +67,19 @@ let rec construct_ast_dag_rec system curr_op binders term pos_in_op =
       (* A new free variable *)
 	let new_var = DVar(ident, None) in
 	(new_var, binders)
-    | Term(ident,terms) ->
-      let (_,new_binders,terms_well_formed) =
-	List.fold_left
-	  (construct_sub_term system ident)
-	  (0,binders,[])
-	  terms
-      in (DTerm(ident,List.rev terms_well_formed),binders)
+    | Term(ident,terms) as t ->
+      begin
+	let (_,(_,args,_)) = lookup_op system ident in
+	if List.length args != List.length terms then
+	  raise (TermSystemError(WrongTermArity, Term_ast.string_of_term t))
+	;
+	let (_,new_binders,terms_well_formed) =
+	  List.fold_left
+	    (construct_sub_term system ident)
+	      (0,binders,[])
+	    terms
+	in (DTerm(ident,List.rev terms_well_formed),binders)
+      end
 and construct_sub_term = fun system ident ->
   fun (pos,binds,l) sub_term ->
     let (sub_term_wf,new_binds) =
@@ -106,10 +112,6 @@ let type_clash_error t1 t2 =
   let s1 = (type_to_string t1) in
   let s2 = (type_to_string t2) in
   raise (TermSystemError(TypeClash, s1 ^ " and " ^ s2))
-
-(* let compare_typed_term_and_type type_binders typed_term typ = *)
-(*   match typed_term with *)
-(*     | TypedConst(tapp) -> *)
 
 let rec unify_types type_binders t1 t2 =
   match (t1,t2) with
@@ -150,18 +152,17 @@ and unify_types_list type_binders l1 l2 =
 			  (t::q, final_binders)
     | _ -> raise (TermSystemError(WrongTermArity, "todo"))
 
-(* let rec term_check_types system term = *)
-(*   let TermAstDag(info,term_dag) = term in *)
+(* let rec term_dag_check_types system term_dag = *)
 (*   match term_dag with *)
 (*     | DConst(ident) -> *)
 (*       let (_,Constant(type_binders,const_type)) = lookup_const system ident in *)
 (*       let gen_binders = binders_to_TBinds type_binders in *)
-(*       (\*TODO*\) *)
+(*       (TypedConst(const_type),gen_binders) *)
 (*     | DBinder(ident,_) -> (\* TODO *\) *)
 (*     | DVar(ident,_) -> (\* TODO *\) *)
 (*     | DTerm(ident,sub_terms) -> *)
 (*       let (_,Operator(type_binders,args,res)) = lookup_op system ident in *)
-(*       let gen_binders = put_binders_into_map type_binders in *)
+(*       let gen_binders = binders_to_TBinds type_binders in *)
 (* 	List.map2 *)
 (* 	(\* begin *\) *)
 (* 	(fun term arg -> *)
@@ -176,7 +177,7 @@ and unify_types_list type_binders l1 l2 =
 (* 	      begin *)
 (* 		match term with *)
 (* 		  | DBinder(ident,_) -> TypedBinder ident *)
-(* 		  | _ -> Term_system_error (BinderClash, pos_to_string info) *)
+(* 		  | _ -> TermSystemError (BinderClash, pos_to_string info) *)
 (* 	      end *)
 (* 	) *)
 (* 	(\* end *\) *)
