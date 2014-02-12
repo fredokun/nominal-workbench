@@ -1,5 +1,11 @@
 begin library "rewriting_system_parser"
     sort = true
-    files = [ "lexer.mll" "parser.mly" "include.ml" "parser_include.ml" "parsetree.mli" ]
+    files = [ 
+      "lexer.mll" 
+      "parser.mly" 
+      "include.ml" "parser_include.ml" 
+      "parsetree.mli"
+      "interactive_ast.mli"
+    ]
     requires = [ "rewriting_system" "term_system" ]
 end

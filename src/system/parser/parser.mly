@@ -13,6 +13,7 @@ open Parsetree
 open Include
 open Hashtbl
 open Sys
+open Interactive_ast
 
 (* let annote_pos item = *)
 (*   let pos = Parsing.symbol_start_pos () in *)
@@ -39,17 +40,17 @@ let create_decl name desc =
 
 /* values */
 %token <float> NUM
-%token <string> LIDENT UIDENT PLACEHOLDER FILENAME
+%token <string> LIDENT UIDENT EIDENT PLACEHOLDER FILENAME
 
 /* keywords */
 %token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REDUCE WITH TERM
 
-/* punctuation */
-%token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
-%token DARROW STAR COMMA LT GT DOT ANY
+/* interactive commands */
+%token LOAD_TEST FAILWITH HELP
 
-/* directives */
-%token HELP
+/* punctuation */
+%token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW DASH
+%token DARROW STAR COMMA LT GT DOT ANY
 
 /* comments */
 %token EOF
@@ -84,6 +85,7 @@ strategy:
 ;
     
 decl:
+| interactive_command { PInteractiveCmd $1 }
 | kind_decl { PDecl $1 }
 | constant_decl { PDecl $1 }
 | operator_decl { PDecl $1 }
@@ -100,6 +102,18 @@ decl:
       | Some(f) ->(None, Some f)
     }
 */
+
+/* Top-level commands */
+
+interactive_command:
+| LOAD_TEST FILENAME expectation { LoadTest ($2, $3) }
+
+expectation:
+| FAILWITH domain_error { MustFail ($2) }
+| { MustPass }
+
+domain_error:
+| EIDENT DOT EIDENT { Error($1, $3) }
 
 /* kinds */
 
