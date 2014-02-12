@@ -1,7 +1,7 @@
 
 open Rewriting_ast
 open Term_ast
-open Strategy
+open Strategy_ast
 open Symbols
 
 let raise_unknown_placeholder ident =
@@ -28,69 +28,72 @@ let rewrite (pattern, effect) ifmatch elsef term =
   | Some ph -> ifmatch ph effect
 
 let rec replace ident new_strategy = function
-  | Id -> Id
-  | Fail -> Fail
-  | Seq(s1, s2) ->
-    Seq(replace ident new_strategy s1, replace ident new_strategy s2)
-  | Either(s1, s2) -> 
-    Either(replace ident new_strategy s1, replace ident new_strategy s2)
-  | Rec(var, s) ->
-    Rec(var, replace ident new_strategy s)
-  | Test(s) -> Test(replace ident new_strategy s)
-  | Not(s) -> Not(replace ident new_strategy s)
-  | Var(name) when name = ident -> new_strategy
-  | Var(name) -> Var(name)
-  | Rule(name) -> Rule(name)
-  | All(s) -> All(replace ident new_strategy s)
+  | SId -> SId
+  | SFail -> SFail
+  | SSeq(s1, s2) ->
+    SSeq(replace ident new_strategy s1, replace ident new_strategy s2)
+  | SEither(s1, s2) -> 
+    SEither(replace ident new_strategy s1, replace ident new_strategy s2)
+  | SRec(var, s) ->
+    SRec(var, replace ident new_strategy s)
+  | STest(s) -> STest(replace ident new_strategy s)
+  | SNot(s) -> SNot(replace ident new_strategy s)
+  | SVar(name) when name = ident -> new_strategy
+  | SVar(name) -> SVar(name)
+  | SRule(name) -> SRule(name)
+  | SAll(s) -> SAll(replace ident new_strategy s)
+  | SCall(name, s_list) -> 
+    SCall(name, List.map (replace ident new_strategy) s_list)
 
 let rec apply_strategy rules rec_env strategy term =
   let rec apply_strategy strategy term =
     match strategy with
-    | Id -> Some(term)
-    | Fail -> None
-    | Seq(s1, s2) -> 
+    | SId -> Some(term)
+    | SFail -> None
+    | SSeq(s1, s2) -> 
       begin
         match apply_strategy s1 term with
         | None -> None
         | Some(t) -> apply_strategy s2 t
       end
-    | Either(s1, s2) ->
+    | SEither(s1, s2) ->
       begin
         match apply_strategy s1 term with
         | None -> apply_strategy s2 term
         | res -> res
       end
-    | Rec(var, s) as rec_strat ->
+    | SRec(var, s) as rec_strat ->
       Hashtbl.add rec_env var rec_strat;
       apply_strategy s term
-    | Test(s) ->
+    | STest(s) ->
       begin
         match apply_strategy s term with
         | None -> None
         | Some _ -> Some(term)
       end
-    | Not(s) ->
+    | SNot(s) ->
       begin
         match apply_strategy s term with
         | None -> Some(term)
         | Some _ -> None
       end
-    | Var(name) -> 
+    | SVar(name) -> 
       begin
         try
           let rec_strat = Hashtbl.find rec_env name in
           apply_strategy rec_strat term
         with Not_found -> assert false
       end
-    | Rule(Some(name)) ->
+    | SRule(Some(name)) ->
       begin
         try
           let (_, rule) = System_map.find name rules in
           rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
         with Not_found -> assert false
       end
-    | Rule(None) -> apply_strategy (Strategies.seq_all rules) term
-    | All(s) -> apply_to_children rules rec_env s term
+    | SRule(None) -> apply_strategy (Strategies.seq_all rules) term
+    | SAll(s) -> apply_to_children rules rec_env s term
+    | SCall _ -> assert false (* TODO *)
   in
   apply_strategy strategy term
 

@@ -26,6 +26,8 @@
       ; "reduce", REDUCE
       ; "with", WITH
       ; "term", TERM
+      ; "strategy", STRATEGY
+      ; "rec", REC
       ]
 
   let directive_table = Hashtbl.create 16
@@ -70,6 +72,7 @@ let space = ['\t' ' ']*
 let newline = ['\n' '\r']
 let comment = '#' [^ '\n' '\r' ] *
 let dash = '-'
+let either = "+>"
 
 let directive = colon lower_ident
 let directive_opt = dash dash lower_ident
@@ -115,14 +118,13 @@ let directive_opt = dash dash lower_ident
   | doublearrow { DARROW }
   | star { STAR }
   | comma { COMMA }
-  | dash { DASH }
+  | either { SEITHER }
   | any { ANY }
   | newline { 
     Lexing.new_line lexbuf;
     token lexbuf }
   | eof { EOF }
   | _ { failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }
-
 
 {
 }

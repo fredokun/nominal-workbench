@@ -3,6 +3,8 @@
    (C) Copyright Pierre Talbot
 *)
 
+open Strategy_ast
+
 (* Auxiliary types *)
 type type_name = string
 type type_binders = type_name list
@@ -17,7 +19,7 @@ type kind_type =
 
 type kind = kind_type list
 
-type strategy =
+type strategy_name =
   | Strategy of string
   | TopDown
   | BottomUp
@@ -74,3 +76,4 @@ and rewriting_desc =
   | DConstant of constant
   | DOperator of operator
   | DRule of rule
+  | DStrategy of strategy_def
