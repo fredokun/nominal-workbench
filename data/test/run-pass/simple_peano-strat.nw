@@ -1,0 +1,62 @@
+# Peano grammar.
+kind Nat : type
+constant Zero : Nat
+
+operator Successor : Nat -> Nat
+operator Add : Nat * Nat -> Nat
+
+rule [add-nil-left] :
+  Add(Zero, ?n) => ?n
+
+rule [add-nil-right] :
+  Add(?n, Zero) => ?n
+
+rule [add-l] :
+  Add(Successor(?u), ?v) => Successor(Add(?u, ?v))
+
+rule [add-r] :
+  Add(?u, Successor(?v)) => Successor(Add(?u, ?v))
+
+
+rule [add-one-add] :
+  Add(?a, ?b) => Successor(Add(?a, ?b))
+
+strategy Dummy : id() # do nothing
+strategy TryBasicRules : 
+  [add-nil-right] +>
+  [add-nil-left] +>
+  [add-l] +>
+  [add-r] +>
+  id()
+
+strategy TopdownAll : Topdown(TryBasicRules) # top down on all rules
+
+strategy BottomupAll : Bottomup(TryBasicRules) # bottom up on all rules
+strategy AddOne : Try([add-one-add])
+strategy AddOneResult : AddOne ; BottomupAll
+
+# Tests
+
+#:test let two = Successor(Successor(Zero)) --equal two
+#:test let three = Successor(Successor(Zero)) --equal three
+
+#:test Successor(Zero) --equal Successor(Zero)
+#:test Successor(Successor(Zero)) --equal Successor(Successor(Zero))
+#:test Zero --equal Zero
+:test rewrite Add(Zero,Successor(Zero)) with TopdownAll --equal Successor(Zero)
+:test rewrite Add(Zero,Successor(Zero)) with BottomupAll --equal Successor(Zero)
+:test rewrite Add(Zero,Successor(Zero)) with Dummy --equal Add(Zero,Successor(Zero))
+:test rewrite Add(Zero,Successor(Zero)) with AddOne --equal Successor(Add(Zero, Successor(Zero)))
+:test rewrite Add(Zero,Successor(Zero)) with AddOneResult --equal Successor(Successor(Zero))
+#:test rewrite Add(Zero,Zero) with <strategy> --equal Zero
+#:test rewrite Add(Successor(Zero),Successor(Zero)) with <strategy> --equal two
+#:test rewrite Add(Successor(Zero),Successor(Zero)) with <strategy> --equal two
+#:test rewrite Add(Add(Zero, Successor(Zero)), Add(Successor(Zero),Successor(Zero))) with <strategy> --equal three
+
+# Erroneous cases
+
+#:test Successor(0) --failwith TermSystemError.UnknownSymbol
+#:test Successor --failwith TermSystemError.BadTermArity
+#:test Successor(Zero,Zero) --failwith TermSystemError.BadTermArity
+#:test Successor(Zero,Zero) --failwith TermSystemError.BadTermArity
+#:test Successor(TestConstant) --failwith TermSystemError.WrongParameterKind

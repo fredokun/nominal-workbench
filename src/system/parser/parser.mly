@@ -220,8 +220,8 @@ strategy_decl:
   }
 
 strategy_head :
-| STRATEGY LIDENT COLON { ($2, []) }
-| STRATEGY LIDENT LPAREN strategy_param_list RPAREN COLON { ($2, $4) }
+| STRATEGY UIDENT COLON { ($2, []) }
+| STRATEGY UIDENT LPAREN strategy_param_list RPAREN COLON { ($2, $4) }
 
 strategy_param_list :
 | LIDENT { [$1] }
@@ -245,8 +245,9 @@ strategy_advanced_expression :
 | LIDENT { SVar $1 }
 | REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) }
 | RULE LPAREN RPAREN { SRule None }
-| RULE LPAREN UIDENT RPAREN { SRule (Some $3) } 
-| UIDENT LPAREN RPAREN { SCall ($1, []) }
+| RULE LPAREN LIDENT RPAREN { SRule (Some $3) } 
+| LBRACKET LIDENT RBRACKET { SRule (Some $2) }
+| UIDENT { SCall ($1, []) }
 | UIDENT LPAREN strategy_expression_list RPAREN { SCall ($1, $3) }
 
 strategy_expression_list :

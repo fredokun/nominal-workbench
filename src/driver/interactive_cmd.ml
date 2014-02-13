@@ -38,7 +38,7 @@ let check_term eval_term = function
     if (equal_term rt1 rt2) then
       rewritten_success rt1 rt2
     else
-      print_failure (sprintf "Bad term rewriting, expected %s but got %s." rt1 rt2)
+      print_failure (sprintf "Bad term rewriting, expected %s but got %s." rt2 rt1)
   | TMustFail (term, e) ->
     let open Rewriting_error in
     try

@@ -67,7 +67,6 @@ and process_term system strategy t =
   let open Symbols in
   let open Strategy_ast in
   try
-    let strategy = topdown any_rule in
     let nt = Rewriting.rewrite_rec strategy system t in
     Printf.printf "Term : %s rewrote into %s\n%!"
       (string_of_term t)
@@ -78,11 +77,6 @@ and process_term system strategy t =
     Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t);
     t
 
-and process_reduce system term strategy =
-  let open Rewriting_ast in
-  let open Symbols in
-  process_term system strategy term 
-
 and process_term_expr system = function
   | PTermLet (ident, term_expr) -> 
     let rewritten_term = process_term_expr system term_expr in
@@ -90,7 +84,10 @@ and process_term_expr system = function
     rewritten_term
   | PTermRewrite (term_expr, strategy) ->
     let rewritten_subterm = process_term_expr system term_expr in
-    let rewritten_term = process_reduce system rewritten_subterm strategy in
+    (* Printf.printf "%s with %s \n" 
+      (Term_ast.string_of_term  rewritten_subterm)
+      (Strategy_ast.string_of_strategy strategy); *)
+    let rewritten_term = process_term system strategy rewritten_subterm in
     rewritten_term 
   | PTerm (term) -> term
 
