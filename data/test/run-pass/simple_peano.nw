@@ -1,5 +1,5 @@
 # Not a part of the Peano grammar, just for testing purpose.
-open data/test/tools/test_tool.nw
+open "data/test/tools/test_tool.nw"
 
 # Peano grammar.
 kind Nat : type

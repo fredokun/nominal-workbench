@@ -32,7 +32,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 
 /* values */
 %token <float> NUM
-%token <string> LIDENT UIDENT EIDENT PLACEHOLDER FILENAME
+%token <string> LIDENT UIDENT PLACEHOLDER STRING
 
 /* keywords */
 %token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REWRITE WITH LET
@@ -82,11 +82,11 @@ decl:
 | rule_decl { PDecl $1 }
 | strategy_decl { PDecl $1 }
 | term_expr { PTermExpr $1 }
-| OPEN FILENAME { PFile_include $2 }
+| OPEN STRING { PFile_include $2 }
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }
 
-/* | OPEN FILENAME
+/* | OPEN STRING
     { match Include.nw_include files_included include_paths $2 with
       | None -> (None, None)
       | Some(f) ->(None, Some f)
@@ -96,7 +96,7 @@ decl:
 /* Top-level commands */
 
 interactive_command:
-| LOAD_TEST FILENAME expectation { LoadTest ($2, $3) }
+| LOAD_TEST STRING expectation { LoadTest ($2, $3) }
 | TEST test_term_predicate { TermTest(TMustPass($2)) }
 | TEST term_expr FAILWITH domain_error { TermTest(TMustFail($2, $4)) }
 | QUIT { Quit }
@@ -110,7 +110,7 @@ expectation:
 | { MustPass }
 
 domain_error:
-| EIDENT DOT EIDENT { Error($1, $3) }
+| UIDENT DOT UIDENT { Error($1, $3) }
 
 /* kinds */
 
