@@ -77,7 +77,7 @@ let check_rewriting_system eval_ast ast (RewritingTest(filename, expectation)) =
 let test_rewriting_system eval_ast channel (RewritingTest(_, expectation) as test) =
   let open Rewriting_parsing_error in
   try
-    check_rewriting_system eval_ast (Parser_include.parse_rewriting_system channel) test
+    check_rewriting_system eval_ast (Parser_include.parse_nowork_file channel) test
   with
   | RewritingParsingError(code,_) ->
       check_expectation expectation (Failed(Error(domain_name, string_of_error_code code)))

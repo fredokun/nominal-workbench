@@ -16,6 +16,9 @@ val rule_suffix : string
 (* If True, do not launch the REPL after having evaluated the files. *)
 val no_repl : bool ref
 
+(* If True, the mode debug is activated. *)
+val debug : bool ref
+
 val verbose : bool ref
 
 val reset_system : bool ref
