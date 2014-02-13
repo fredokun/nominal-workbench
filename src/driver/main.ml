@@ -47,15 +47,15 @@ let process_file system fname =
       printf "Evaluating file %s...\n%!" fname;
     let ic = open_in fpath in
     try
-      let structure = Parser.start Lexer.token (Lexing.from_channel ic) in
-      let new_system = List.fold_left Eval.evaluate_structure_item system structure in
+      let ast = Parser_include.parse_nowork_file ic in
+      let new_system = List.fold_left Eval.evaluate_structure_item system ast in
       (* Pretty.print_system Format.std_formatter new_system; *)
       close_in ic;
       (* todo type check. before or after ? *)
       new_system
     with
-    | _ ->
-      eprintf "[Warning] Unhandled error. Skipping %s\n%!" fname;
+    | e ->
+      Display_test.print_unknown_exc e (sprintf "processing of the file %s" fname);
       close_in ic;
       system
   end
@@ -65,6 +65,9 @@ let main k =
   begin
     (* Parse the command-line *)
     Arg.parse Config.list file_argument usage;
+
+    (if !Config.debug then
+      Printexc.record_backtrace true);
 
     (* Parse & Eval the files *)
     let system = 
@@ -77,7 +80,7 @@ let main k =
       else
         List.fold_left (fun acc fname -> process_file acc fname) empty_system
           (List.rev !files) in
-    if !Config.no_repl then
+    if not !Config.no_repl then
       (* Continuation, might be a 'Read-Eval-Print-Loop' *)
       k system
   end

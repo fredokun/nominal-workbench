@@ -5,10 +5,15 @@
 
 open Printf
 open Display_test
-open Interactive_ast
-open Parsetree
+open Parsing_ast
 
 (* Test framework. *)
+type result =
+  | Passed
+  | Failed of error
+
+type rewriting_test = RewritingTest of filename * expectation
+
 let string_of_error (Error(domain, name)) =
   sprintf "%s.%s" domain name
 
@@ -22,64 +27,31 @@ let strip_ws str =
 let equal_term t1 t2 =
   (strip_ws t1) = (strip_ws t2)
 
-(* Term rewriting tests. *)
-let check_term_expectation expectation result domain success_cont =
-  match (expectation, result) with
-  | (TMustPass(_), TFailed(e)) ->
-    print_failure (sprintf "Failure with error %s." ( string_of_error e))
-  | (TMustFail(e), TPassed(t)) -> print_failure
-      (sprintf "Should have failed with %s but passed with %s." (string_of_error e) t)
-  | (TMustFail(expected), TFailed(e)) when not ( equal_error expected e ) ->
-      print_failure (sprintf "Expected error %s but failed with %s."
-        (string_of_error expected)
-        (string_of_error e))
-  | (TMustFail(_), TFailed(e)) ->
-      print_success (sprintf "Failure with %s as expected." (string_of_error e))
-  | (TMustPass(t1), TPassed(t2)) when not (equal_term t1 t2) ->
-      print_failure (sprintf "Bad term rewriting, expected %s but got %s." t1 t2)
-  | (TMustPass(t1), TPassed(t2)) -> success_cont ()
-
-let rewritten_success t1 t2 () =
+let rewritten_success t1 t2 =
   print_success (sprintf "Term %s has been correctly rewritten in %s." t1 t2)
 
-let check_processed_term term strategy rules expectation =
-  let open Rewriting_error in
-  let open Symbols in
-  try
-    let rewritten_term = Rewriting.rewrite_rec strategy rules term in
-    let srewritten_term = Term_ast.string_of_term rewritten_term in
-    check_term_expectation expectation (TPassed(srewritten_term)) domain_name
-     (rewritten_success (Term_ast.string_of_term term) srewritten_term)
-  with
-  | RewritingError(code, _) ->
-      check_term_expectation expectation (TFailed(Error(domain_name, string_of_error_code code)))
-        domain_name ignore
-  | e -> print_unknown_exc e "term rewriting"
-
-
-let check_term system (TermTest(libs, term, expectation)) =
-  let open Term_parsing_error in
-  let open Symbols in
-  try
-    let term, strategy =
-      match Parser.start Lexer.token (Lexing.from_string term) with
-      | [Parsetree.PTermExpr (PTerm t)] -> t, Strategy_ast.(topdown any_rule)
-      | [Parsetree.PTermExpr (PTermRewrite (t, s))] -> assert false (* TODO FIXME *)
-      | [Parsetree.PTermExpr (PTermLet _)] -> assert false (* TODO *)
-      | (Parsetree.PTermExpr _)::_ ->
-        print_system_error "You can only test one item at a time";
-        raise (TermParsingError(SyntaxError, "Expected one term"))
-      | _ -> print_system_error "This is not a term."; 
-        raise (TermParsingError(SyntaxError, "Expected a term")) in
-    check_processed_term term strategy system expectation
-  with
-  | TermParsingError(code, _) ->
-    check_term_expectation expectation (TFailed(Error(domain_name, string_of_error_code code)))
-      domain_name ignore
-  | e -> print_unknown_exc e "parsing of the terms"
-
-let check_terms system terms () =
-  List.iter (check_term system) (List.rev terms)
+let check_term eval_term = function
+  | TMustPass (InPredicate(t1, t2))
+  | TMustPass (EqualPredicate(t1, t2)) ->
+    let rt1 = Term_ast.string_of_term @@ eval_term t1 in
+    let rt2 = Term_ast.string_of_term @@ eval_term t2 in
+    if (equal_term rt1 rt2) then
+      rewritten_success rt1 rt2
+    else
+      print_failure (sprintf "Bad term rewriting, expected %s but got %s." rt1 rt2)
+  | TMustFail (term, e) ->
+    let open Rewriting_error in
+    try
+      let rt = Term_ast.string_of_term @@ eval_term term in
+      print_failure (sprintf "Should have failed with %s but passed with %s." (string_of_error e) rt)
+    with
+    | RewritingError(code, _) when equal_error e (Error(domain_name, string_of_error_code code)) ->
+        print_success (sprintf "Failure with %s as expected." (string_of_error e))
+    | RewritingError(code, _) ->
+        print_failure (sprintf "Expected error %s but failed with %s."
+          (string_of_error e)
+          (string_of_error (Error(domain_name, string_of_error_code code))))
+    | e -> print_unknown_exc e "term rewriting"
 
 (* Rewriting System test *)
 let check_expectation expectation result domain success_cont =
@@ -96,13 +68,11 @@ let check_expectation expectation result domain success_cont =
 
 let system_name filename = (Filename.chop_extension (Filename.basename filename))
 
-(*
-let check_rewriting_system ast RewritingTest(filename, expectation) =
+let check_rewriting_system eval_ast ast (RewritingTest(filename, expectation)) =
   let open Rewriting_system_error in
   try 
-    let system = Eval.evaluate_structure_item Symbols.empty_system ast in
-    Eval.run_type_check system ast;
     let success_cont () = print_success (sprintf "%s passed." (system_name filename)) in
+    ignore (eval_ast ast);
     check_expectation expectation Passed domain_name success_cont
   with
   | RewritingSystemError(code, _) ->
@@ -110,17 +80,17 @@ let check_rewriting_system ast RewritingTest(filename, expectation) =
       domain_name ignore
   | e -> print_unknown_exc e "check of the rewriting system"
 
-let test_rewriting_system channel (RewritingTest(_, expectation) as test) =
+let test_rewriting_system eval_ast channel (RewritingTest(_, expectation) as test) =
   let open Rewriting_parsing_error in
   try
-    check_rewriting_system (Parser_include.parse_rewriting_system channel) test
+    check_rewriting_system eval_ast (Parser_include.parse_nowork_file channel) test
   with
   | RewritingParsingError(code,_) ->
       check_expectation expectation (Failed(Error(domain_name, string_of_error_code code)))
         domain_name ignore
   | e -> print_unknown_exc e "parsing of the rewriting system"
 
-let launch_test (RewritingTest(filename, _) as test) =
+let launch_test eval_ast (RewritingTest(filename, _) as test) =
   let launch () = 
     (* print_test no name file; *)
     try
@@ -128,20 +98,18 @@ let launch_test (RewritingTest(filename, _) as test) =
         print_system_error (sprintf "%s: is a directory" filename)
       else
         let f = open_in filename in
-        test_rewriting_system f test;
+        test_rewriting_system eval_ast f test;
         close_in f
     with
     | Sys_error(e) -> print_system_error e
-    | e ->
-      printf "Something got really wrong, here the exception backtrace:\n";
-      printf "Exception: %s.\n" ( Printexc.to_string e );
-      Printexc.print_backtrace stdout in
+    | e -> print_unknown_exc e "launching of the test" in
   Printexc.record_backtrace true;
   launch ();
   Printexc.record_backtrace false
 
-let eval_interactive_cmd system = function
+let eval_interactive_cmd process_term_expr eval_system system = function
 | LoadTest(filename, expectation) -> 
-  launch_test (RewritingTest(filename, expectation)); system
-
-*)
+  launch_test (eval_system system) (RewritingTest(filename, expectation));
+  system
+| TermTest(term) -> check_term (process_term_expr system) term; system
+| Quit -> exit 0

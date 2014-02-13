@@ -1,0 +1,24 @@
+:load-test data/test/run-fail/constants.nw --failwith RewritingSystemError.UnboundSymbol
+:load-test data/test/run-pass/with_comment.nw
+:load-test data/test/run-pass/with_include.nw
+:load-test data/test/run-pass/with_forall.nw
+:load-test data/test/run-fail/typecheck_cardinality_error_in_effect_operation.nw --failwith RewritingSystemError.WrongArity
+:load-test data/test/run-fail/typecheck_cardinality_error_in_pattern_operation.nw --failwith RewritingSystemError.WrongArity
+:load-test data/test/run-fail/typecheck_illegal_type_app.nw --failwith RewritingSystemError.IllegalTypeApp
+:load-test data/test/run-pass/with_forall.nw
+:load-test data/test/run-fail/typecheck_cardinality_error_in_effect_operation.nw --failwith RewritingSystemError.WrongArity
+:load-test data/test/run-fail/typecheck_cardinality_error_in_pattern_operation.nw --failwith RewritingSystemError.WrongArity
+:load-test data/test/run-fail/typecheck_illegal_type_app.nw --failwith RewritingSystemError.IllegalTypeApp
+:load-test data/test/run-fail/typecheck_not_declared_constant_in_effect.nw --failwith RewritingSystemError.UnboundSymbol
+:load-test data/test/run-fail/typecheck_not_declared_constant_in_pattern.nw --failwith RewritingSystemError.UnboundSymbol
+:load-test data/test/run-fail/typecheck_not_declared_operation_in_effect.nw --failwith RewritingSystemError.UnboundSymbol
+:load-test data/test/run-fail/typecheck_not_declared_operation_in_pattern.nw --failwith RewritingSystemError.UnboundSymbol
+:load-test data/test/run-fail/typecheck_placeholder_unknown_in_effect.nw --failwith RewritingSystemError.UnknownPlaceholder
+:load-test data/test/run-fail/typecheck_type_ill_formed.nw --failwith RewritingSystemError.TypeIllFormed
+:load-test data/test/run-fail/typecheck_typing_clash_wrong_operation_in_effect.nw --failwith RewritingSystemError.TypeClash
+:load-test data/test/run-fail/typecheck_typing_clash_wrong_operation_in_pattern.nw --failwithRewritingSystemError.TypeClash
+:load-test data/test/run-fail/typecheck_wrong_binder_kind.nw --failwith RewritingSystemError.WrongBinderKind
+:load-test data/test/run-fail/typecheck_placeholder_clash.nw --failwith RewritingSystemError.TypeClash
+:load-test data/test/run-fail/typecheck_generics.nw --failwith RewritingSystemError.KindClash
+:load-test data/test/run-pass/simple_peano.nw
+:load-test data/test/run-pass/negative_peano.nw

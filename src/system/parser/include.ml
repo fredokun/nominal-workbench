@@ -78,7 +78,7 @@ let add_path include_paths pathname =
   else
     ()
 
-(* give it a string, it do the job *)
+(* give it a string, it does the job *)
 let nw_include files_included include_paths name =
   let fname = (get_absolute_path include_paths name) in
   if Filename.check_suffix fname ".nw" then

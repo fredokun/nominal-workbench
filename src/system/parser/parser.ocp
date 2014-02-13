@@ -4,8 +4,7 @@ begin library "rewriting_system_parser"
       "lexer.mll" 
       "parser.mly" 
       "include.ml" "parser_include.ml"
-      "interactive_ast.mli"
-      "parsetree.mli"
+      "parsing_ast.mli"
     ]
     requires = [ "rewriting_system" "term_system" ]
 end

@@ -32,16 +32,22 @@
 
   let directive_table = Hashtbl.create 16
   let () =
-    List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok)
+    List.iter (fun (kwd, tok) -> Hashtbl.add directive_table kwd tok)
       [ ":help", HELP
-      ; ":load_test", LOAD_TEST
+      ; ":?", HELP
+      ; ":quit", QUIT
+      ; ":exit", QUIT
+      ; ":q", QUIT
+      ; ":load-test", LOAD_TEST
+      ; ":test", TEST
       ]
 
   let directive_option_table = Hashtbl.create 16
   let () =
-    List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok)
+    List.iter (fun (kwd, tok) -> Hashtbl.add directive_option_table kwd tok)
       [ "--failwith", FAILWITH
-      ;
+      ; "--in", IN_CMD_OPTION
+      ; "--equal", EQUAL_CMD_OPTION
       ]
 }
 

@@ -19,3 +19,25 @@ rule [add-l] :
 
 rule [add-r] :
   Add(?u, Successor(?v)) => Successor(Add(?u, ?v))
+
+# Tests
+
+:test let two = Successor(Successor(Zero)) --equal two
+:test let three = Successor(Successor(Zero)) --equal three
+
+:test Successor(Zero) --equal Successor(Zero)
+:test Successor(Successor(Zero)) --equal Successor(Successor(Zero))
+:test Zero --equal Zero
+#:test rewrite Add(Zero,Successor(Zero)) with <strategy> --equal Successor(Zero)
+#:test rewrite Add(Zero,Zero) with <strategy> --equal Zero
+#:test rewrite Add(Successor(Zero),Successor(Zero)) with <strategy> --equal two
+#:test rewrite Add(Successor(Zero),Successor(Zero)) with <strategy> --equal two
+#:test rewrite Add(Add(Zero, Successor(Zero)), Add(Successor(Zero),Successor(Zero))) with <strategy> --equal three
+
+# Erroneous cases
+
+:test Successor(0) --failwith TermSystemError.UnknownSymbol
+:test Successor --failwith TermSystemError.BadTermArity
+:test Successor(Zero,Zero) --failwith TermSystemError.BadTermArity
+:test Successor(Zero,Zero) --failwith TermSystemError.BadTermArity
+:test Successor(TestConstant) --failwith TermSystemError.WrongParameterKind

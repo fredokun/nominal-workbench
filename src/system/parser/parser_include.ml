@@ -24,7 +24,7 @@ and parse_file_list l =
     | [] -> []
     | f :: q -> (parse_file f) @ parse_file_list q
 *)
-let parse_rewriting_system channel =
+let parse_nowork_file channel =
   let open Rewriting_parsing_error in
   try
     parse_channel channel
