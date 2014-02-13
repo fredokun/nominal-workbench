@@ -10,9 +10,9 @@ type id = int
 type ident = string
 (* type hash = int *)
 
-(* type 'a hashed = { id : int; hash : int; value : 'a} *)
+type 'a hashed = { id : int; hash : int; value : 'a}
 
-type 'a hlist = (id * 'a) list
+type 'a hlist = 'a hashed list
 
 let nil = []
 
@@ -25,15 +25,14 @@ type hterm =
   | HVar
   | HFreeVar of ident
 
-let rec hash_hlist l =
-  let rec step acc = function
-    | [] -> acc
-    | (id, hd) :: tl -> step ((hash hd) + 17 * acc) tl in
-  step 1 l
+let rec hash_hlist = function
+    | [] -> 0
+    | v :: [] -> hash_term v.value
+    | v1 :: v2 :: _ -> (hash_term v1.value) + 17 * v2.hash
 
 (** The hashtbl's hash function is efficient on string, so we can use it without
   any consequence *)
-and hash = function
+and hash_term = function
   | HConst i -> Hashtbl.hash i
   | HFreeVar i -> 2 + Hashtbl.hash i
   | HTerm (i, htl) -> (3 + Hashtbl.hash i) + hash_hlist htl
@@ -46,7 +45,7 @@ let rec equal_hlist hl1 hl2 =
   | [], [] -> true
     (* We can suppose at the moment we try the equality that tl1 and tl2 are
       already hashconsed *)
-  | (_, hd1) :: tl1, (_, hd2) :: tl2 -> hd1 == hd2 && tl1 == tl2
+  | v1 :: tl1, v2 :: tl2 -> v1.value == v2.value && tl1 == tl2
   | _, _ -> false
 
 and equal ht1 ht2 =
@@ -63,7 +62,7 @@ and equal ht1 ht2 =
 module HTermtbl = Hashtbl.Make(struct
     type t = hterm
     let equal = equal
-    let hash = hash
+    let hash = hash_term
   end)
 
 
@@ -109,11 +108,13 @@ let remove_binder t bindings =
 let string_of_bindings b =
   List.fold_left (fun acc (i, _) -> Format.sprintf "%s, %s" acc i) "" b
 
-let is_var = function
+let is_var t =
+  match t with
   | DVar _ -> true
   | _ -> false
 
-let get_var_id = function
+let get_var_id t =
+  match t with
   | DVar id -> id
   | _ -> assert false
 
@@ -145,7 +146,7 @@ let rec create_hlist bindings (names : string list) (* : bindings -> ident list 
     let res = create_cons term htl in
     if is_var hd && List.mem_assoc (get_var_id hd) bindings then
       begin
-        let (id, _) = List.hd res in
+        let id = (List.hd res).id in
         let r = try List.assoc (get_var_id hd) bindings
           with Not_found ->
             raise (TermSystemError (VariableUnbound, get_var_id hd)) in
@@ -155,13 +156,15 @@ let rec create_hlist bindings (names : string list) (* : bindings -> ident list 
     else res, names
 
 
-and create_cons =
+and create_cons : hterm -> hterm hlist -> hterm hlist=
   let open HListtbl in
   let id = ref 1 in
   let t = create 43 in
   add t nil nil;
   fun term hlist ->
-    let new_hl = (!id, term) :: hlist in
+    let new_hl =
+      { id = !id; value = term;
+        hash = hash_term term + 17 * hash_hlist hlist} :: hlist in
     try find t new_hl
     with Not_found ->
       add t new_hl new_hl;
@@ -230,8 +233,8 @@ let create_term_with_names td =
 let rec string_of_hlist hl names =
   let rec step acc = function
   | [] -> ""
-  | [(_, ht)] -> Format.sprintf "%s%s" acc (string_of_hterm names ht)
-  | (_, ht) :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm names ht)) tl
+  | [ht] -> Format.sprintf "%s%s" acc (string_of_hterm names ht.value)
+  | ht :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm names ht.value)) tl
   in
   step "" hl
 
@@ -262,7 +265,7 @@ let pretty_print_with_names names term = assert false
 
 module ReprH = Hashtbl.Make (struct
     type t = hterm
-    let hash = hash
+    let hash = hash_term
     let equal = (==)
   end)
 
@@ -296,12 +299,12 @@ let dot t filename =
     let key = repr t in
     if not (Hashtbl.mem term_tbl key) || is_binder t then
       match t with
-      | HTerm (n, args) -> let value = List.fold_left (fun acc (id, t) ->
-          let r = if is_var t then Format.sprintf "%s:%d" (repr t) id
-            else repr t in
+      | HTerm (n, args) -> let value = List.fold_left (fun acc (t : hterm hashed) ->
+          let r = if is_var t.value then Format.sprintf "%s:%d" (repr t.value) t.id
+            else repr t.value in
           Format.sprintf "%s\"%s\" -> \"%s\";@\n" acc key r) "" args in
         Hashtbl.add term_tbl key value;
-        List.iter (fun (id, t) -> browse id t) args
+        List.iter (fun t -> browse t.id t.value) args
       | HBinder binded -> let value = List.fold_left (fun acc (_, id) ->
           Format.sprintf "%s\"%s\" -> \"var:%d\"[style=dotted]@\n" acc key id)
           "" binded in

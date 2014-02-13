@@ -50,8 +50,8 @@ let create_tests () =
   let hl1, _ = create_hlist [] [] l1 in
   let hl2, _ = create_hlist [] [] l2 in
 
-  List.iter2 (fun (_, t1) (_, t2) ->
-      match t1, t2 with
+  List.iter2 (fun t1 t2 ->
+      match t1.value, t2.value with
       | HBinder b1, HBinder b2 -> assert (b1 == b2)
       | _ -> ()
     ) hl1 hl2;
@@ -140,7 +140,7 @@ let lambda_tests () =
   (* We open the term and get the second lambda, which is basically id *)
   let hid3 = match hsnd with
     | HTerm (_, hl) ->
-      snd @@ List.hd @@ List.tl hl
+      (List.hd @@ List.tl hl).value
     | _ -> assert false in
 
   (* pretty_print hid2; *)
@@ -178,7 +178,8 @@ let naming_tests () =
   let happ, happ_names = create_term_with_names app in
 
   pretty_print happ;
-  Format.printf "[%s]@." @@ String.concat ", " happ_names
+  Format.printf "[%s]@." @@ String.concat ", " happ_names;
+  dot happ "happgraph.dot"
 
 
 let _ =
