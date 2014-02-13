@@ -5,9 +5,15 @@
 
 open Printf
 open Display_test
-open Parsetree
+open Parsing_ast
 
 (* Test framework. *)
+type result =
+  | Passed
+  | Failed of error
+
+type rewriting_test = RewritingTest of filename * expectation
+
 let string_of_error (Error(domain, name)) =
   sprintf "%s.%s" domain name
 

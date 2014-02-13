@@ -18,26 +18,16 @@ type term_expr =
 | PTerm of term_ast
 
 type term_predicate = 
-  | InPredicate of term_expr * term_expr
-  | EqualPredicate of term_expr * term_expr
+| InPredicate of term_expr * term_expr
+| EqualPredicate of term_expr * term_expr
 
 type term_test =
-  | TMustPass of term_predicate
-  | TMustFail of term_expr * error
+| TMustPass of term_predicate
+| TMustFail of term_expr * error
 
 type expectation =
-  | MustPass
-  | MustFail of error
-
-type rewriting_test = RewritingTest of filename * expectation
-
-type result =
-  | Passed
-  | Failed of error
-
-type term_result =
-  | TPassed of string
-  | TFailed of error
+| MustPass
+| MustFail of error
 
 type interactive_ast =
 | LoadTest of filename * expectation

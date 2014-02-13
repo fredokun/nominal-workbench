@@ -1,8 +1,7 @@
 %{
 (* Distributed under the MIT License.
   (See accompanying file LICENSE.txt)
-  (C) Copyright Matthieu Dien
-  (C) Copyright Vincent Botbol
+  (C) Copyright NoWork team
 *)
 
 open Parsing
@@ -10,7 +9,7 @@ open Lexing
 open Rewriting_ast
 open Term_ast
 open Strategy_ast
-open Parsetree
+open Parsing_ast
 open Include
 open Hashtbl
 open Sys
@@ -51,10 +50,10 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %token EOF
 
 %start start
-%type <Parsetree.structure> start
+%type <Parsing_ast.structure> start
 
 %start toplevel_phrase
-%type <Parsetree.structure_item> toplevel_phrase
+%type <Parsing_ast.structure_item> toplevel_phrase
 
 %right STAR DARROW ARROW COLON DOT EITHER
 
