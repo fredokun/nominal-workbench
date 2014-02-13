@@ -31,12 +31,12 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %}
 
 /* values */
-%token <float> NUM
+%token <int> NUM
 %token <string> LIDENT UIDENT PLACEHOLDER STRING
 
 /* keywords */
 %token KIND TYPE ATOM OPERATOR RULE CONSTANT OPEN FORALL REWRITE WITH LET
-%token STRATEGY REC
+%token STRATEGY REC PROJ
 
 /* interactive commands */
 %token LOAD_TEST FAILWITH HELP QUIT TEST
@@ -246,6 +246,7 @@ strategy_advanced_expression :
 | REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) }
 | RULE LPAREN RPAREN { SRule None }
 | RULE LPAREN LIDENT RPAREN { SRule (Some $3) } 
+| PROJ LPAREN NUM COMMA strategy_expression RPAREN { SProj ($3, $5) }
 | LBRACKET LIDENT RBRACKET { SRule (Some $2) }
 | UIDENT { SCall ($1, []) }
 | UIDENT LPAREN strategy_expression_list RPAREN { SCall ($1, $3) }

@@ -4,6 +4,7 @@ type strategy =
   | STest of strategy
   | SNot of strategy
   | SAll of strategy
+  | SProj of int * strategy
   | SSeq of strategy * strategy
   | SEither of strategy * strategy
   | SRec of string * strategy
@@ -37,6 +38,7 @@ let rec string_of_strategy = function
   | SRule(Some(name)) -> "rule(" ^ name ^ ")"
   | SRule(None) -> "rule()"
   | SAll(s) -> "all(" ^ (string_of_strategy s) ^ ")"
+  | SProj(i, s) -> "proj(" ^ (string_of_int i) ^ ", " ^ (string_of_strategy s) ^ ")"
   | SCall(name, params) -> 
     let params = List.map string_of_strategy params in
     name ^ "(" ^ (String.concat "," params) ^ ")"

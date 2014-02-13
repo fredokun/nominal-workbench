@@ -50,6 +50,7 @@ let rec replace ident new_strategy = function
   | SVar(name) -> SVar(name)
   | SRule(name) -> SRule(name)
   | SAll(s) -> SAll(replace ident new_strategy s)
+  | SProj(i, s) -> SProj(i, replace ident new_strategy s)
   | SCall(name, s_list) -> 
     SCall(name, List.map (replace ident new_strategy) s_list)
 
@@ -101,6 +102,7 @@ let rec apply_strategy system rec_env strategy term =
       end
     | SRule(None) -> apply_strategy (seq_all system.rules) term
     | SAll(s) -> apply_to_children system rec_env s term
+    | SProj(i, s) -> apply_to_child i system rec_env s term 
     | SCall(name, s_list) ->
       begin
         try
@@ -133,6 +135,21 @@ and apply_to_children system rec_env strategy = function
         end
     in
     apply_to_children [] terms
+  | t -> Some(t)
+
+and apply_to_child nth system rec_env strategy = function
+  | {name=name; desc=Term(terms); _} ->
+    let rec apply_to_nth i acc = function
+      | [] -> Some(Term_ast.create_term name (Term ( List.rev acc)))
+      | head :: tail when i = nth -> 
+        begin
+          match apply_strategy system rec_env strategy head with
+          | None -> None
+          | Some(t) -> apply_to_nth (i + 1) (t::acc) tail
+        end
+      | head :: tail -> apply_to_nth (i + 1) (head :: acc) tail
+    in
+    apply_to_nth 0 [] terms 
   | t -> Some(t)
     
 
