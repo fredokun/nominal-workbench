@@ -165,21 +165,29 @@ let naming_tests () =
   let id1 = DTerm ("Lambda", [bx; DVar "x"]) in
   let by = DBinder "y" in
   let id2 = DTerm ("Lambda", [by; DVar "y"]) in
+  let bz = DBinder "z" in
+  let id3 = DTerm ("Lambda", [bz; DVar "z"]) in
 
   let lsnd = DTerm ("Lambda",
                     [bx; DTerm ("Lambda", [by; DVar "y"])]) in
 
   let hsnd, hsnd_names = create_term_with_names lsnd in
 
-  pretty_print hsnd;
-  Format.printf "[%s]@." @@ String.concat ", " hsnd_names;
+  (* pretty_print hsnd; *)
+  (* Format.printf "[%s]@." @@ String.concat ", " hsnd_names; *)
 
-  let app = DTerm ("App", [lsnd; id1]) in
+  assert (hsnd_names = ["x"; "y"]);
+
+  let app = DTerm ("App", [lsnd; id3]) in
   let happ, happ_names = create_term_with_names app in
 
-  pretty_print happ;
-  Format.printf "[%s]@." @@ String.concat ", " happ_names;
-  dot happ "happgraph.dot"
+  (* pretty_print happ; *)
+  (* Format.printf "[%s]@." @@ String.concat ", " happ_names; *)
+  (* dot happ "happgraph.dot"; *)
+
+  assert (happ_names = ["x"; "y"; "z"]);
+
+  Format.printf "Binders names OK@."
 
 
 let _ =

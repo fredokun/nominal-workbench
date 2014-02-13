@@ -299,10 +299,11 @@ let dot t filename =
     let key = repr t in
     if not (Hashtbl.mem term_tbl key) || is_binder t then
       match t with
-      | HTerm (n, args) -> let value = List.fold_left (fun acc (t : hterm hashed) ->
+      | HTerm (n, args) -> let _, value = List.fold_left (fun (n, acc) t ->
           let r = if is_var t.value then Format.sprintf "%s:%d" (repr t.value) t.id
             else repr t.value in
-          Format.sprintf "%s\"%s\" -> \"%s\";@\n" acc key r) "" args in
+          n + 1, Format.sprintf "%s\"%s\" -> \"%s\"[label=arg%d];@\n" acc key r n)
+          (1, "") args in
         Hashtbl.add term_tbl key value;
         List.iter (fun t -> browse t.id t.value) args
       | HBinder binded -> let value = List.fold_left (fun acc (_, id) ->
