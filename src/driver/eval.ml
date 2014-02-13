@@ -100,7 +100,7 @@ and evaluate_structure_item system =
   let open Rewriting_ast in
   let open Strategy_ast in
   function
-  | PInteractiveCmd cmd -> eval_interactive_cmd eval_and_check system cmd
+  | PInteractiveCmd cmd -> eval_interactive_cmd process_term_expr eval_and_check system cmd
   | PDecl rewriting_decl -> 
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
