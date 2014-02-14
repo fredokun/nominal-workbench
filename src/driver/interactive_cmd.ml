@@ -30,22 +30,36 @@ let equal_term t1 t2 =
 let rewritten_success t1 t2 =
   print_success (sprintf "Term %s has been correctly rewritten in %s." t1 t2)
 
-let check_term eval_term = function
+let check_term eval_term = 
+  let open Rewriting_error in function
   | TMustPass (InPredicate(t1, t2))
   | TMustPass (EqualPredicate(t1, t2)) ->
-    let rt1 = Term_ast.string_of_term @@ eval_term t1 in
-    let rt2 = Term_ast.string_of_term @@ eval_term t2 in
-    if (equal_term rt1 rt2) then
-      rewritten_success rt1 rt2 (* FIXME : display twice the same thing *)
-    else
-      print_failure (sprintf "Bad term rewriting, expected %s but got %s." rt2 rt1)
+    begin
+      try
+        let rt1 = Term_ast.string_of_term @@ eval_term t1 in
+        let rt2 = Term_ast.string_of_term @@ eval_term t2 in
+        if (equal_term rt1 rt2) then
+          rewritten_success rt1 rt2 (* FIXME : it displays twice the same thing *)
+        else
+          print_failure 
+            (sprintf "Bad term rewriting, expected %s but got %s." rt2 rt1)
+      with
+      | RewritingError(code, msg) ->
+        print_failure 
+          (sprintf "Failure with %s while expecting to succeed on rewriting.\
+            \n\tMessage : %s" 
+            (string_of_error_code code)
+            (error_msg code msg))
+    end
   | TMustFail (term, e) ->
-    let open Rewriting_error in
     try
       let rt = Term_ast.string_of_term @@ eval_term term in
-      print_failure (sprintf "Should have failed with %s but passed with %s." (string_of_error e) rt)
+      print_failure 
+        (sprintf "Should have failed with %s but passed with %s." 
+          (string_of_error e) rt)
     with
-    | RewritingError(code, _) when equal_error e (Error(domain_name, string_of_error_code code)) ->
+    | RewritingError(code, _) 
+      when equal_error e (Error(domain_name, string_of_error_code code)) ->
         print_success (sprintf "Failure with %s as expected." (string_of_error e))
     | RewritingError(code, _) ->
         print_failure (sprintf "Expected error %s but failed with %s."
@@ -56,8 +70,10 @@ let check_term eval_term = function
 (* Rewriting System test *)
 let check_expectation expectation result domain success_cont =
   match (expectation, result) with
-  | (MustPass, Failed(e)) -> print_failure (sprintf "Failure with error %s." (string_of_error e))
-  | (MustFail(e), Passed) -> print_failure (sprintf "Should have failed with %s." (string_of_error e))
+  | (MustPass, Failed(e)) -> 
+    print_failure (sprintf "Failure with error %s." (string_of_error e))
+  | (MustFail(e), Passed) -> 
+    print_failure (sprintf "Should have failed with %s." (string_of_error e))
   | (MustFail(expected), Failed(e)) when not ( equal_error expected e ) ->
       print_failure (sprintf "Expected error %s but failed with %s."
         (string_of_error expected)

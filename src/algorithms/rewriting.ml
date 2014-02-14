@@ -1,12 +1,12 @@
 
 open Rewriting_ast
+open Rewriting_error
 open Term_ast
 open Strategy_ast
 open Symbols
 
 let raise_unknown_placeholder ident =
-  let open Rewriting_error in
-  raise (RewritingError(UnknownPlaceholder, ident))
+  raise @@ RewritingError(UnknownPlaceholder, ident)
 
 let rec substitute placeholders effect =
   match effect with
@@ -14,7 +14,8 @@ let rec substitute placeholders effect =
   | EPlaceholder ident ->
     begin
       try Matching.SMap.find ident placeholders
-      with Not_found -> raise_unknown_placeholder ident
+      with Not_found -> 
+        raise_unknown_placeholder ident
     end
   | EOperator (ident, operands) ->
     Term_ast.create_term ident (Term (List.map (substitute placeholders) operands))
@@ -58,8 +59,8 @@ let rec replace ident new_strategy = function
 
 let rec apply_strategy system rec_env strategy term =
   let rec apply strategy term =
-    Printf.printf ">> rewriting : %s \n\twith %s\n" 
-      (string_of_term term) (string_of_strategy strategy);
+    (* Printf.printf ">> rewriting : %s \n\twith %s\n" 
+      (string_of_term term) (string_of_strategy strategy); *)
     match strategy with
     | SId -> Some(term)
     | SFail -> None
@@ -95,14 +96,14 @@ let rec apply_strategy system rec_env strategy term =
         try
           let rec_strat = List.assoc name rec_env in
           apply rec_strat term
-        with Not_found -> failwith @@ "Unbound var " ^ name ^ " in strategy."
+        with Not_found -> raise @@ RewritingError(UnboundStrategyVar, name)
       end
     | SRule(Some(name)) ->
       begin
         try
           let (_, rule) = System_map.find name system.rules in
           rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
-        with Not_found -> failwith @@ "Unbound rule [" ^ name ^ "] in strategy."
+        with Not_found -> raise @@ RewritingError(UnknownRule, name)
       end
     | SRule(None) -> apply (seq_all system.rules) term
     | SAll(s) -> apply_to_children system rec_env s term
@@ -114,7 +115,7 @@ let rec apply_strategy system rec_env strategy term =
         try
           let rec replace_params acc = function
             | [], [] -> acc
-            | [], _ -> assert false
+            | [], _ -> assert false (* Should not happen : already checked *)
             | _, [] -> assert false
             | ident :: id_tail, s :: s_tail ->
               let new_s = replace ident s acc in
@@ -123,11 +124,11 @@ let rec apply_strategy system rec_env strategy term =
           let (_, (signature, body)) = System_map.find name system.strategies in
           let sig_size = List.length signature in
           if sig_size <> (List.length s_list) then
-            failwith @@ "Not enough parameters, awaiting " ^ (string_of_int sig_size)
+            raise @@ RewritingError(BadStrategyCall, (string_of_int sig_size))
           else
           let new_s = replace_params body (signature, s_list) in
           apply new_s term
-        with Not_found -> failwith @@ "Unbound strategy " ^ name ^ "."
+        with Not_found -> raise @@ RewritingError(UnknownStrategy, name)
       end
           
   in
