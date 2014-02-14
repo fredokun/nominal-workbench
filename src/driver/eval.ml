@@ -66,16 +66,17 @@ and process_term system strategy t =
   let open Term_ast in 
   let open Symbols in
   let open Strategy_ast in
-  try
-    let nt = Rewriting.rewrite_rec strategy system t in
-    Printf.printf "Term : %s rewrote into %s\n%!"
-      (string_of_term t)
-      (string_of_term nt);
-    nt
-  with
+(*  try *)
+  let nt = Rewriting.rewrite_rec strategy system t in
+  Printf.printf "Term : %s rewrote into %s\n%!"
+    (string_of_term t)
+    (string_of_term nt);
+  nt
+(*  with
   | _ ->
     Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t);
     t
+*)
 
 and process_term_expr system = function
   | PTermLet (ident, term_expr) -> 

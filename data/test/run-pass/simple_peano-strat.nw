@@ -17,6 +17,10 @@ rule [add-l] :
 rule [add-r] :
   Add(?u, Successor(?v)) => Successor(Add(?u, ?v))
 
+# Additional rules
+
+rule [is-add] :
+  Add(?u, ?v) => Add(?u, ?v)
 
 rule [add-one-add] :
   Add(?a, ?b) => Successor(Add(?a, ?b))
@@ -29,9 +33,18 @@ strategy TryBasicRules :
   [add-r] +>
   id()
 
-strategy TopdownAll : Topdown(TryBasicRules) # top down on all rules
+strategy Any(s) : 
+  rec(a, s +> one(a))
 
-strategy BottomupAll : Bottomup(TryBasicRules) # bottom up on all rules
+strategy While(p, s) :
+  rec(b, (test(p) ; s ; b) +> id())
+
+strategy TopdownAll : 
+  While(Any([is-add]), Topdown(TryBasicRules))
+
+strategy BottomupAll : 
+  While(Any([is-add]), Bottomup(TryBasicRules))
+
 strategy AddOne : Try([add-one-add])
 strategy AddOneResult : AddOne ; BottomupAll
 
@@ -44,8 +57,26 @@ strategy AddOneResult : AddOne ; BottomupAll
 #:test Successor(Successor(Zero)) --equal Successor(Successor(Zero))
 #:test Zero --equal Zero
 :test rewrite Add(Zero,Successor(Zero)) with TopdownAll --equal Successor(Zero)
-:test rewrite Add(Zero,Successor(Zero)) with BottomupAll --equal Successor(Zero)
+:test rewrite Add(Zero,Successor(Zero)) with BottomupAll
+  --equal Successor(Zero)
+
+:test rewrite Add(Zero,Successor(Zero)) with Any([is-add])
+  --equal Add(Zero, Successor(Zero))
+
+:test rewrite Successor(Add(Zero, Zero)) with Any([is-add])
+  --equal Successor(Add(Zero, Zero))
+
+#:test rewrite Successor(Zero) with Any([is-add]) --equal Successor(Zero)
+
+:test rewrite Add(Successor(Zero), Successor(Zero)) with BottomupAll ; BottomupAll
+  --equal Successor(Successor(Zero))
+
+:test rewrite Add(Successor(Add(Successor(Zero), Zero)), Successor(Zero))
+  with BottomupAll
+  --equal Successor(Successor(Successor(Zero)))
+
 :test rewrite Add(Zero,Successor(Zero)) with Dummy --equal Add(Zero,Successor(Zero))
+
 :test rewrite Add(Zero,Successor(Zero)) with AddOne --equal Successor(Add(Zero, Successor(Zero)))
 :test rewrite Add(Zero,Successor(Zero)) with AddOneResult --equal Successor(Successor(Zero))
 #:test rewrite Add(Zero,Zero) with <strategy> --equal Zero

@@ -21,6 +21,12 @@ rule [app] :
 rule [lambda] :
   Subst(?x, ?T, Lambda(?y, ?U)) => Lambda(?y, Subst(?x, ?T, ?U))
 
+
+# extra rules for strategies
+
+rule [dummy-replace] :
+  Lambda(?x, ?Y) => Var(?x)
+
 rule [is-lambda] :
   Lambda(?x, ?T) => Lambda(?x, ?T)
 
@@ -29,6 +35,9 @@ rule [is-left-app] :
 
 rule [is-right-lambda] :
   App(?x, Lambda(?y, ?U)) => App(?x, Lambda(?y, ?U))
+
+rule [is-app-lambda-lambda] :
+  App(Lambda(?x, ?Y), Lambda(?z, ?U)) => App(Lambda(?x, ?Y), Lambda(?z, ?U))
 
 strategy IsValue :
   test([is-lambda])
@@ -39,8 +48,35 @@ strategy IsRightValue :
 strategy IsLeftApp :
   test([is-left-app])
 
-# strategy CallByValue : TODO
+strategy IsAppLambdaValue :
+  test([is-app-lambda-lambda])
+
+strategy Left(s) : proj(0, s)
+strategy Right(s) : proj(1, s)
+
+strategy SubstAll :
+  rec(y, [subst-var] +> [subst-nvar] +> [lambda])
+
+strategy CallByValue :
+  rec(x,
+    SubstAll +>
+    (IsLeftApp ; Left(x) ; Right(x)) +>
+#    (IsAppLambdaValue ; [beta]) +>
+#    id()
+  )
     
 :test rewrite Lambda(x, Var(x)) with id() --equal Lambda(x, Var(x))
+
+:test rewrite Lambda(x, Var(x)) with Try([dummy-replace]) --equal Var(x)
+
+:test rewrite App(Lambda(x, Var(x)), Lambda(x, Var(x)))
+  with Right(Try([dummy-replace])) --equal App(Lambda(x, Var(x)), Var(x))
+
+:test rewrite App(Lambda(x, Var(x)), Lambda(x, Var(x)))
+  with Left(Try([dummy-replace])) --equal App(Var(x), Lambda(x, Var(x)))
+
 :test rewrite Lambda(x, Var(x)) with CallByValue --equal Lambda(x, Var(x))
+:test rewrite App(Lambda(x, Var(x)), Lambda(x, Var(x))) 
+  with CallByValue --equal Lambda(x, Var(x))
+
 #:test rewrite App(Lambda(x, Var(x)),Lambda(x, Var(x))) with CallByValue --equal Lambda(x, Var(x))

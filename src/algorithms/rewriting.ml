@@ -50,12 +50,17 @@ let rec replace ident new_strategy = function
   | SVar(name) -> SVar(name)
   | SRule(name) -> SRule(name)
   | SAll(s) -> SAll(replace ident new_strategy s)
+  | SSome(s) -> SSome(replace ident new_strategy s)
+  | SOne(s) -> SOne(replace ident new_strategy s)
   | SProj(i, s) -> SProj(i, replace ident new_strategy s)
   | SCall(name, s_list) -> 
     SCall(name, List.map (replace ident new_strategy) s_list)
 
 let rec apply_strategy system rec_env strategy term =
   let rec apply_strategy strategy term =
+    Printf.printf ">> rewriting : %s \n\twith %s\n" 
+      (string_of_term term) (string_of_strategy strategy);
+  
     match strategy with
     | SId -> Some(term)
     | SFail -> None
@@ -91,17 +96,19 @@ let rec apply_strategy system rec_env strategy term =
         try
           let rec_strat = Hashtbl.find rec_env name in
           apply_strategy rec_strat term
-        with Not_found -> assert false
+        with Not_found -> failwith @@ "Unbound var " ^ name ^ " in strategy."
       end
     | SRule(Some(name)) ->
       begin
         try
           let (_, rule) = System_map.find name system.rules in
           rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
-        with Not_found -> assert false
+        with Not_found -> failwith @@ "Unbound rule [" ^ name ^ "] in strategy."
       end
     | SRule(None) -> apply_strategy (seq_all system.rules) term
     | SAll(s) -> apply_to_children system rec_env s term
+    | SSome(s) -> apply_to_some_children system rec_env s term
+    | SOne(s) -> apply_to_one_child system rec_env s term
     | SProj(i, s) -> apply_to_child i system rec_env s term 
     | SCall(name, s_list) ->
       begin
@@ -115,9 +122,13 @@ let rec apply_strategy system rec_env strategy term =
               replace_params new_s (id_tail, s_tail)
           in
           let (_, (signature, body)) = System_map.find name system.strategies in
+          let sig_size = List.length signature in
+          if sig_size <> (List.length s_list) then
+            failwith @@ "Not enough parameters, awaiting " ^ (string_of_int sig_size)
+          else
           let new_s = replace_params body (signature, s_list) in
           apply_strategy new_s term
-        with Not_found -> assert false
+        with Not_found -> failwith @@ "Unbound strategy " ^ name ^ "."
       end
           
   in
@@ -137,7 +148,42 @@ and apply_to_children system rec_env strategy = function
     apply_to_children [] terms
   | t -> Some(t)
 
+and apply_to_some_children system rec_env strategy = function
+  | {name=name; desc=Const; _} -> None
+  | {name=name; desc=Term(terms); _} ->
+    let rec apply_to_children acc one_ok = function
+      | [] -> 
+        if not one_ok then None
+        else Some(Term_ast.create_term name (Term ( List.rev acc)))
+      | head :: tail -> 
+        begin
+          match apply_strategy system rec_env strategy head with
+          | None -> apply_to_children (head::acc) one_ok tail
+          | Some(t) -> apply_to_children (t::acc) true tail
+        end
+    in
+    apply_to_children [] false terms
+  | t -> Some(t)
+
+and apply_to_one_child system rec_env strategy = function
+  | {name=name; desc=Const; _} -> None
+  | {name=name; desc=Term(terms); _} ->
+    let rec apply_to_children acc = function
+      | [] -> None
+      | head :: tail -> 
+        begin
+          match apply_strategy system rec_env strategy head with
+          | None -> apply_to_children (head::acc) tail
+          | Some(t) -> 
+            let new_terms = (List.rev acc) @ (t::tail) in
+            Some(Term_ast.create_term name (Term new_terms))
+        end
+    in
+    apply_to_children [] terms
+  | t -> Some(t)
+
 and apply_to_child nth system rec_env strategy = function
+  | {name=name; desc=Const; _} as t -> Some(t)
   | {name=name; desc=Term(terms); _} ->
     let rec apply_to_nth i acc = function
       | [] -> Some(Term_ast.create_term name (Term ( List.rev acc)))
@@ -154,9 +200,12 @@ and apply_to_child nth system rec_env strategy = function
     
 
 let rec rewrite_rec strategy system term =
+(*
+  Printf.printf "rewriting : %s \n\twith %s\n" 
+    (string_of_term term) (string_of_strategy strategy);
+*)
   let rec_env = Hashtbl.create 3 in
   match apply_strategy system rec_env strategy term with
-  | Some(newterm) when newterm <> term -> rewrite_rec strategy system newterm
+  (* | Some(newterm) when newterm <> term -> rewrite_rec strategy system newterm *)
   | Some(newterm) -> newterm
-  | None -> assert false
-
+  | None -> failwith "Strategy application has failed"

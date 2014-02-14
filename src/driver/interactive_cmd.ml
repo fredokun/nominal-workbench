@@ -36,7 +36,7 @@ let check_term eval_term = function
     let rt1 = Term_ast.string_of_term @@ eval_term t1 in
     let rt2 = Term_ast.string_of_term @@ eval_term t2 in
     if (equal_term rt1 rt2) then
-      rewritten_success rt1 rt2
+      rewritten_success rt1 rt2 (* FIXME : display twice the same thing *)
     else
       print_failure (sprintf "Bad term rewriting, expected %s but got %s." rt2 rt1)
   | TMustFail (term, e) ->
