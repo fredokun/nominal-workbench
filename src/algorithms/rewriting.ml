@@ -58,81 +58,78 @@ let rec replace ident new_strategy = function
     SCall(name, List.map (replace ident new_strategy) s_list)
 
 let rec apply_strategy system rec_env strategy term =
-  let rec apply strategy term =
-    (* Printf.printf ">> rewriting : %s \n\twith %s\n" 
-      (string_of_term term) (string_of_strategy strategy); *)
-    match strategy with
-    | SId -> Some(term)
-    | SFail -> None
-    | SSeq(s1, s2) -> 
-      begin
-        match apply s1 term with
-        | None -> None
-        | Some(t) -> apply s2 t
-      end
-    | SEither(s1, s2) ->
-      begin
-        match apply s1 term with
-        | None -> apply s2 term
-        | res -> res
-      end
-    | SRec(var, s) as rec_strat ->
-      let new_rec_env = (var, rec_strat)::rec_env in
-      apply_strategy system new_rec_env s term
-    | STest(s) ->
-      begin
-        match apply s term with
-        | None -> None
-        | Some _ -> Some(term)
-      end
-    | SNot(s) ->
-      begin
-        match apply s term with
-        | None -> Some(term)
-        | Some _ -> None
-      end
-    | SVar(name) -> 
-      begin
-        try
-          let rec_strat = List.assoc name rec_env in
-          apply rec_strat term
-        with Not_found -> raise @@ RewritingError(UnboundStrategyVar, name)
-      end
-    | SRule(Some(name)) ->
-      begin
-        try
-          let (_, rule) = System_map.find name system.rules in
-          rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
-        with Not_found -> raise @@ RewritingError(UnknownRule, name)
-      end
-    | SRule(None) -> apply (seq_all system.rules) term
-    | SAll(s) -> apply_to_children system rec_env s term
-    | SSome(s) -> apply_to_some_children system rec_env s term
-    | SOne(s) -> apply_to_one_child system rec_env s term
-    | SProj(i, s) -> apply_to_child i system rec_env s term 
-    | SCall(name, s_list) ->
-      begin
-        try
-          let rec replace_params acc = function
-            | [], [] -> acc
-            | [], _ -> assert false (* Should not happen : already checked *)
-            | _, [] -> assert false
-            | ident :: id_tail, s :: s_tail ->
-              let new_s = replace ident s acc in
-              replace_params new_s (id_tail, s_tail)
-          in
-          let (_, (signature, body)) = System_map.find name system.strategies in
-          let sig_size = List.length signature in
-          if sig_size <> (List.length s_list) then
-            raise @@ RewritingError(BadStrategyCall, (string_of_int sig_size))
-          else
-          let new_s = replace_params body (signature, s_list) in
-          apply new_s term
-        with Not_found -> raise @@ RewritingError(UnknownStrategy, name)
-      end
-          
-  in
-  apply strategy term
+  let apply = apply_strategy system rec_env in
+  (* Printf.printf ">> rewriting : %s \n\twith %s\n" 
+    (string_of_term term) (string_of_strategy strategy); *)
+  match strategy with
+  | SId -> Some(term)
+  | SFail -> None
+  | SSeq(s1, s2) -> 
+    begin
+      match apply s1 term with
+      | None -> None
+      | Some(t) -> apply s2 t
+    end
+  | SEither(s1, s2) ->
+    begin
+      match apply s1 term with
+      | None -> apply s2 term
+      | res -> res
+    end
+  | SRec(var, s) as rec_strat ->
+    let new_rec_env = (var, rec_strat)::rec_env in
+    apply_strategy system new_rec_env s term
+  | STest(s) ->
+    begin
+      match apply s term with
+      | None -> None
+      | Some _ -> Some(term)
+    end
+  | SNot(s) ->
+    begin
+      match apply s term with
+      | None -> Some(term)
+      | Some _ -> None
+    end
+  | SVar(name) -> 
+    begin
+      try
+        let rec_strat = List.assoc name rec_env in
+        apply rec_strat term
+      with Not_found -> raise @@ RewritingError(UnboundStrategyVar, name)
+    end
+  | SRule(Some(name)) ->
+    begin
+      try
+        let (_, rule) = System_map.find name system.rules in
+        rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
+      with Not_found -> raise @@ RewritingError(UnknownRule, name)
+    end
+  | SRule(None) -> apply (seq_all system.rules) term
+  | SAll(s) -> apply_to_children system rec_env s term
+  | SSome(s) -> apply_to_some_children system rec_env s term
+  | SOne(s) -> apply_to_one_child system rec_env s term
+  | SProj(i, s) -> apply_to_child i system rec_env s term 
+  | SCall(name, s_list) ->
+    begin
+      try
+        let rec replace_params acc = function
+          | [], [] -> acc
+          | [], _ -> assert false (* Should not happen : already checked *)
+          | _, [] -> assert false
+          | ident :: id_tail, s :: s_tail ->
+            let new_s = replace ident s acc in
+            replace_params new_s (id_tail, s_tail)
+        in
+        let (_, (signature, body)) = System_map.find name system.strategies in
+        let sig_size = List.length signature in
+        if sig_size <> (List.length s_list) then
+          raise @@ RewritingError(BadStrategyCall, (string_of_int sig_size))
+        else
+        let new_s = replace_params body (signature, s_list) in
+        apply new_s term
+      with Not_found -> raise @@ RewritingError(UnknownStrategy, name)
+    end
 
 and apply_to_children system rec_env strategy = function
   | {name=name; desc=Term(terms); _} ->
