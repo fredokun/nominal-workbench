@@ -143,6 +143,7 @@ let decl_well_formed sys = function
     rule_well_formed sys info r
   | { name = id; info = info; desc = DKind k } ->
     kind_well_formed id info k
+  | _ -> ()
 
 
 (* Kind checking *)
@@ -169,47 +170,7 @@ let rec kind_of_type sys tb env ta =
     let (_, kind_types) = lookup_kind sys id in
     [last kind_types]
 
-(*let kind_check_type sys tb env ta ktl =
-  let rec loop env ty_args ktl =
-    match ty_args, ktl with
-    | [], [x] -> env
-    | arg1 :: args, k1 :: ks ->
-      let env = loop env arg1 k1 in
-      loop env args ks
-    | _ -> assert false
-  in
-  match ta with
-  | TypeName id -> env
-  | TypeApplication (_, tal) -> loop env tal ktl*)
 
-(*t rec loop env ta k =
-  match ta, k with
-  | TypeName id, _ when List.mem id tb ->
-    (* is second test useful ? *)
-    if List.mem_assoc id env then
-      if List.assoc id env = ta then
-	env
-      else
-	loop env (List.assoc id env) k
-    else
-      (id, ta) :: env
-  | TypeName id, _ ->
-    let (_, Kind kk) = lookup_kind sys id in
-    if kk = [Atom] then
-      raise_kind_clash ta (Kind kk)
-    else
-      loop 
-    (*if k = kind
-      then env
-      else raise_kind_clash ta k*)
-  | TypeApplication (id, []), [kind_res] ->
-    env
-  | TypeApplication (id, arg1::args), (k1 :: ks) ->
-    let new_env = loop env arg1 [k1] in
-    loop new_env (TypeApplication (id, args)) ks
-  | _ -> assert false
-in
-loop env ta k*)
 	
 (* Type checking *)
       
@@ -221,32 +182,6 @@ let check_param_type env param_name ta =
       raise_type_clash (TypeName param_name) ta
   else
     (param_name, ta) :: env
-
-(* subtype ? *)
-(*let check_types (tb1, ta1) (tb2, ta2) =
-  let rec loop (env1, env2) ta1 ta2 =
-    match ta1, ta2 with
-    | TAny, _
-    | _, TAny ->
-      (env1, env2)
-    | TypeName id, _  when List.mem id tb1 ->
-      (check_param_type env1 id ta2, env2)
-    | _, TypeName id when List.mem id tb2 ->
-      (env1, check_param_type env2 id ta1)
-    | TypeName id1, TypeName id2 ->
-      if id1 = id2 then
-	(env1, env2)
-      else
-	raise_type_clash ta1 ta2
-
-    | TypeApplication (id1, args1), TypeApplication (id2, args2) ->
-      if id1 = id2 then
-	List.fold_left2 loop (env1, env2) args1 args2
-      else
-	raise_type_clash ta1 ta2
-    | _ -> raise_type_clash ta1 ta2
-  in
-  ignore (loop ([], []) ta1 ta2)*)
 
 let is_atom sys tb = function
   | TypeName id when not (List.mem id tb) ->
@@ -285,8 +220,9 @@ let check_op sys = function
 
 (* Pattern checking *)
 
+(* these types are useless, just here as comments *)
 type param_env = (string * (type_binders * type_application)) list
-type ph_env = (string * type_application) list
+type placeholder_env = param_env
 
 let rec subst_type_param param new_ty ta =
   match ta with
@@ -373,26 +309,6 @@ let rec unify_types tb1 tb2 env ta1 ta2 =
     List.fold_left2 (unify_types tb1 tb2) env tal1 tal2
   | _ ->
     raise_type_clash ta1 ta2
-    
-
-(*let rec type_of_pat sys env pat =
-  match pat with
-  | PAny -> TAny
-  | PConstant id ->
-    let (_, (tb, ta)) = lookup_const sys id in
-    subst_type_params tb env ta
-  | PPlaceholder id when List.mem_assoc id env ->
-    List.assoc id env
-  | PPlaceholder id -> TAny
-  | POperator (id, patl) ->
-    let (_, (tbb, args, res)) = lookup_op sys id in
-    let env = List.fold_left2 (unify_pat_op_arg sys tbb) in
-    subst_type_params tbb env res
-
-and unify_pat_op_arg sys tb env pat op_arg =
-  match op_arg with
-  | OpTypeArg ta -> unify_type_apps tb ta (type_of_pat sys [] pat)
-  | OpBinderArg id -> unify_type_apps tb (TypeName id) (type_of_pat sys [] pat)*)
 
 
 let rec type_check_pat sys tb ((param_env, ph_env) as typing_env) pat ta =
@@ -507,3 +423,34 @@ let check_typing sys decl =
 let check_decl sys decl =
   decl_well_formed sys decl;
   check_typing sys decl
+
+
+(* Rule typing *)
+
+let type_of_pat sys pat =
+  match pat with
+  | PAny -> ([], (["A"], TypeName "A"))
+  | PConstant id ->
+    let (_, (tb, ta)) = lookup_const sys id in
+    ([], (tb, ta))
+  | PPlaceholder id ->
+    let ty = (["A"], TypeName "A") in
+    ([(id, ty)], ty)
+  | POperator (id, patl) ->
+    let (_,  (tb, args, res)) = lookup_op sys id in
+    let (param_env, ph_env) = List.fold_left2 (check_pat_op_arg sys tb) ([], []) patl args in
+    (ph_env, subst_type_params sys tb param_env res)
+
+let type_of_effect sys ph_env eff =
+  match eff with
+  | EConstant id -> 
+    let (_, (tb, ta)) = lookup_const sys id in
+    (tb, ta)
+  | EPlaceholder id when List.mem_assoc id ph_env ->
+    List.assoc id ph_env
+  | EPlaceholder _ ->
+    (["A"], TypeName "A")
+  | EOperator (id, effl) ->
+    let (_,  (tb, args, res)) = lookup_op sys id in
+    let (param_env, _) = List.fold_left2 (check_eff_op_arg sys tb) ([], []) effl args in
+    subst_type_params sys tb param_env res
