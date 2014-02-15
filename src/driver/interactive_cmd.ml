@@ -53,42 +53,43 @@ let check_term eval_term = function
           (string_of_error (Error(domain_name, string_of_error_code code))))
     | e -> print_unknown_exc e "term rewriting"
 
-(* Rewriting System test *)
-let check_expectation expectation result domain success_cont =
-  match (expectation, result) with
-  | (MustPass, Failed(e)) -> print_failure (sprintf "Failure with error %s." (string_of_error e))
-  | (MustFail(e), Passed) -> print_failure (sprintf "Should have failed with %s." (string_of_error e))
-  | (MustFail(expected), Failed(e)) when not ( equal_error expected e ) ->
-      print_failure (sprintf "Expected error %s but failed with %s."
-        (string_of_error expected)
-        (string_of_error e))
-  | (MustFail(_), Failed(e)) ->
-      print_success (sprintf "Failure with %s as expected." (string_of_error e))
-  | (MustPass, Passed) -> success_cont ()
 
 let system_name filename = (Filename.chop_extension (Filename.basename filename))
+
+(* Rewriting System test *)
+let check_expectation filename expectation result domain =
+  match (expectation, result) with
+  | (MustPass, Failed(e)) -> print_failure (sprintf "Failure with error %s. (%s)" (string_of_error e) filename)
+  | (MustFail(e), Passed) -> print_failure (sprintf "Should have failed with %s. (%s)" (string_of_error e) filename)
+  | (MustFail(expected), Failed(e)) when not ( equal_error expected e ) ->
+      print_failure (sprintf "Expected error %s but failed with %s. (%s)"
+        (string_of_error expected)
+        (string_of_error e)
+        filename)
+  | (MustFail(_), Failed(e)) ->
+      print_success (sprintf "Failure with %s as expected. (%s)" (string_of_error e) filename)
+  | (MustPass, Passed) -> print_success (sprintf "%s passed. (%s)" (system_name filename) filename)
 
 let check_rewriting_system eval_ast ast (RewritingTest(filename, expectation)) =
   let open Rewriting_system_error in
   try 
-    let success_cont () = print_success (sprintf "%s passed." (system_name filename)) in
     ignore (eval_ast ast);
-    check_expectation expectation Passed domain_name success_cont
+    check_expectation filename expectation Passed domain_name
   with
   | RewritingSystemError(code, _) ->
-    check_expectation expectation (Failed(Error(domain_name, string_of_error_code code)))
-      domain_name ignore
-  | e -> print_unknown_exc e "check of the rewriting system"
+    check_expectation filename expectation 
+      (Failed(Error(domain_name, string_of_error_code code))) domain_name
+  | e -> print_unknown_exc e (sprintf "check of the rewriting system (%s)" filename)
 
-let test_rewriting_system eval_ast channel (RewritingTest(_, expectation) as test) =
+let test_rewriting_system eval_ast channel (RewritingTest(filename, expectation) as test) =
   let open Rewriting_parsing_error in
   try
     check_rewriting_system eval_ast (Parser_include.parse_nowork_file channel) test
   with
   | RewritingParsingError(code,_) ->
-      check_expectation expectation (Failed(Error(domain_name, string_of_error_code code)))
-        domain_name ignore
-  | e -> print_unknown_exc e "parsing of the rewriting system"
+      check_expectation filename expectation 
+        (Failed(Error(domain_name, string_of_error_code code))) domain_name
+  | e -> print_unknown_exc e (sprintf "parsing of the rewriting system (%s)" filename)
 
 let launch_test eval_ast (RewritingTest(filename, _) as test) =
   let launch () = 
@@ -102,7 +103,7 @@ let launch_test eval_ast (RewritingTest(filename, _) as test) =
         close_in f
     with
     | Sys_error(e) -> print_system_error e
-    | e -> print_unknown_exc e "launching of the test" in
+    | e -> print_unknown_exc e (sprintf "launching of the test (%s)" filename) in
   Printexc.record_backtrace true;
   launch ();
   Printexc.record_backtrace false
