@@ -428,7 +428,7 @@ and check_pat_op_arg sys tb typing_env pat op_arg =
     | PPlaceholder _ ->
       type_check_pat sys tb typing_env pat (TypeName tname)
     | _ ->
-      my_raise "Wrong pattern for binder"
+      raise_wrong_binder_kind tname
     end
 
 
@@ -477,7 +477,7 @@ and check_eff_op_arg sys tb typing_env eff op_arg =
     | EPlaceholder _ ->
       type_check_eff sys tb typing_env eff (TypeName tname)
     | _ ->
-      my_raise "Wrong pattern for binder"
+      raise_wrong_binder_kind tname
     end
 
 
