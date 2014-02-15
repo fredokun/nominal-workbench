@@ -30,6 +30,7 @@
       ; "let", LET
       ; "strategy", STRATEGY
       ; "rec", REC
+      ; "proj", PROJ
       ]
 
   let directive_table = Hashtbl.create 16
@@ -54,8 +55,9 @@
 }
 
 let lower_ident = ['a'-'z']['-''a'-'z''A'-'Z''0'-'9']*
-let upper_ident = ['A'-'Z''0'-'9']['-' '_' 'a'-'z''A'-'Z''0'-'9']*
+let upper_ident = ['A'-'Z']['-' '_' 'a'-'z''A'-'Z''0'-'9']*
 let placeholder = '?' ['-''a'-'z''A'-'Z''0'-'9'] +
+let num = ['0' - '9'] +
 
 let double_quote = '"'
 let not_double_quote = [^ '"' ]
@@ -125,6 +127,7 @@ let directive_opt = dash dash lower_ident
   | star { STAR }
   | comma { COMMA }
   | either { SEITHER }
+  | num as i { NUM (int_of_string i) }
   | any { ANY }
   | newline { 
     Lexing.new_line lexbuf;

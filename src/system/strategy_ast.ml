@@ -4,6 +4,9 @@ type strategy =
   | STest of strategy
   | SNot of strategy
   | SAll of strategy
+  | SSome of strategy
+  | SOne of strategy
+  | SProj of int * strategy
   | SSeq of strategy * strategy
   | SEither of strategy * strategy
   | SRec of string * strategy
@@ -37,6 +40,9 @@ let rec string_of_strategy = function
   | SRule(Some(name)) -> "rule(" ^ name ^ ")"
   | SRule(None) -> "rule()"
   | SAll(s) -> "all(" ^ (string_of_strategy s) ^ ")"
+  | SSome(s) -> "some(" ^ (string_of_strategy s) ^ ")"
+  | SOne(s) -> "one(" ^ (string_of_strategy s) ^ ")"
+  | SProj(i, s) -> "proj(" ^ (string_of_int i) ^ ", " ^ (string_of_strategy s) ^ ")"
   | SCall(name, params) -> 
     let params = List.map string_of_strategy params in
     name ^ "(" ^ (String.concat "," params) ^ ")"
@@ -46,6 +52,8 @@ let base_strat name content =
   | "test" -> STest content
   | "not" -> SNot content
   | "all" -> SAll content
+  | "some" -> SSome content
+  | "one" -> SOne content
   | _ -> assert false
 
 let base_strat_simple = function
