@@ -22,6 +22,7 @@ let raise_unbound_symbol pos id =
     Printf.sprintf "%s at %s." id (pos_to_string pos)))
 
 let raise_type_clash t1 t2 =
+  Printf.printf "Type clash between %s and %s\n" (type_to_string t1) (type_to_string t2);
   raise (RewritingSystemError (
     TypeClash,
     Printf.sprintf "%s and %s." (type_to_string t1) (type_to_string t2)))
@@ -148,16 +149,16 @@ let decl_well_formed sys = function
 
 (* Kind checking *)
 
-let rec last = function
+(*let rec last = function
   | [x] -> x
   | x :: xs -> last xs
-  | [] -> assert false
+  | [] -> assert false*)
 
 let is_atom = function
   | [Atom] -> true
   | _ -> false
 
-let rec kind_of_type sys tb env ta =
+(*let rec kind_of_type sys tb env ta =
   match ta with
   | TypeName id when List.mem id tb ->
     if List.mem_assoc id env then
@@ -168,7 +169,7 @@ let rec kind_of_type sys tb env ta =
     snd (lookup_kind sys id)
   | TypeApplication (id, _) ->
     let (_, kind_types) = lookup_kind sys id in
-    [last kind_types]
+    [last kind_types]*)
 
 
 	
@@ -220,10 +221,6 @@ let check_op sys = function
 
 (* Pattern checking *)
 
-(* these types are useless, just here as comments *)
-type param_env = (string * (type_binders * type_application)) list
-type placeholder_env = param_env
-
 let rec subst_type_param param new_ty ta =
   match ta with
   | TypeName id when id = param -> new_ty
@@ -231,11 +228,17 @@ let rec subst_type_param param new_ty ta =
     TypeApplication (id, List.map (subst_type_param param new_ty) args)
   | _ -> ta
 
+let incr_param str =
+  assert (String.length str = 1);
+  let c = String.get str 0 in
+  let c = Char.chr (Char.code c + 1) in
+  String.make 1 c
+
 let get_new_param sys tb old =
   let rec loop res =
     if not (List.mem res tb || is_kind sys res)
     then res
-    else loop (res ^ "0")
+    else loop (incr_param res)
   in
   loop old
 
@@ -327,12 +330,9 @@ let rec type_check_pat sys tb ((param_env, ph_env) as typing_env) pat ta =
     (param_env, (id, (tb, ta)) :: ph_env)
   | POperator (id, patl) ->
     let (_, (tbb, args, result)) = lookup_op sys id in
-    let (param_env, ph_env) = List.fold_left2 (check_pat_op_arg sys tb) typing_env patl args in
-    let res_tb, res_ty = subst_type_params sys tbb param_env result in
-    if eq_type (res_tb, res_ty) (tb, ta) then
-      (param_env, ph_env)
-    else
-      raise_type_clash res_ty ta
+    let (new_param_env, ph_env) = List.fold_left2 (check_pat_op_arg sys tb) ([], ph_env) patl args in
+    let res_tb, res_ta = subst_type_params sys tbb new_param_env result in
+    (unify_types tb res_tb param_env ta res_ta, ph_env)
 
 
 and check_pat_op_arg sys tb typing_env pat op_arg =
@@ -347,8 +347,42 @@ and check_pat_op_arg sys tb typing_env pat op_arg =
       raise_wrong_binder_kind tname
     end
 
+let type_of_pat sys pat =
+  match pat with
+  | PAny -> ([], (["A"], TypeName "A"))
+  | PConstant id ->
+    let (_, (tb, ta)) = lookup_const sys id in
+    ([], (tb, ta))
+  | PPlaceholder id ->
+    let ty = (["A"], TypeName "A") in
+    ([(id, ty)], ty)
+  | POperator (id, patl) ->
+    let (_,  (tb, args, res)) = lookup_op sys id in
+    let (param_env, ph_env) = List.fold_left2 (check_pat_op_arg sys tb) ([], []) patl args in
+    (ph_env, subst_type_params sys tb param_env res)
+
+module SSet = Set.Make(String)
+let tb_of_type (tb, ta) =
+  let rec loop set = function
+  | TypeName id ->
+    if List.mem id tb then
+      SSet.add id set
+    else
+      set
+  | TypeApplication (_, args) ->
+    List.fold_left (fun acc ta -> loop acc ta) set args
+  in
+  loop SSet.empty ta
+
+let clean_type (tb, ta) =
+  let binders = SSet.elements (tb_of_type (tb, ta)) in
+  (binders, ta)
 
 let check_pattern sys pat =
+  let _, (tb, ta) = type_of_pat sys pat in
+  (*let tb, ta = clean_type (tb, ta) in
+  Format.fprintf Format.std_formatter "%a %a\n"
+    Pretty.print_type_binders tb Pretty.print_type_application ta;*)
   match pat with
   | PAny
   | PConstant _ -> []
@@ -377,12 +411,10 @@ let rec type_check_eff sys tb ((param_env, ph_env) as typing_env) eff ta =
     (param_env, (id, (tb, ta)) :: ph_env)
   | EOperator (id, effl) ->
     let (_, (tbb, args, result)) = lookup_op sys id in
-    let (param_env, ph_env) = List.fold_left2 (check_eff_op_arg sys tb) typing_env effl args in
-    let res_tb, res_ty = subst_type_params sys tbb param_env result in
-    if eq_type (res_tb, res_ty) (tb, ta) then
-      (param_env, ph_env)
-    else
-      raise_type_clash res_ty ta
+    let (new_param_env, ph_env) = List.fold_left2 (check_eff_op_arg sys tb) typing_env effl args in
+    let res_tb, res_ta = subst_type_params sys tbb new_param_env result in
+    (unify_types tb res_tb param_env ta res_ta, ph_env)
+    
 
 and check_eff_op_arg sys tb typing_env eff op_arg =
   match op_arg with
@@ -396,6 +428,19 @@ and check_eff_op_arg sys tb typing_env eff op_arg =
       raise_wrong_binder_kind tname
     end
 
+let type_of_effect sys ph_env eff =
+  match eff with
+  | EConstant id -> 
+    let (_, (tb, ta)) = lookup_const sys id in
+    (tb, ta)
+  | EPlaceholder id when List.mem_assoc id ph_env ->
+    List.assoc id ph_env
+  | EPlaceholder _ ->
+    (["A"], TypeName "A")
+  | EOperator (id, effl) ->
+    let (_,  (tb, args, res)) = lookup_op sys id in
+    let (param_env, _) = List.fold_left2 (check_eff_op_arg sys tb) ([], []) effl args in
+    subst_type_params sys tb param_env res
 
 let check_effect sys env eff =
   match eff with
@@ -425,32 +470,6 @@ let check_decl sys decl =
   check_typing sys decl
 
 
+
 (* Rule typing *)
 
-let type_of_pat sys pat =
-  match pat with
-  | PAny -> ([], (["A"], TypeName "A"))
-  | PConstant id ->
-    let (_, (tb, ta)) = lookup_const sys id in
-    ([], (tb, ta))
-  | PPlaceholder id ->
-    let ty = (["A"], TypeName "A") in
-    ([(id, ty)], ty)
-  | POperator (id, patl) ->
-    let (_,  (tb, args, res)) = lookup_op sys id in
-    let (param_env, ph_env) = List.fold_left2 (check_pat_op_arg sys tb) ([], []) patl args in
-    (ph_env, subst_type_params sys tb param_env res)
-
-let type_of_effect sys ph_env eff =
-  match eff with
-  | EConstant id -> 
-    let (_, (tb, ta)) = lookup_const sys id in
-    (tb, ta)
-  | EPlaceholder id when List.mem_assoc id ph_env ->
-    List.assoc id ph_env
-  | EPlaceholder _ ->
-    (["A"], TypeName "A")
-  | EOperator (id, effl) ->
-    let (_,  (tb, args, res)) = lookup_op sys id in
-    let (param_env, _) = List.fold_left2 (check_eff_op_arg sys tb) ([], []) effl args in
-    subst_type_params sys tb param_env res
