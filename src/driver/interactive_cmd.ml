@@ -10,7 +10,7 @@ open Parsing_ast
 (* Test framework. *)
 type result =
   | Passed
-  | Failed of error
+  | Failed of error * string (* error message *)
 
 type rewriting_test = RewritingTest of filename * expectation
 
@@ -22,6 +22,15 @@ let equal_error (Error(domain1, name1)) (Error(domain2, name2)) =
 
 let strip_ws str =
   Str.global_replace (Str.regexp " +") "" str
+
+let string_of_filename filename =
+  sprintf "    Filename: %s\n" filename
+
+let string_of_msg msg =
+  sprintf "    Message: %s\n" msg
+
+let string_of_test_info filename msg =
+  string_of_filename filename ^ string_of_msg msg  
 
 (* Only a textual equality test. *)
 let equal_term t1 t2 =
@@ -39,32 +48,35 @@ let check_term eval_term =
         let rt1 = Pretty.(string_of pp_term) @@ eval_term t1 in
         let rt2 = Pretty.(string_of pp_term) @@ eval_term t2 in
         if (equal_term rt1 rt2) then
-          rewritten_success rt1 rt2 (* FIXME : it displays twice the same thing *)
+          rewritten_success rt1 rt2
         else
-          print_failure 
-            (sprintf "Bad term rewriting, expected %s but got %s." rt2 rt1)
+          print_failure (
+            sprintf "Bad term rewriting, expected %s but got %s.\n" rt2 rt1)
       with
       | RewritingError(code, msg) ->
-        print_failure 
-          (sprintf "Failure with %s while expecting to succeed on rewriting.\
-            \n\tMessage : %s" 
-            (string_of_error_code code)
-            (error_msg code msg))
+        print_failure (
+          sprintf "Failure with %s while expecting to succeed on rewriting.\n" 
+            (string_of_error_code code) ^
+          string_of_msg (error_msg code msg))
     end
   | TMustFail (term, e) ->
     try
       let rt = Pretty.(string_of pp_term) @@ eval_term term in
-      print_failure 
-        (sprintf "Should have failed with %s but passed with %s." 
+      print_failure (
+        sprintf "Should have failed with %s but passed with %s.\n" 
           (string_of_error e) rt)
     with
-    | RewritingError(code, _) 
+    | RewritingError(code, msg) 
       when equal_error e (Error(domain_name, string_of_error_code code)) ->
-        print_success (sprintf "Failure with %s as expected." (string_of_error e))
-    | RewritingError(code, _) ->
-        print_failure (sprintf "Expected error %s but failed with %s."
-          (string_of_error e)
-          (string_of_error (Error(domain_name, string_of_error_code code))))
+        print_success (
+          sprintf "Failure with %s as expected.\n" (string_of_error e) ^
+          string_of_msg @@ error_msg code msg)
+    | RewritingError(code, msg) ->
+        print_failure (
+          sprintf "Expected error %s but failed with %s.\n"
+            (string_of_error e)
+            (string_of_error (Error(domain_name, string_of_error_code code))) ^
+          string_of_msg @@ error_msg code msg)
     | e -> print_unknown_exc e "term rewriting"
 
 
@@ -72,19 +84,28 @@ let system_name filename = (Filename.chop_extension (Filename.basename filename)
 
 (* Rewriting System test *)
 let check_expectation filename expectation result domain =
-  match (expectation, result) with
-  | (MustPass, Failed(e)) -> 
-    print_failure (sprintf "Failure with error %s. (%s)" (string_of_error e) filename)
-  | (MustFail(e), Passed) -> 
-    print_failure (sprintf "Should have failed with %s. (%s)" (string_of_error e) filename)
-  | (MustFail(expected), Failed(e)) when not ( equal_error expected e ) ->
-      print_failure (sprintf "Expected error %s but failed with %s. (%s)"
+  match expectation, result with
+  | MustPass, Failed(e, msg) -> 
+    print_failure (
+      sprintf "Failure with error %s.\n" (string_of_error e) ^ 
+      string_of_test_info filename msg)
+  | MustFail(e), Passed -> 
+    print_failure (
+      sprintf "Should have failed with %s.\n" (string_of_error e) ^ 
+      string_of_filename filename)
+  | MustFail(expected), Failed(e, msg) when not ( equal_error expected e ) ->
+      print_failure (sprintf "Expected error %s but failed with %s.\n"
         (string_of_error expected)
-        (string_of_error e)
-        filename)
-  | (MustFail(_), Failed(e)) ->
-      print_success (sprintf "Failure with %s as expected. (%s)" (string_of_error e) filename)
-  | (MustPass, Passed) -> print_success (sprintf "%s passed. (%s)" (system_name filename) filename)
+        (string_of_error e) ^
+        string_of_test_info filename msg)
+  | MustFail(_), Failed(e, msg) ->
+      print_success (
+        sprintf "Failure with %s as expected.\n" (string_of_error e) ^
+        string_of_test_info filename msg)
+  | MustPass, Passed -> 
+      print_success (
+        sprintf "%s passed.\n" (system_name filename) ^
+        string_of_filename filename)
 
 let check_rewriting_system eval_ast ast (RewritingTest(filename, expectation)) =
   let open Rewriting_system_error in
@@ -92,9 +113,9 @@ let check_rewriting_system eval_ast ast (RewritingTest(filename, expectation)) =
     ignore (eval_ast ast);
     check_expectation filename expectation Passed domain_name
   with
-  | RewritingSystemError(code, _) ->
+  | RewritingSystemError(code, msg) ->
     check_expectation filename expectation 
-      (Failed(Error(domain_name, string_of_error_code code))) domain_name
+      (Failed(Error(domain_name, string_of_error_code code), error_msg code msg)) domain_name
   | e -> print_unknown_exc e (sprintf "check of the rewriting system (%s)" filename)
 
 let test_rewriting_system eval_ast channel (RewritingTest(filename, expectation) as test) =
@@ -102,9 +123,9 @@ let test_rewriting_system eval_ast channel (RewritingTest(filename, expectation)
   try
     check_rewriting_system eval_ast (Parser_include.parse_nowork_file channel) test
   with
-  | RewritingParsingError(code,_) ->
+  | RewritingParsingError(code, msg) ->
       check_expectation filename expectation 
-        (Failed(Error(domain_name, string_of_error_code code))) domain_name
+        (Failed(Error(domain_name, string_of_error_code code), error_msg code msg)) domain_name
   | e -> print_unknown_exc e (sprintf "parsing of the rewriting system (%s)" filename)
 
 let launch_test eval_ast (RewritingTest(filename, _) as test) =
