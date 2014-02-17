@@ -1,0 +1,10 @@
+kind K1 : type -> type
+kind K2 : type
+
+constant C1 : K1<K2>
+constant C2 : K2
+
+operator O : forall(A).A * A -> A
+
+rule [R] :
+     O(O(C2,C2),C1) => C1

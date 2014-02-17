@@ -1,5 +1,5 @@
 #    Include Test    #
 
-open data/test/run-pass/with_comment.nw
+open "data/test/run-pass/with_comment.nw"
 
 Lambda(x,x)

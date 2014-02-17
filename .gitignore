@@ -6,3 +6,4 @@ ocp-build.root*
 *.swp
 *~
 src/auto_gen/*.ml
+nowork

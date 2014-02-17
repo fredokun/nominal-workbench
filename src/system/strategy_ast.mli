@@ -4,6 +4,9 @@ type strategy =
   | STest of strategy
   | SNot of strategy
   | SAll of strategy
+  | SSome of strategy
+  | SOne of strategy
+  | SProj of int * strategy
   | SSeq of strategy * strategy
   | SEither of strategy * strategy
   | SRec of string * strategy

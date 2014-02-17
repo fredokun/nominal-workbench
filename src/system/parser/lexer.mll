@@ -12,6 +12,8 @@
 
   let (>>) f h = h f
 
+  let str_buff = Buffer.create 100
+
   let keyword_table = Hashtbl.create 16
   let () =
     List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok)
@@ -28,6 +30,7 @@
       ; "let", LET
       ; "strategy", STRATEGY
       ; "rec", REC
+      ; "proj", PROJ
       ]
 
   let directive_table = Hashtbl.create 16
@@ -52,11 +55,12 @@
 }
 
 let lower_ident = ['a'-'z']['-''a'-'z''A'-'Z''0'-'9']*
-let upper_ident = ['A'-'Z''0'-'9']['-''a'-'z''A'-'Z''0'-'9']*
-let err_ident = ['A'-'Z''0'-'9']['-''_''a'-'z''A'-'Z''0'-'9']*
+let upper_ident = ['A'-'Z']['-' '_' 'a'-'z''A'-'Z''0'-'9']*
 let placeholder = '?' ['-''a'-'z''A'-'Z''0'-'9'] +
-let filename = ['a'-'z''A'-'Z''0'-'9']['/''-''_''.''a'-'z''A'-'Z''0'-'9']*
+let num = ['0' - '9'] +
 
+let double_quote = '"'
+let not_double_quote = [^ '"' ]
 let lparen = '('
 let rparen = ')'
 let lbracket = '['
@@ -86,7 +90,6 @@ let directive_opt = dash dash lower_ident
   rule token = parse
   | space {token lexbuf}
   | comment { token lexbuf }
-  | err_ident as s { EIDENT(s)}
   | lower_ident as s {
     try
       Hashtbl.find keyword_table s
@@ -103,10 +106,9 @@ let directive_opt = dash dash lower_ident
     try
       Hashtbl.find directive_option_table s
     with Not_found ->
-      assert false (* todo *)
+      failwith @@ "Unknown directive : " ^ s (* TODO *)
   }
   | upper_ident as s { UIDENT(s) }
-  | filename as f { FILENAME(f) }
   | placeholder as p { PLACEHOLDER(p) }
   | lparen { LPAREN }
   | rparen { RPAREN }
@@ -125,12 +127,22 @@ let directive_opt = dash dash lower_ident
   | star { STAR }
   | comma { COMMA }
   | either { SEITHER }
+  | num as i { NUM (int_of_string i) }
   | any { ANY }
   | newline { 
     Lexing.new_line lexbuf;
     token lexbuf }
+  | double_quote { 
+    Buffer.reset str_buff; 
+    string lexbuf }
   | eof { EOF }
   | _ { failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }
 
+and string = parse
+  | not_double_quote as c { 
+    Buffer.add_char str_buff c; 
+    string lexbuf }
+  | double_quote { STRING (Buffer.contents str_buff) } 
+  | _ { failwith ("Unfinished string") }  (* TODO actual exception *)
 {
 }
