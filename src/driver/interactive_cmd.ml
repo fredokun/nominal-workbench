@@ -36,8 +36,8 @@ let check_term eval_term =
   | TMustPass (EqualPredicate(t1, t2)) ->
     begin
       try
-        let rt1 = Term_ast.string_of_term @@ eval_term t1 in
-        let rt2 = Term_ast.string_of_term @@ eval_term t2 in
+        let rt1 = Pretty.(string_of pp_term) @@ eval_term t1 in
+        let rt2 = Pretty.(string_of pp_term) @@ eval_term t2 in
         if (equal_term rt1 rt2) then
           rewritten_success rt1 rt2 (* FIXME : it displays twice the same thing *)
         else
@@ -53,7 +53,7 @@ let check_term eval_term =
     end
   | TMustFail (term, e) ->
     try
-      let rt = Term_ast.string_of_term @@ eval_term term in
+      let rt = Pretty.(string_of pp_term) @@ eval_term term in
       print_failure 
         (sprintf "Should have failed with %s but passed with %s." 
           (string_of_error e) rt)

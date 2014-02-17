@@ -45,7 +45,8 @@ let rec construct_ast_dag_rec system curr_op pos_in_op (term : Term_ast.term_ast
     begin
       let (_,(_,args,_)) = lookup_op system term.name in
       if List.length args != List.length terms then
-	raise (TermSystemError(WrongTermArity, Term_ast.string_of_term term));
+	raise (TermSystemError(WrongTermArity,
+                               Pretty.(string_of pp_term term)));
       DTerm (term.name, List.map (construct_ast_dag_rec system term.name 0) terms)
     end
 

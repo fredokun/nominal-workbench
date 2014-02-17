@@ -69,8 +69,8 @@ and process_term system strategy t =
 (*  try *)
   let nt = Rewriting.rewrite_rec strategy system t in
   Printf.printf "Term : %s rewrote into %s\n%!"
-    (string_of_term t)
-    (string_of_term nt);
+    Pretty.(string_of pp_term t)
+    Pretty.(string_of pp_term nt);
   nt
 (*  with
   | _ ->

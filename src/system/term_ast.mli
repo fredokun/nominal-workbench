@@ -18,14 +18,13 @@ type term_desc =
   | Const
   | Term of term_ast list
   | Var
+
 and term_ast = 
   {
     name : string;
     info : info;
     desc : term_desc;
   }
-
-val string_of_term : term_ast -> string
 
 val create_term : string -> term_desc -> term_ast
 val create_term_info : string -> term_desc -> info -> term_ast

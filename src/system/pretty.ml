@@ -1,10 +1,10 @@
 open Format
-open Rewriting_ast
 open Symbols
+open Rewriting_ast
 open Strategy_ast
 
   
-let print_separated sep f fmt = 
+let pp_separated sep f fmt = 
   let rec loop = function
   | [] -> ()
   | [e] -> fprintf fmt "%a" f e
@@ -12,82 +12,116 @@ let print_separated sep f fmt =
   in loop
 
 
-let print_kind_type fmt = function
+let pp_kind_type fmt = function
   | Type -> fprintf fmt "type"
   | Atom -> fprintf fmt "atom"
 
-let print_kind = print_separated " -> " print_kind_type
+let pp_kind = pp_separated " -> " pp_kind_type
 
 
-let print_type_name fmt tn = fprintf fmt "%s" tn
+let pp_type_name fmt tn = fprintf fmt "%s" tn
   
 
-let rec print_type_application fmt = function
+let rec pp_type_application fmt = function
   | TypeApplication (tname, tapps) -> fprintf fmt "%s [%a]" tname
-      (print_separated ", " print_type_application) tapps
-  | TypeName tname -> print_type_name fmt tname
+      (pp_separated ", " pp_type_application) tapps
+  | TypeName tname -> pp_type_name fmt tname
 
       
-let print_operator_arg fmt = function
-  | OpTypeArg tapp -> print_type_application fmt tapp  
-  | OpBinderArg tname -> print_type_name fmt tname 
+let pp_operator_arg fmt = function
+  | OpTypeArg tapp -> pp_type_application fmt tapp  
+  | OpBinderArg tname -> pp_type_name fmt tname 
 
   
-let print_type_binders fmt binders =
+let pp_type_binders fmt binders =
   match binders with [] -> () | binders ->
-    fprintf fmt " forall(%a)." (print_separated ", " print_type_name) binders
+    fprintf fmt " forall(%a)." (pp_separated ", " pp_type_name) binders
   
 
-let print_operator fmt op =
+let pp_operator fmt op =
   let binders, args, result = op in
-  fprintf fmt "%a%a -> %a" print_type_binders binders
-    (print_separated " * " print_operator_arg) args print_type_application result
+  fprintf fmt "%a%a -> %a" pp_type_binders binders
+    (pp_separated " * " pp_operator_arg) args pp_type_application result
 
   
-let rec print_pattern fmt = function
+let rec pp_pattern fmt = function
   | POperator (name, patterns) ->
-      fprintf fmt "%s (%a)" name (print_separated ", " print_pattern) patterns
+      fprintf fmt "%s (%a)" name (pp_separated ", " pp_pattern) patterns
   | PPlaceholder s -> fprintf fmt "%s" s
   | PConstant s -> fprintf fmt "%s" s
   | PAny -> fprintf fmt "_"
 
 
-let rec print_effect fmt = function
+let rec pp_effect fmt = function
   | EOperator (name, effects) -> 
-      fprintf fmt "%s (%a)" name (print_separated ", " print_effect) effects
+      fprintf fmt "%s (%a)" name (pp_separated ", " pp_effect) effects
   | EPlaceholder s -> fprintf fmt "%s" s
   | EConstant s -> fprintf fmt "%s" s
 
 
-let print_rule fmt rule =
+let pp_rule fmt rule =
   let p, e = rule in
-  fprintf fmt "%a => %a" print_pattern p print_effect e
+  fprintf fmt "%a => %a" pp_pattern p pp_effect e
 
-let print_const_decl fmt cst =
+let pp_const_decl fmt cst =
   let binders, tapp = cst in
-  fprintf fmt "%a %a" print_type_binders binders print_type_application tapp
+  fprintf fmt "%a %a" pp_type_binders binders pp_type_application tapp
+
+let rec pp_strategy fmt = function
+  | SId -> fprintf fmt "id"
+  | SFail -> fprintf fmt "fail"
+  | SSeq(s1, s2) -> fprintf fmt "%a; %a" pp_strategy s1 pp_strategy s2
+  | SEither(s1, s2) -> fprintf fmt "%a +> %a" pp_strategy s1 pp_strategy s2
+  | SRec(var, s) -> fprintf fmt "rec (%s, %a)"  var pp_strategy s
+  | STest(s) -> fprintf fmt "test(%a)" pp_strategy s
+  | SNot(s) -> fprintf fmt "not(%a)" pp_strategy s
+  | SVar(name) -> fprintf fmt "%s" name
+  | SRule(Some(name)) -> fprintf fmt "rule(%s)" name
+  | SRule(None) -> fprintf fmt "rule()"
+  | SAll(s) -> fprintf fmt "all(%a)" pp_strategy s
+  | SSome(s) -> fprintf fmt "some(%a)" pp_strategy s
+  | SOne(s) -> fprintf fmt "one(%a)" pp_strategy s
+  | SProj(i, s) -> fprintf fmt "proj(%d, %a)" i pp_strategy s
+  | SCall(name, params) -> fprintf fmt "%s(%a)" name
+      (pp_separated ", " pp_strategy) params
 
 
-let print_strategy_def fmt (params, s) =
-  fprintf fmt " (%a) %s" (print_separated ", " (fun fmt x -> fprintf fmt "%s" x)) params (string_of_strategy s)
+let pp_strategy_def fmt (params, s) =
+  fprintf fmt " (%a) %a"
+    (pp_separated ", " (fun fmt s -> fprintf fmt "%s" s)) params pp_strategy s
     
-let print_rewriting_desc name fmt desc =
+
+let pp_rewriting_desc name fmt desc =
   match desc with
-  | DKind k -> fprintf fmt "kind %s: %a" name print_kind k
-  | DConstant c -> fprintf fmt "constant %s: %a" name print_const_decl c
-  | DRule r -> fprintf fmt "rule [%s]:%a" name print_rule r
-  | DOperator o -> fprintf fmt "operator %s: %a" name print_operator o
-  | DStrategy s -> fprintf fmt "strategy %s %a" name print_strategy_def s
+  | DKind k -> fprintf fmt "kind %s: %a" name pp_kind k
+  | DConstant c -> fprintf fmt "constant %s: %a" name pp_const_decl c
+  | DRule r -> fprintf fmt "rule [%s]:%a" name pp_rule r
+  | DOperator o -> fprintf fmt "operator %s: %a" name pp_operator o
+  | DStrategy s -> fprintf fmt "strategy %s %a" name pp_strategy_def s
 
 
-let print_rewriting_decl fmt rd = fprintf fmt "%a"
-  (print_rewriting_desc rd.name) rd.desc
+let pp_rewriting_decl fmt rd = fprintf fmt "%a"
+  (pp_rewriting_desc rd.name) rd.desc
 
 
-let print_system fmt sys =
+let rec pp_term fmt t = 
+  let open Term_ast in
+  let {name=name;desc=desc;_} = t in
+  match desc with
+  | Const -> fprintf fmt "%s" name
+  | Var -> fprintf fmt "%s" name
+  | Term term_list -> fprintf fmt "%s (%a)" name
+      (pp_separated ", " pp_term) term_list
+
+
+      
+let pp_system fmt sys =
   let print f l = System_map.iter
-    (fun k (_, d) -> fprintf fmt "%a@." (print_rewriting_desc k) (f d)) l in
+    (fun k (_, d) -> fprintf fmt "%a@." (pp_rewriting_desc k) (f d)) l in
   print (fun x -> DKind x) sys.kinds;
   print (fun x -> DConstant x) sys.constants;
   print (fun x -> DOperator x) sys.operators;
-  print (fun x -> DRule x) sys.rules;
+  print (fun x -> DRule x) sys.rules
+
+
+let string_of print e = asprintf "%a" print e
