@@ -1,6 +1,7 @@
 open Format
 open Rewriting_ast
 open Symbols
+open Strategy_ast
 
   
 let print_separated sep f fmt = 
@@ -66,12 +67,17 @@ let print_const_decl fmt cst =
   let binders, tapp = cst in
   fprintf fmt "%a %a" print_type_binders binders print_type_application tapp
 
+
+let print_strategy_def fmt (params, s) =
+  fprintf fmt " (%a) %s" (print_separated ", " (fun fmt x -> fprintf fmt "%s" x)) params (string_of_strategy s)
+    
 let print_rewriting_desc name fmt desc =
   match desc with
-  | DKind k -> fprintf fmt "kind %s : %a" name print_kind k
-  | DConstant c -> fprintf fmt "constant %s :%a" name print_const_decl c
-  | DOperator o -> fprintf fmt "operator %s :%a" name print_operator o
-  | DRule r -> fprintf fmt "rule [%s] : %a" name print_rule r
+  | DKind k -> fprintf fmt "kind %s: %a" name print_kind k
+  | DConstant c -> fprintf fmt "constant %s: %a" name print_const_decl c
+  | DRule r -> fprintf fmt "rule [%s]:%a" name print_rule r
+  | DOperator o -> fprintf fmt "operator %s: %a" name print_operator o
+  | DStrategy s -> fprintf fmt "strategy %s %a" name print_strategy_def s
 
 
 let print_rewriting_decl fmt rd = fprintf fmt "%a"
