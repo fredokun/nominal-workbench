@@ -1,7 +1,7 @@
 begin program "nowork"
   sort = true
   files = [ "nowork.ml" ]
-  requires = [ "driver" ]
+  requires = [ "interactive" ]
   bytecomp = [ "-g" ]
   bytelink = [ "-g" ]
 end
