@@ -62,11 +62,17 @@ and subst_vars system =
       end
       | _ -> term
 
+and run_term_type_check system term =
+  let open Term_checker in
+  let ast_checked = construct_ast_checked system term in
+  ignore (check_type_of_term system ast_checked)
+
 and process_term system strategy t =
   let open Term_ast in 
   let open Symbols in
   let open Strategy_ast in
 (*  try *)
+  run_term_type_check system t;
   let nt = Rewriting.rewrite_rec strategy system t in
   Printf.printf "Term : %s rewrote into %s\n%!"
     Pretty.(string_of pp_term t)

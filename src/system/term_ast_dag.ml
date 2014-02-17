@@ -6,6 +6,8 @@
   (C) Copyright Matthieu Dien
 *)
 
+open Rewriting_ast
+
 type info = Lexing.position
 
 type ident = string
@@ -13,22 +15,31 @@ type ident = string
 type term_dag =
   | DConst of ident
   | DTerm of ident * term_dag list
-  (* Because when you find a binder, you don't know its sons *)
   | DBinder of ident
   | DVar of ident
 
 (* Typed AST *)
 
-type type_name = string
-type type_binders = type_name list
+(* type type_name = string *)
+(* type type_binders = type_name list *)
 
-type type_application =
-  | TypeApplication of type_name * type_application list
-  | TypeName of type_name
+(* type type_application = *)
+(*   | TypeApplication of type_name * type_application list *)
+(*   | TypeName of type_name *)
+
+module TBinders_map = Map.Make(String)
+
+(* Because cyclic sucks *)
+type bnd_typ_app = BndTypApp of (bnd_typ_app TBinders_map.t) * type_application
+
+type genericity =
+| Gen
+| Inst of bnd_typ_app
+| Simple
 
 type term_type =
-  | TypedConst of type_application
-  | TypedTerm of type_application list * type_application
+  | TypedConst of bnd_typ_app
+  | TypedTerm of bnd_typ_app
   | TypedBinder of type_name
   | TypedVar of type_name
 

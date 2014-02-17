@@ -189,9 +189,42 @@ let naming_tests () =
 
   Format.printf "Binders names OK@."
 
+let reconstruct_tests () =
+  (* Tests the reconstruction of the hterms into terms
+     *)
+
+  let bx = DBinder "x" in
+  let id1 = DTerm ("Lambda", [bx; DVar "x"]) in
+  let by = DBinder "y" in
+  let id2 = DTerm ("Lambda", [by; DVar "y"]) in
+  let bz = DBinder "z" in
+  let id3 = DTerm ("Lambda", [bz; DVar "z"]) in
+
+  let lsnd = DTerm ("Lambda",
+                    [bx; DTerm ("Lambda", [by; DVar "y"])]) in
+  let hsnd, hsnd_names = create_term_with_names lsnd in
+
+  let snd = create_dterm hsnd_names hsnd in
+  Format.printf "Before: %s@." @@ string_of_term lsnd;
+  Format.printf "After: %s@." @@ string_of_term snd;
+
+  assert (lsnd = snd);
+
+  let app = DTerm ("App", [lsnd; id3]) in
+  let happ, happ_names = create_term_with_names app in
+  let recr_app = create_dterm happ_names happ in
+
+  Format.printf "Before: %s@." @@ string_of_term app;
+  Format.printf "After: %s@." @@ string_of_term recr_app;
+
+  assert (app = recr_app);
+
+  Format.printf "Term reconstruction OK@."
+
 
 let _ =
   create_tests ();
   peano_tests ();
   lambda_tests ();
-  naming_tests ()
+  naming_tests ();
+  reconstruct_tests ()

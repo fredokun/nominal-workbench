@@ -228,6 +228,31 @@ let create_term_with_names td =
   let term, _, names = create_term_raw [] [] td in
   term, names
 
+module IMap = Map.Make (struct
+    type t = int
+    let compare = Pervasives.compare
+  end)
+
+let create_dterm names td =
+  let rec step names bindings cell td =
+    match td, names with
+    | HConst i, _ -> DConst i, names, bindings
+    | HVar, _ -> DVar (IMap.find cell bindings), names, bindings
+    | HFreeVar i, _ -> DVar i, names, bindings
+    | HBinder binded, var :: names ->
+      DBinder var, names, List.fold_left
+        (fun b (_, id) -> IMap.add id var bindings)
+        bindings binded
+    | HTerm (i, terms), names ->
+      let terms, names, bindings = List.fold_left
+          (fun (l, names, bindings) t ->
+             let term, names, bindings = step names bindings t.id t.value in
+             term :: l, names, bindings) ([], names, bindings) terms in
+      DTerm (i, List.rev terms), names, bindings
+    | _, _ -> assert false
+  in
+  let t, _, _ = step names IMap.empty (-1) td in t
+
 (* Pretty printing function *)
 
 let rec string_of_hlist hl names =
