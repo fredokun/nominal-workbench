@@ -72,7 +72,7 @@ let rec pp_strategy fmt = function
   | SFail -> fprintf fmt "fail"
   | SSeq(s1, s2) -> fprintf fmt "%a; %a" pp_strategy s1 pp_strategy s2
   | SEither(s1, s2) -> fprintf fmt "%a +> %a" pp_strategy s1 pp_strategy s2
-  | SRec(var, s) -> fprintf fmt "rec (%s, %a)"  var pp_strategy s
+(*  | SRec(var, s) -> fprintf fmt "rec (%s, %a)"  var pp_strategy s *)
   | STest(s) -> fprintf fmt "test(%a)" pp_strategy s
   | SNot(s) -> fprintf fmt "not(%a)" pp_strategy s
   | SVar(name) -> fprintf fmt "%s" name

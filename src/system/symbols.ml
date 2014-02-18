@@ -22,10 +22,13 @@ type system = {
 
 let builtin_strategies m = 
   let dummy_info = Lexing.dummy_pos in
-  let entry_of_fun f = (dummy_info, strategy_def_of_fun f) in
-  m |> System_map.add "Try" @@ entry_of_fun try_app
-    |> System_map.add "Topdown" @@ entry_of_fun topdown
-    |> System_map.add "Bottomup" @@ entry_of_fun bottomup
+  let add_def (name, params, body) =
+    System_map.add name (dummy_info, (params, body))
+  in
+  m |> add_def try_def
+    |> add_def repeat_def
+    |> add_def topdown_def
+    |> add_def bottomup_def
 
 
 let empty_system = {

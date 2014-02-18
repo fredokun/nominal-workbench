@@ -247,7 +247,7 @@ strategy_operator :
 
 strategy_advanced_expression :
 | LIDENT { SVar $1 }
-| REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) }
+/* | REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) } */
 | RULE LPAREN RPAREN { SRule None }
 | RULE LPAREN LIDENT RPAREN { SRule (Some $3) } 
 | PROJ LPAREN NUM COMMA strategy_expression RPAREN { SProj ($3, $5) }
