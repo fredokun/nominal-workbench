@@ -33,14 +33,22 @@ strategy TryBasicRules :
   [add-r] +>
   id()
 
+strategy Topdown2(s) :
+  s ; all(Topdown2(s))
+
+strategy Bottomup2(s) :
+  all(Bottomup2(s)) ; s
+
 strategy Any(s) : 
-  rec(a, s +> one(a))
+  s +> one(Any(s)) # use of recursion
+#  rec(a, s +> one(a))
 
 strategy While(p, s) :
-  rec(b, (test(p) ; s ; b) +> id())
+  (test(p) ; s ; While(p, s)) +> id()
+#rec(b, (test(p) ; s ; b) +> id())
 
 strategy TopdownAll : 
-  While(Any([is-add]), Topdown(TryBasicRules))
+  While(Any([is-add]), Topdown2(TryBasicRules))
 
 strategy BottomupAll : 
   While(Any([is-add]), Bottomup(TryBasicRules))
