@@ -129,6 +129,10 @@ constant_decl:
     { create_decl $2 (DConstant ($4, $5)) }
 | CONSTANT UIDENT COLON constant_type
     { create_decl $2 (DConstant ([],$4)) }
+| CONSTANT NUM COLON type_binders constant_type  /* TODO : factorize */
+    { create_decl (string_of_int $2) (DConstant ($4, $5)) }
+| CONSTANT NUM COLON constant_type
+    { create_decl (string_of_int $2) (DConstant ([],$4)) }
 
 type_binders:
 | FORALL LPAREN word_list RPAREN DOT { $3 }
@@ -266,6 +270,7 @@ term_expr:
 term:
 | UIDENT LPAREN term_params RPAREN { create_term $1 (Term $3) }
 | UIDENT { create_term $1 Const }
+| NUM { create_term (string_of_int $1) Const }
 | LIDENT { create_term $1 Var }
 
 term_params:
