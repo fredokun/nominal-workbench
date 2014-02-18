@@ -195,17 +195,18 @@ rule_body:
 | rule_side_pattern DARROW rule_side_effect { $1,$3 }
 
 rule_side_pattern:
+| NUM { PConstant (string_of_int $1) }
 | UIDENT { PConstant $1 }
 | UIDENT LPAREN rule_side_list_pattern RPAREN { POperator ($1, $3) }
 | PLACEHOLDER { PPlaceholder $1 }
 | ANY { PAny }
-
 
 rule_side_list_pattern:
 | rule_side_pattern COMMA rule_side_list_pattern { $1 :: $3 }
 | rule_side_pattern { [$1] }
 
 rule_side_effect:
+| NUM { EConstant (string_of_int $1) }
 | UIDENT { EConstant $1 }
 | UIDENT LPAREN rule_side_list_effect RPAREN { EOperator ($1, $3) }
 | PLACEHOLDER { EPlaceholder $1 }
