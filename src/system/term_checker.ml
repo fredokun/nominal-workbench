@@ -43,11 +43,19 @@ let rec construct_ast_checked_rec
       let (_,(_,args,_)) = lookup_op system term.name in
       if List.length args != List.length terms then
 	raise (TermSystemError(WrongTermArity, Pretty.(string_of pp_term term)));
-      DTerm (term.name, 
-	     List.map (construct_ast_checked_rec system term.name 0) terms)
+      DTerm (term.name, construct_sub_term_checked system term.name terms)
     end
 
-let construct_ast_checked system term =
+and construct_sub_term_checked system curr_op terms =
+  List.rev ( snd (
+    List.fold_left
+      (fun (n,l) sub_term ->
+	((n+1),
+	 (construct_ast_checked_rec system curr_op n sub_term)::l))
+      (0,[])
+      terms))
+
+and construct_ast_checked system term =
   construct_ast_checked_rec system "" 0 term
 
 let binders_to_TBinds tbinds =
@@ -107,8 +115,8 @@ and unify_types tb1 tb2 t1 t2 =
       match genericity tb1 t1 with
       | Gen -> let inst = BndTypApp (tb2, t2) in
 	       BndTypApp (TBinders_map.add tn1 inst tb1, t2)
-      | Inst (BndTypApp (tb, t)) -> unify_types tb tb2 t t2	
-      | Simple -> 
+      | Inst (BndTypApp (tb, t)) -> unify_types tb tb2 t t2
+      | Simple ->
 	begin
 	  match genericity tb2 t2 with
 	  | Gen -> BndTypApp (tb1, t1)
@@ -142,7 +150,7 @@ and unify_types tb1 tb2 t1 t2 =
 	    in
 	    BndTypApp (new_tbs, TypeApplication(tn1, new_apps))
 	  with
-	  | Invalid_argument _ -> type_clash_error t1 t2	 
+	  | Invalid_argument _ -> type_clash_error t1 t2
 	else
 	  type_clash_error t1 t2
       | _ -> type_clash_error t1 t2
@@ -154,14 +162,15 @@ let rec check_sub_terms system gen_binders =
     | DBinder _ ->
       begin
 	match arg with
-	| OpBinderArg t -> TypedBinder t
-	| _ -> raise (TermSystemError (BinderClash, "todo" (* todo *) ))
+	| OpBinderArg t -> TypedBinder (TypeName t)
+	| t -> raise (TermSystemError (BinderClash,
+				       Pretty.(string_of pp_operator_arg t)))
       end
     | DVar _ ->
       begin
 	match arg with
-	| OpTypeArg(TypeName t) -> TypedVar t
-	| _ -> raise (TermSystemError (VarClash, "todo" (* todo *) ))
+	| OpTypeArg t -> TypedVar t
+	| _ -> raise (TermSystemError (VarClash, "todo1" (* todo *) ))
       end
     | DConst ident ->
       let (_,(type_binders,const_type)) = lookup_const system ident in
@@ -195,23 +204,31 @@ and check_type_of_term system term_dag =
   | DBinder _ -> failwith("you should not be here")
   | DVar _ -> failwith("you should not be here")
   | DTerm(ident,sub_terms) ->
+    (* raise (Invalid_argument (string_of_term term_dag)); *)
     let (_,(type_binders,args,res)) = lookup_op system ident in
     let gen_binders = binders_to_TBinds type_binders in
     let new_binders =
-      List.fold_left2
-	(fun (gen_binders) term arg ->
+      List.fold_right2
+	(fun term arg gen_binders ->
 	  let sub_term = check_sub_terms system gen_binders term arg in
 	  match sub_term with
 	  | TypedVar _ -> gen_binders
 	  | TypedBinder _ -> gen_binders
 	  | TypedConst (BndTypApp (bnd,_)) -> merge_tbs bnd gen_binders
 	  | TypedTerm (BndTypApp (bnd,_)) -> merge_tbs bnd gen_binders)
-	gen_binders
 	sub_terms
 	args
+	gen_binders
     in TypedTerm (BndTypApp (new_binders, res))
-	
-      
+
+let type_of_typed_term term =
+  match term with
+    | TypedBinder t -> t
+    | TypedVar t -> t
+    | TypedConst (BndTypApp (bnd, t)) -> t
+    | TypedTerm (BndTypApp (bnd, t)) -> t
+
+
 
 (* forall term in subterms :
      if term is TypeApplication position :

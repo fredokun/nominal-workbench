@@ -2,4 +2,4 @@
 
 open "data/test/run-pass/with_comment.nw"
 
-Lambda(x,x)
+:test Lambda(x,x) --equal Lambda(x,x)

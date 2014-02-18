@@ -5,5 +5,5 @@ constant C2 : forall(A).A
 
 operator Op : forall(A,B). A * B -> Pair<A,B>
 
-rule [r] :
-  Op(Op(C1,C2), C1) => Op(Op(C1,C2), C1)
+# rule [r] :
+#   Op(Op(C1,C2), C1) => Op(Op(C1,C2), C1)

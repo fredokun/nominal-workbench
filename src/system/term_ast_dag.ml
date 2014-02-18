@@ -40,8 +40,8 @@ type genericity =
 type term_type =
   | TypedConst of bnd_typ_app
   | TypedTerm of bnd_typ_app
-  | TypedBinder of type_name
-  | TypedVar of type_name
+  | TypedBinder of type_application
+  | TypedVar of type_application
 
 let rec string_of_term : term_dag -> string = function
   | DConst id -> id
