@@ -55,7 +55,7 @@
 }
 
 let lower_ident = ['a'-'z']['-''a'-'z''A'-'Z''0'-'9']*
-let upper_ident = ['0' - '9''A'-'Z']['-' '_' 'a'-'z''A'-'Z''0'-'9']*
+let upper_ident = ['A'-'Z']['-' '_' 'a'-'z''A'-'Z''0'-'9']*
 let placeholder = '?' ['-''a'-'z''A'-'Z''0'-'9'] +
 let num = ['0' - '9'] +
 
