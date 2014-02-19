@@ -37,28 +37,34 @@ let equal_term t1 t2 =
   (strip_ws t1) = (strip_ws t2)
 
 let rewritten_success t1 t2 =
-  print_success (sprintf "Term %s has been correctly rewritten in %s." t1 t2)
+  print_success (sprintf "Term %s has been correctly rewritten in %s.\n" t1 t2)
 
-let check_term eval_term = 
-  let open Rewriting_error in function
+let rewritten_failure error msg =
+  print_failure (sprintf "Failure with %s while expecting to succeed on rewriting.\n" 
+    error ^ msg)
+
+(* Lot of redundant code, should be factorized, we probably need functor for this. *)
+let check_term eval_term = function
   | TMustPass (InPredicate(t1, t2))
   | TMustPass (EqualPredicate(t1, t2)) ->
-    begin
-      try
-        let rt1 = Pretty.(string_of pp_term) @@ eval_term t1 in
-        let rt2 = Pretty.(string_of pp_term) @@ eval_term t2 in
-        if (equal_term rt1 rt2) then
-          rewritten_success rt1 rt2
-        else
-          print_failure (
-            sprintf "Bad term rewriting, expected %s but got %s.\n" rt2 rt1)
-      with
-      | RewritingError(code, msg) ->
+  begin
+    try
+      let rt1 = Pretty.(string_of pp_term) @@ eval_term t1 in
+      let rt2 = Pretty.(string_of pp_term) @@ eval_term t2 in
+      if (equal_term rt1 rt2) then
+        rewritten_success rt1 rt2
+      else
         print_failure (
-          sprintf "Failure with %s while expecting to succeed on rewriting.\n" 
-            (string_of_error_code code) ^
-          string_of_msg (error_msg code msg))
-    end
+          sprintf "Bad term rewriting, expected %s but got %s.\n" rt2 rt1)
+    with
+    | Rewriting_error.RewritingError(code, msg) -> Rewriting_error.(
+        rewritten_failure (string_of_error_code code) 
+          (string_of_msg (error_msg code msg)))
+    | Term_system_error.TermSystemError(code, msg) -> Term_system_error.(
+        rewritten_failure (string_of_error_code code) 
+            (string_of_msg (error_msg code msg)))
+    | e -> print_unknown_exc e "term rewriting"
+  end
   | TMustFail (term, e) ->
     try
       let rt = Pretty.(string_of pp_term) @@ eval_term term in
@@ -66,17 +72,28 @@ let check_term eval_term =
         sprintf "Should have failed with %s but passed with %s.\n" 
           (string_of_error e) rt)
     with
-    | RewritingError(code, msg) 
-      when equal_error e (Error(domain_name, string_of_error_code code)) ->
+    | Rewriting_error.RewritingError(code, msg) -> Rewriting_error.(
+      if equal_error e (Error(domain_name, string_of_error_code code)) then
         print_success (
           sprintf "Failure with %s as expected.\n" (string_of_error e) ^
           string_of_msg @@ error_msg code msg)
-    | RewritingError(code, msg) ->
+      else
         print_failure (
           sprintf "Expected error %s but failed with %s.\n"
             (string_of_error e)
             (string_of_error (Error(domain_name, string_of_error_code code))) ^
+          string_of_msg @@ error_msg code msg))
+    | Term_system_error.TermSystemError(code, msg) -> Term_system_error.(
+      if equal_error e (Error(domain_name, string_of_error_code code)) then
+        print_success (
+          sprintf "Failure with %s as expected.\n" (string_of_error e) ^
           string_of_msg @@ error_msg code msg)
+      else
+        print_failure (
+          sprintf "Expected error %s but failed with %s.\n"
+            (string_of_error e)
+            (string_of_error (Error(domain_name, string_of_error_code code))) ^
+          string_of_msg @@ error_msg code msg))
     | e -> print_unknown_exc e "term rewriting"
 
 
