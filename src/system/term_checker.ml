@@ -8,13 +8,37 @@ open Term_ast_dag
 open Symbols
 open Rewriting_ast
 open Term_system_error
+open Rewriting_system_error
 open Map
 
-module Var_map = Map.Make(String)
+let lookup_op sys op =
+  try
+    Symbols.lookup_op sys op
+  with
+  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+
+let lookup_rule sys rule =
+  try
+    Symbols.lookup_rule sys rule
+  with
+  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+
+let lookup_kind sys kind =
+  try
+    Symbols.lookup_kind sys kind
+  with
+  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+
+let lookup_const sys const =
+  try
+    Symbols.lookup_const sys const
+  with
+  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+
 
 (* Return the list of binder positions in the operator op_name *)
 let binders_pos_in_op system op_name =
-  let (_,op) = Symbols.lookup_op system op_name in
+  let (_,op) = lookup_op system op_name in
   let (_,args,_) = op in
   let rec give_pos l n = function
     | [] -> l
@@ -29,8 +53,13 @@ let rec construct_ast_checked_rec
   match term.desc with
   | Const ->
     begin
-      ignore (Symbols.lookup_const system term.name);
-      DConst term.name
+      try
+	ignore (lookup_op system term.name);
+	raise (TermSystemError (WrongTermArity, "todo"))
+      with
+      | TermSystemError (UnknownSymbol, desc) ->
+	ignore (lookup_const system term.name);
+	DConst term.name
     end
   | Var ->
     let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in

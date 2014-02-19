@@ -65,8 +65,9 @@ and subst_vars system =
 and run_term_type_check system term =
   let open Term_checker in
   let ast_checked = construct_ast_checked system term in
-  let ast_typed = check_type_of_term system ast_checked in
-  print_endline Pretty.(string_of pp_type_application (type_of_typed_term ast_typed))
+  ignore (check_type_of_term system ast_checked)
+  (* let ast_typed = check_type_of_term system ast_checked in *)
+  (* print_endline Pretty.(string_of pp_type_application (type_of_typed_term ast_typed)) *)
 
 and process_term system strategy ts  : Term_ast.term_ast list =
   let nts = Rewriting.rewrite_rec strategy system ts in
