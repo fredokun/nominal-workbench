@@ -1,0 +1,82 @@
+kind Action : type
+kind ActionName : atom
+
+kind Process : type
+
+constant Zero : Process
+constant Tau : Action
+
+operator In : ActionName -> Action
+operator Out : ActionName -> Action
+
+operator Prefix : Action * Process -> Process
+operator Sum : Process * Process -> Process
+operator Par : Process * Process -> Process
+
+rule [choice-left] :
+  Sum(?X, ?Y) => ?X
+
+rule [choice-right] :
+  Sum(?X, ?Y) => ?Y
+
+rule [par-left] :
+  Par(Prefix(?X, ?Y), ?Z) => Prefix(?X, Par(?Y, ?Z))
+
+rule [par-right] :
+  Par(?X, Prefix(?Y, ?Z)) => Prefix(?Y, Par(?X, ?Z))
+
+rule [par-zero-right] :
+  Par(?X, Zero) => ?X
+
+rule [par-zero-left] :
+  Par(Zero, ?X) => ?X
+
+rule [match-par] :
+  Par(?X, ?Y) => Par(?X, ?Y)
+
+rule [match-sum] :
+  Sum(?X, ?Y) => Sum(?X, ?Y)
+
+strategy Any(s) : 
+  s +> one(Any(s))
+
+strategy While(p, s) :
+  (test(p) ; s ; While(p, s)) +> id()
+
+strategy Choice :
+  [choice-left] + [choice-right]
+
+strategy Par : 
+  [par-left] + [par-right]
+
+strategy BottomupRules :
+  While(Any([match-par] +> [match-sum]),
+    Bottomup(
+      Choice +>
+      Par +>
+      [par-zero-right] +>
+      [par-zero-left] +>
+      id()
+    )
+  )
+  
+
+:test rewrite Zero with id() --equal Zero
+:test rewrite In(a) with id() --equal In(a)
+:test rewrite Out(a) with id() --equal Out(a)
+
+:test rewrite Prefix(In(a), Prefix(Out(b), Zero)) with id()
+  --equal Prefix(In(a), Prefix(Out(b), Zero))
+
+:test rewrite Sum(Prefix(In(a), Zero), Prefix(In(b), Zero)) 
+  with BottomupRules 
+  --equal Prefix(In(a), Zero) ; Prefix(In(b), Zero)
+
+:test rewrite Par(Prefix(In(c), Prefix(In(a), Zero)), Prefix(In(b), Zero)) 
+  with BottomupRules 
+  --equal 
+    Prefix(In(c), Prefix(In(a), Prefix(In(b), Zero))) ;
+    Prefix(In(c), Prefix(In(b), Prefix(In(a), Zero))) ;
+    Prefix(In(b), Prefix(In(c), Prefix(In(a), Zero)))
+          
+
