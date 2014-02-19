@@ -34,10 +34,10 @@ rule [add-r] :
 #:test rewrite Add(Successor(Zero),Successor(Zero)) with <strategy> --equal two
 #:test rewrite Add(Add(Zero, Successor(Zero)), Add(Successor(Zero),Successor(Zero))) with <strategy> --equal three
 
-# Erroneous cases
+# # Erroneous cases
 
 :test Successor(0) --failwith TermSystemError.UnknownSymbol
-:test Successor --failwith TermSystemError.BadTermArity
-:test Successor(Zero,Zero) --failwith TermSystemError.BadTermArity
-:test Successor(Zero,Zero) --failwith TermSystemError.BadTermArity
-:test Successor(TestConstant) --failwith TermSystemError.WrongParameterKind
+:test Successor --failwith TermSystemError.WrongTermArity
+:test Successor(Zero,Zero) --failwith TermSystemError.WrongTermArity
+:test Successor(Zero,Zero) --failwith TermSystemError.WrongTermArity
+:test Successor(TestConstant) --failwith TermSystemError.TypeClash

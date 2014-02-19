@@ -18,8 +18,8 @@ type term_expr =
 | PTerm of term_ast
 
 type term_predicate = 
-| InPredicate of term_expr * term_expr
-| EqualPredicate of term_expr * term_expr
+| InPredicate of term_expr * term_expr list
+| EqualPredicate of term_expr * term_expr list
 
 type term_test =
 | TMustPass of term_predicate

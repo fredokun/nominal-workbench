@@ -44,7 +44,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
-%token DARROW STAR COMMA LT GT DOT ANY SEITHER
+%token DARROW STAR COMMA LT GT DOT ANY SEITHER PLUS
 
 /* comments */
 %token EOF
@@ -102,8 +102,8 @@ interactive_command:
 | QUIT { Quit }
 
 test_term_predicate:
-| term_expr IN_CMD_OPTION term_expr { InPredicate($1, $3) }
-| term_expr EQUAL_CMD_OPTION term_expr { EqualPredicate($1, $3) }
+| term_expr IN_CMD_OPTION term_expr_list { InPredicate($1, $3) }
+| term_expr EQUAL_CMD_OPTION term_expr_list { EqualPredicate($1, $3) }
 
 expectation:
 | FAILWITH domain_error { MustFail ($2) }
@@ -129,6 +129,10 @@ constant_decl:
     { create_decl $2 (DConstant ($4, $5)) }
 | CONSTANT UIDENT COLON constant_type
     { create_decl $2 (DConstant ([],$4)) }
+| CONSTANT NUM COLON type_binders constant_type  /* TODO : factorize */
+    { create_decl (string_of_int $2) (DConstant ($4, $5)) }
+| CONSTANT NUM COLON constant_type
+    { create_decl (string_of_int $2) (DConstant ([],$4)) }
 
 type_binders:
 | FORALL LPAREN word_list RPAREN DOT { $3 }
@@ -191,17 +195,18 @@ rule_body:
 | rule_side_pattern DARROW rule_side_effect { $1,$3 }
 
 rule_side_pattern:
+| NUM { PConstant (string_of_int $1) }
 | UIDENT { PConstant $1 }
 | UIDENT LPAREN rule_side_list_pattern RPAREN { POperator ($1, $3) }
 | PLACEHOLDER { PPlaceholder $1 }
 | ANY { PAny }
-
 
 rule_side_list_pattern:
 | rule_side_pattern COMMA rule_side_list_pattern { $1 :: $3 }
 | rule_side_pattern { [$1] }
 
 rule_side_effect:
+| NUM { EConstant (string_of_int $1) }
 | UIDENT { EConstant $1 }
 | UIDENT LPAREN rule_side_list_effect RPAREN { EOperator ($1, $3) }
 | PLACEHOLDER { EPlaceholder $1 }
@@ -239,11 +244,12 @@ strategy_simple_expression :
 
 strategy_operator :
 | strategy_expression SEITHER strategy_expression { SEither ($1, $3) }
+| strategy_expression PLUS strategy_expression { SChoice ($1, $3) }
 | strategy_expression SEMICOL strategy_expression { SSeq ($1, $3) }
 
 strategy_advanced_expression :
 | LIDENT { SVar $1 }
-| REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) }
+/* | REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) } */
 | RULE LPAREN RPAREN { SRule None }
 | RULE LPAREN LIDENT RPAREN { SRule (Some $3) } 
 | PROJ LPAREN NUM COMMA strategy_expression RPAREN { SProj ($3, $5) }
@@ -257,6 +263,10 @@ strategy_expression_list :
 
 /* terms */
 
+term_expr_list :
+| term_expr { [$1] }
+| term_expr SEMICOL term_expr_list { $1 :: $3 }
+
 term_expr:
 | LPAREN term_expr RPAREN { $2 }
 | LET LIDENT EQUAL term_expr { PTermLet ($2, $4) }
@@ -266,6 +276,7 @@ term_expr:
 term:
 | UIDENT LPAREN term_params RPAREN { create_term $1 (Term $3) }
 | UIDENT { create_term $1 Const }
+| NUM { create_term (string_of_int $1) Const }
 | LIDENT { create_term $1 Var }
 
 term_params:

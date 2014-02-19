@@ -1,4 +1,4 @@
-begin library "driver"
+begin library "interactive"
   sort = true
   files = [ 
     "config.mli" "config.ml" 

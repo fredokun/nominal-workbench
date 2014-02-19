@@ -11,7 +11,7 @@ let cyan_color = "\x1b[0;36m"
 let reset_color = "\x1b[0m"
 
 let print_result_line message color status =
-  printf "%s%s%s  %s\n" color status reset_color message
+  printf "%s%s%s  %s" color status reset_color message
 
 let print_system_error s =
   print_result_line s red_color "[ system error ]"

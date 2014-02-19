@@ -8,4 +8,4 @@ val rewrite:
 
   
 val rewrite_rec: Strategy_ast.strategy ->
-  Symbols.system -> Term_ast.term_ast -> Term_ast.term_ast
+  Symbols.system -> Term_ast.term_ast list -> Term_ast.term_ast list

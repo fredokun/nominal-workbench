@@ -21,14 +21,6 @@ and term_ast =
     desc : term_desc;
   }
 
-let rec string_of_term : term_ast -> string = fun t ->
-  let {name=name;desc=desc;_} = t in
-  match desc with
-  | Const -> name
-  | Var -> "$" ^ name
-  | Term (term_list) ->
-    name ^ "(" ^ String.concat ", " (List.map string_of_term term_list) ^ ")"
-
 let create_term name desc =
   {desc=desc;name=name;info=Lexing.dummy_pos}
 

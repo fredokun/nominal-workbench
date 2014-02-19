@@ -9,43 +9,31 @@ type strategy =
   | SProj of int * strategy
   | SSeq of strategy * strategy
   | SEither of strategy * strategy
-  | SRec of string * strategy
+  | SChoice of strategy * strategy
+(*  | SRec of string * strategy *)
   | SVar of string
   | SRule of string option
   | SCall of string * strategy list
 
 type strategy_def = string list * strategy 
 
-let try_app s = SEither(s, SId)
-let repeat s = SRec("x", SSeq(try_app s, SVar("x")))
-let topdown s = SRec("x", SSeq(s, SAll(SVar("x"))))
-let bottomup s = SRec("x", SSeq(SAll(SVar("x")), s))
 let any_rule = SRule(None)
 
-let strategy_def_of_fun f = 
-  let var = "_s" in
-  ([var], f @@ SVar(var))
+let try_def = 
+  let var = "s" in  
+  "Try", [var], SEither(SVar(var), SId)
 
-let rec string_of_strategy = function
-  | SId -> "id"
-  | SFail -> "fail"
-  | SSeq(s1, s2) -> 
-    (string_of_strategy s1) ^ "; " ^ (string_of_strategy s2)
-  | SEither(s1, s2) ->
-    (string_of_strategy s1) ^ " +> " ^ (string_of_strategy s2)
-  | SRec(var, s) -> "rec(" ^ var ^ ", " ^ (string_of_strategy s) ^ ")"
-  | STest(s) -> "test(" ^ (string_of_strategy s) ^ ")"
-  | SNot(s) -> "not(" ^ (string_of_strategy s) ^ ")"
-  | SVar(name) -> name
-  | SRule(Some(name)) -> "rule(" ^ name ^ ")"
-  | SRule(None) -> "rule()"
-  | SAll(s) -> "all(" ^ (string_of_strategy s) ^ ")"
-  | SSome(s) -> "some(" ^ (string_of_strategy s) ^ ")"
-  | SOne(s) -> "one(" ^ (string_of_strategy s) ^ ")"
-  | SProj(i, s) -> "proj(" ^ (string_of_int i) ^ ", " ^ (string_of_strategy s) ^ ")"
-  | SCall(name, params) -> 
-    let params = List.map string_of_strategy params in
-    name ^ "(" ^ (String.concat "," params) ^ ")"
+let repeat_def = 
+  let name, var = "Repeat", "s" in
+  name, [var], SSeq(SVar(var), SCall(name, [SVar(var)]))
+
+let topdown_def = 
+  let name, var = "Topdown", "s" in
+  name, [var], SSeq(SVar(var), SAll(SCall(name, [SVar(var)])))
+
+let bottomup_def = 
+  let name, var = "Bottomup", "s" in
+  name, [var], SSeq(SAll(SCall(name, [SVar(var)])), SVar(var))
 
 let base_strat name content =
   match name with
