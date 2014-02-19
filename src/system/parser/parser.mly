@@ -44,7 +44,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
-%token DARROW STAR COMMA LT GT DOT ANY SEITHER
+%token DARROW STAR COMMA LT GT DOT ANY SEITHER PLUS
 
 /* comments */
 %token EOF
@@ -102,8 +102,8 @@ interactive_command:
 | QUIT { Quit }
 
 test_term_predicate:
-| term_expr IN_CMD_OPTION term_expr { InPredicate($1, $3) }
-| term_expr EQUAL_CMD_OPTION term_expr { EqualPredicate($1, $3) }
+| term_expr IN_CMD_OPTION term_expr_list { InPredicate($1, $3) }
+| term_expr EQUAL_CMD_OPTION term_expr_list { EqualPredicate($1, $3) }
 
 expectation:
 | FAILWITH domain_error { MustFail ($2) }
@@ -244,6 +244,7 @@ strategy_simple_expression :
 
 strategy_operator :
 | strategy_expression SEITHER strategy_expression { SEither ($1, $3) }
+| strategy_expression PLUS strategy_expression { SChoice ($1, $3) }
 | strategy_expression SEMICOL strategy_expression { SSeq ($1, $3) }
 
 strategy_advanced_expression :
@@ -261,6 +262,10 @@ strategy_expression_list :
 | strategy_expression COMMA strategy_expression_list { $1 :: $3 }
 
 /* terms */
+
+term_expr_list :
+| term_expr { [$1] }
+| term_expr SEMICOL term_expr_list { $1 :: $3 }
 
 term_expr:
 | LPAREN term_expr RPAREN { $2 }

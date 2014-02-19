@@ -68,10 +68,11 @@ let pp_const_decl fmt cst =
   fprintf fmt "%a %a" pp_type_binders binders pp_type_application tapp
 
 let rec pp_strategy fmt = function
-  | SId -> fprintf fmt "id"
-  | SFail -> fprintf fmt "fail"
+  | SId -> fprintf fmt "id()"
+  | SFail -> fprintf fmt "fail()"
   | SSeq(s1, s2) -> fprintf fmt "%a; %a" pp_strategy s1 pp_strategy s2
   | SEither(s1, s2) -> fprintf fmt "%a +> %a" pp_strategy s1 pp_strategy s2
+  | SChoice(s1, s2) -> fprintf fmt "%a + %a" pp_strategy s1 pp_strategy s2
 (*  | SRec(var, s) -> fprintf fmt "rec (%s, %a)"  var pp_strategy s *)
   | STest(s) -> fprintf fmt "test(%a)" pp_strategy s
   | SNot(s) -> fprintf fmt "not(%a)" pp_strategy s

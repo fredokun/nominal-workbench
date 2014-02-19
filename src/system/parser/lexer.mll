@@ -83,6 +83,7 @@ let newline = ['\n' '\r']
 let comment = '#' [^ '\n' '\r' ] *
 let dash = '-'
 let either = "+>"
+let plus = '+'
 
 let directive = colon lower_ident
 let directive_opt = dash dash lower_ident
@@ -127,6 +128,7 @@ let directive_opt = dash dash lower_ident
   | star { STAR }
   | comma { COMMA }
   | either { SEITHER }
+  | plus { PLUS }
   | num as i { NUM (int_of_string i) }
   | any { ANY }
   | newline { 

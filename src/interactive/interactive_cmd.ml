@@ -36,8 +36,25 @@ let string_of_test_info filename msg =
 let equal_term t1 t2 =
   (strip_ws t1) = (strip_ws t2)
 
+let string_of_terms ts = 
+    List.sort String.compare @@ List.map Pretty.(string_of pp_term) ts
+
+let flatten_string_of_terms ts =
+  String.concat "; " @@ string_of_terms ts
+
+let equal_terms t1s t2s =
+  let t1s_str = string_of_terms t1s in
+  let t2s_str = string_of_terms t2s in
+  List.for_all2 equal_term t1s_str t2s_str
+
 let rewritten_success t1 t2 =
-  print_success (sprintf "Term %s has been correctly rewritten in %s.\n" t1 t2)
+  print_success (sprintf "Terms have been correctly rewritten in : %s\n%!"
+    (flatten_string_of_terms t1)) (* FIXME : find a way to write the original expr *)
+
+let rewritten_failure_unexpected t1 t2 =
+  print_failure (sprintf "Bad term rewriting : %s expected but got : %s\n%!"
+    (flatten_string_of_terms t2)
+    (flatten_string_of_terms t1))
 
 let rewritten_failure error msg =
   print_failure (sprintf "Failure with %s while expecting to succeed on rewriting.\n" 
@@ -49,13 +66,12 @@ let check_term eval_term = function
   | TMustPass (EqualPredicate(t1, t2)) ->
   begin
     try
-      let rt1 = Pretty.(string_of pp_term) @@ eval_term t1 in
-      let rt2 = Pretty.(string_of pp_term) @@ eval_term t2 in
-      if (equal_term rt1 rt2) then
-        rewritten_success rt1 rt2
+      let rt1s = eval_term t1 in
+      let rt2s = List.flatten @@ List.map eval_term t2 in
+      if (equal_terms rt1s rt2s) then
+        rewritten_success rt1s rt2s
       else
-        print_failure (
-          sprintf "Bad term rewriting, expected %s but got %s.\n" rt2 rt1)
+        rewritten_failure_unexpected rt1s rt2s
     with
     | Rewriting_error.RewritingError(code, msg) -> Rewriting_error.(
         rewritten_failure (string_of_error_code code) 
@@ -67,7 +83,7 @@ let check_term eval_term = function
   end
   | TMustFail (term, e) ->
     try
-      let rt = Pretty.(string_of pp_term) @@ eval_term term in
+      let rt = flatten_string_of_terms @@ eval_term term in
       print_failure (
         sprintf "Should have failed with %s but passed with %s.\n" 
           (string_of_error e) rt)

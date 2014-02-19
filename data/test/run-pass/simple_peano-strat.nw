@@ -87,6 +87,14 @@ strategy AddOneResult : AddOne ; BottomupAll
 
 :test rewrite Add(Zero,Successor(Zero)) with AddOne --equal Successor(Add(Zero, Successor(Zero)))
 :test rewrite Add(Zero,Successor(Zero)) with AddOneResult --equal Successor(Successor(Zero))
+
+:test rewrite Add(Zero,Successor(Zero)) 
+  with AddOneResult + id() 
+  --equal Successor(Successor(Zero))
+
+:test rewrite Add(Zero,Successor(Zero)) 
+  with AddOneResult + id() 
+  --equal Successor(Successor(Zero)) ; Add(Zero, Successor(Zero))
 #:test rewrite Add(Zero,Zero) with <strategy> --equal Zero
 #:test rewrite Add(Successor(Zero),Successor(Zero)) with <strategy> --equal two
 #:test rewrite Add(Successor(Zero),Successor(Zero)) with <strategy> --equal two

@@ -44,6 +44,8 @@ let rec replace ident new_strategy = function
     SSeq(replace ident new_strategy s1, replace ident new_strategy s2)
   | SEither(s1, s2) -> 
     SEither(replace ident new_strategy s1, replace ident new_strategy s2)
+  | SChoice(s1, s2) -> 
+    SChoice(replace ident new_strategy s1, replace ident new_strategy s2)
 (*  | SRec(var, s) ->
     SRec(var, replace ident new_strategy s) *)
   | STest(s) -> STest(replace ident new_strategy s)
@@ -58,59 +60,64 @@ let rec replace ident new_strategy = function
   | SCall(name, s_list) -> 
     SCall(name, List.map (replace ident new_strategy) s_list)
 
-let rec apply_strategy system rec_env strategy term =
+let rec apply_strategy system rec_env strategy term_list =
   let apply = apply_strategy system rec_env in
   (* Printf.printf ">> rewriting : %s \n\twith %s\n" 
-    (string_of_term term) (string_of_strategy strategy); *)
+    (string_of_term_list term) (string_of_strategy strategy); *)
   match strategy with
-  | SId -> Some(term)
-  | SFail -> None
+  | SId -> term_list
+  | SFail -> []
   | SSeq(s1, s2) -> 
     begin
-      match apply s1 term with
-      | None -> None
-      | Some(t) -> apply s2 t
+      match apply s1 term_list with
+      | [] -> []
+      | ts -> apply s2 ts
     end
   | SEither(s1, s2) ->
     begin
-      match apply s1 term with
-      | None -> apply s2 term
+      match apply s1 term_list with
+      | [] -> apply s2 term_list
       | res -> res
     end
 (*  | SRec(var, s) as rec_strat ->
     let new_rec_env = (var, rec_strat)::rec_env in
-    apply_strategy system new_rec_env s term *)
+    apply_strategy system new_rec_env s term_list *)
+  | SChoice(s1, s2) ->
+    (apply s1 term_list) @ (apply s2 term_list)
   | STest(s) ->
     begin
-      match apply s term with
-      | None -> None
-      | Some _ -> Some(term)
+      match apply s term_list with
+      | [] -> []
+      | _ -> term_list
     end
   | SNot(s) ->
     begin
-      match apply s term with
-      | None -> Some(term)
-      | Some _ -> None
+      match apply s term_list with
+      | [] -> term_list
+      | _ -> []
     end
   | SVar(name) -> 
     begin
       try
         let rec_strat = List.assoc name rec_env in
-        apply rec_strat term
+        apply rec_strat term_list
       with Not_found -> raise @@ RewritingError(UnboundStrategyVar, name)
     end
   | SRule(Some(name)) ->
     begin
       try
         let (_, rule) = System_map.find name system.rules in
-        rewrite rule (fun ph ef -> Some(substitute ph ef)) (fun x -> None) term
+        let rewrite_term t = 
+          rewrite rule (fun ph ef -> [substitute ph ef]) (fun x -> []) t 
+        in
+        List.flatten @@ List.map rewrite_term term_list
       with Not_found -> raise @@ RewritingError(UnknownRule, name)
     end
-  | SRule(None) -> apply (seq_all system.rules) term
-  | SAll(s) -> apply_to_children system rec_env s term
-  | SSome(s) -> apply_to_some_children system rec_env s term
-  | SOne(s) -> apply_to_one_child system rec_env s term
-  | SProj(i, s) -> apply_to_child i system rec_env s term 
+  | SRule(None) -> apply (seq_all system.rules) term_list
+  | SAll(s) -> apply_to_children system rec_env s term_list
+  | SSome(s) -> apply_to_some_children system rec_env s term_list
+  | SOne(s) -> apply_to_one_child system rec_env s term_list
+  | SProj(i, s) -> apply_to_child i system rec_env s term_list 
   | SCall(name, s_list) ->
     begin
       try
@@ -128,71 +135,91 @@ let rec apply_strategy system rec_env strategy term =
           raise @@ RewritingError(BadStrategyCall, (string_of_int sig_size))
         else
         let new_s = replace_params body (signature, s_list) in
-        apply new_s term
+        apply new_s term_list
       with Not_found -> raise @@ RewritingError(UnknownStrategy, name)
     end
 
-and apply_to_children system rec_env strategy = function
-  | {name=name; desc=Term(terms); _} ->
-    let rec apply_to_children acc = function
-      | [] -> Some(Term_ast.create_term name (Term ( List.rev acc)))
-      | head :: tail -> 
-        begin
-          match apply_strategy system rec_env strategy head with
-          | None -> None
-          | Some(t) -> apply_to_children (t::acc) tail
-        end
-    in
-    apply_to_children [] terms
-  | const_or_var -> Some(const_or_var)
+and apply_to_children system rec_env strategy term_list = 
+  let apply_to_children' = function
+    | {name=name; desc=Term(terms); _} ->
+      let rec apply_to_children acc = function
+        | [] -> [Term_ast.create_term name (Term ( List.rev acc))]
+        | head :: tail -> 
+          begin
+            match apply_strategy system rec_env strategy [head] with
+            | [] -> []
+            | ts -> 
+              List.flatten  @@ 
+                List.map (fun t -> apply_to_children (t::acc) tail) ts
+          end
+      in
+      apply_to_children [] terms
+    | const_or_var -> [const_or_var]
+  in
+  List.flatten @@ List.map apply_to_children' term_list
 
-and apply_to_some_children system rec_env strategy = function
-  | {name=name; desc=Term(terms); _} ->
-    let rec apply_to_children acc one_ok = function
-      | [] -> 
-        if not one_ok then None
-        else Some(Term_ast.create_term name (Term ( List.rev acc)))
-      | head :: tail -> 
-        begin
-          match apply_strategy system rec_env strategy head with
-          | None -> apply_to_children (head::acc) one_ok tail
-          | Some(t) -> apply_to_children (t::acc) true tail
-        end
-    in
-    apply_to_children [] false terms
-  | const_or_var -> None
+and apply_to_some_children system rec_env strategy term_list = 
+  let apply_to_some_children' = function
+    | {name=name; desc=Term(terms); _} ->
+      let rec apply_to_children acc one_ok = function
+        | [] -> 
+          if not one_ok then []
+          else [Term_ast.create_term name (Term ( List.rev acc))]
+        | head :: tail -> 
+          begin
+            match apply_strategy system rec_env strategy [head] with
+            | [] -> apply_to_children (head::acc) one_ok tail
+            | ts -> 
+              List.flatten @@
+                List.map (fun t -> apply_to_children (t::acc) true tail) ts
+          end
+      in
+      apply_to_children [] false terms
+    | const_or_var -> []
+  in
+  List.flatten @@ List.map apply_to_some_children' term_list
 
-and apply_to_one_child system rec_env strategy = function
-  | {name=name; desc=Term(terms); _} ->
-    let rec apply_to_children acc = function
-      | [] -> None
-      | head :: tail -> 
-        begin
-          match apply_strategy system rec_env strategy head with
-          | None -> apply_to_children (head::acc) tail
-          | Some(t) -> 
-            let new_terms = (List.rev acc) @ (t::tail) in
-            Some(Term_ast.create_term name (Term new_terms))
-        end
-    in
-    apply_to_children [] terms
-  | const_or_var -> None
+and apply_to_one_child system rec_env strategy term_list = 
+  let apply_to_one_child' = function
+    | {name=name; desc=Term(terms); _} ->
+      let rec apply_to_children acc = function
+        | [] -> []
+        | head :: tail -> 
+          begin
+            match apply_strategy system rec_env strategy [head] with
+            | [] -> apply_to_children (head::acc) tail
+            | ts -> 
+              let create_new_terms t =
+                let new_children = (List.rev acc) @ (t::tail) in
+                Term_ast.create_term name (Term new_children)
+              in
+              List.map create_new_terms ts
+          end
+      in
+      apply_to_children [] terms
+    | const_or_var -> []
+  in
+  List.flatten @@ List.map apply_to_one_child' term_list
 
-and apply_to_child nth system rec_env strategy = function
-  | {name=name; desc=Term(terms); _} ->
-    let rec apply_to_nth i acc = function
-      | [] -> Some(Term_ast.create_term name (Term ( List.rev acc)))
-      | head :: tail when i = nth -> 
-        begin
-          match apply_strategy system rec_env strategy head with
-          | None -> None
-          | Some(t) -> apply_to_nth (i + 1) (t::acc) tail
-        end
-      | head :: tail -> apply_to_nth (i + 1) (head :: acc) tail
-    in
-    apply_to_nth 0 [] terms 
-  | const_or_var -> Some(const_or_var)
-    
+and apply_to_child nth system rec_env strategy term_list = 
+  let apply_to_child' = function
+    | {name=name; desc=Term(terms); _} ->
+      let rec apply_to_nth i acc = function
+        | [] -> [Term_ast.create_term name (Term ( List.rev acc))]
+        | head :: tail when i = nth -> 
+          begin
+            match apply_strategy system rec_env strategy [head] with
+            | [] -> []
+            | ts -> 
+              List.flatten @@
+                List.map (fun t -> apply_to_nth (i + 1) (t::acc) tail) ts
+          end
+        | head :: tail -> apply_to_nth (i + 1) (head :: acc) tail
+      in
+      apply_to_nth 0 [] terms 
+    | const_or_var -> [const_or_var]
+  in
+  List.flatten @@ List.map apply_to_child' term_list    
 
 let rec rewrite_rec strategy system term =
 (*
@@ -201,5 +228,5 @@ let rec rewrite_rec strategy system term =
 *)
   match apply_strategy system [] strategy term with
   (* | Some(newterm) when newterm <> term -> rewrite_rec strategy system newterm *)
-  | Some(newterm) -> newterm
-  | None -> failwith "Strategy application has failed"
+  | [] -> failwith "Strategy application has failed"
+  | newterm -> newterm
