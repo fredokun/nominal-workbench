@@ -18,12 +18,14 @@ let nil = []
 
 let nil2 = []
 
-type hterm =
+type hterm_raw =
   | HConst of ident
-  | HTerm of ident * hterm hlist
+  | HTerm of ident * hterm_raw hlist
   | HBinder of (id * id) list
   | HVar
   | HFreeVar of ident
+
+type hterm = { term: hterm_raw; binders: string list }
 
 let rec hash_hlist = function
     | [] -> 0
@@ -60,14 +62,14 @@ and equal ht1 ht2 =
 
 
 module HTermtbl = Hashtbl.Make(struct
-    type t = hterm
+    type t = hterm_raw
     let equal = equal
     let hash = hash_term
   end)
 
 
 module HListtbl = Hashtbl.Make(struct
-    type t = hterm hlist
+    type t = hterm_raw hlist
     let equal = equal_hlist
     let hash = hash_hlist
   end)
@@ -126,8 +128,7 @@ let add_binder_name t l =
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
    from right to left actually, to retrieve the binded variables before
    hashconsing the binder. *)
-let rec create_hlist bindings (names : string list) (* : bindings -> ident list -> *)
-   (* term_dag list -> 'a * 'b  *)= function
+let rec create_hlist bindings names = function
   | [] -> nil, names
   | hd :: tl ->
     (* If it's a binder, we add it in our bindings *)
@@ -156,7 +157,7 @@ let rec create_hlist bindings (names : string list) (* : bindings -> ident list 
     else res, names
 
 
-and create_cons : hterm -> hterm hlist -> hterm hlist=
+and create_cons =
   let open HListtbl in
   let id = ref 1 in
   let t = create 43 in
@@ -171,8 +172,7 @@ and create_cons : hterm -> hterm hlist -> hterm hlist=
       incr id;
       new_hl
 
-and create_term_raw : bindings -> string list -> term_dag -> hterm * bindings *
-  string list =
+and create_term_raw =
   let open HTermtbl in
   let term_tbl = create 43 in
   let hvar = HVar in
@@ -187,8 +187,8 @@ and create_term_raw : bindings -> string list -> term_dag -> hterm * bindings *
         let hl, names = create_hlist bindings names l in
         HTerm (id, hl), bindings, names
       | DBinder id ->
-        let binded : id list = !(List.assoc id bindings) in
-        let binded : (id * id) list = create_id_list binded in
+        let binded = !(List.assoc id bindings) in
+        let binded = create_id_list binded in
         HBinder binded, remove_binder td bindings, names
     in
 
@@ -199,7 +199,7 @@ and create_term_raw : bindings -> string list -> term_dag -> hterm * bindings *
       add term_tbl term term;
       term, bindings, names
 
-and create_id_list_raw : id -> (id * id) list -> (id * id) list =
+and create_id_list_raw =
   let open IdListtbl in
   let t = create 19 in
   let lid = ref 0 in
@@ -213,27 +213,28 @@ and create_id_list_raw : id -> (id * id) list -> (id * id) list =
       incr lid;
       hl
 
-and create_id_list (l : id list) : (id * id) list =
+and create_id_list l =
   match l with
   | [] -> nil2
   | id :: tl -> create_id_list_raw id (create_id_list tl)
 
 
 (* Main function to hashcons a term_dag *)
-let create_term td =
-  let term, _, _ = create_term_raw [] [] td in
-  term
+(* let create_term td = *)
+(*   let term, _, _ = create_term_raw [] [] td in *)
+(*   term *)
 
-let create_term_with_names td =
-  let term, _, names = create_term_raw [] [] td in
-  term, names
+let create_term td =
+  let term, _, binders = create_term_raw [] [] td in
+  { term; binders }
 
 module IMap = Map.Make (struct
     type t = int
     let compare = Pervasives.compare
   end)
 
-let create_dterm names td =
+let create_dterm td =
+  let td, names = td.term, td.binders in
   let rec step names bindings cell td =
     match td, names with
     | HConst i, _ -> DConst i, names, bindings
@@ -289,7 +290,7 @@ let pretty_print_with_names names term = assert false
 (* Dot representation, which is well suited to show sharing *)
 
 module ReprH = Hashtbl.Make (struct
-    type t = hterm
+    type t = hterm_raw
     let hash = hash_term
     let equal = (==)
   end)

@@ -13,8 +13,8 @@ let create_tests () =
   let hc2 = create_term c2 in
   let hc3 = create_term c3 in
 
-  assert (not (hc1 == hc2));
-  assert (hc2 == hc3);
+  assert (not (hc1.term == hc2.term));
+  assert (hc2.term == hc3.term);
 
   Format.printf "Const OK@.";
 
@@ -28,8 +28,8 @@ let create_tests () =
   let hfv2 = create_term fv2 in
   let hfv3 = create_term fv3 in
 
-  assert (not (hfv1 == hfv2));
-  assert (hfv1 == hfv3);
+  assert (not (hfv1.term == hfv2.term));
+  assert (hfv1.term == hfv3.term);
 
   Format.printf "FreeVars OK@.";
 
@@ -78,7 +78,7 @@ let create_tests () =
   let ht1 = create_term t1 in
   let ht2 = create_term t2 in
 
-  assert (ht1 == ht2);
+  assert (ht1.term == ht2.term);
   Format.printf "Terms OK@."
 
 let peano_tests () =
@@ -103,9 +103,9 @@ let peano_tests () =
   let ha3 = create_term add3 in
   let ha4 = create_term add4 in
 
-  assert(ha1 == ha2);
-  assert(ha2 == ha3);
-  assert(ha3 == ha4);
+  assert(ha1.term == ha2.term);
+  assert(ha2.term == ha3.term);
+  assert(ha3.term == ha4.term);
 
   Format.printf "Peano OK@."
 
@@ -129,7 +129,7 @@ let lambda_tests () =
   let hid1 = create_term id1 in
   let hid2 = create_term id2 in
 
-  assert (hid1 == hid2);
+  assert (hid1.term == hid2.term);
 
   (* Term for getting the second element of a pair in lambda calculus, which is
   also the encoding for "false". *)
@@ -138,7 +138,7 @@ let lambda_tests () =
   let hsnd = create_term lsnd in
 
   (* We open the term and get the second lambda, which is basically id *)
-  let hid3 = match hsnd with
+  let hid3 = match hsnd.term with
     | HTerm (_, hl) ->
       (List.hd @@ List.tl hl).value
     | _ -> assert false in
@@ -148,7 +148,7 @@ let lambda_tests () =
 
   (* dot hsnd "graphsnd.dot"; *)
 
-  assert (hid2 == hid3);
+  assert (hid2.term == hid3);
 
   (* let app = DTerm ("App", [id1; id2]) in *)
   (* let happ = create_term app in *)
@@ -171,21 +171,21 @@ let naming_tests () =
   let lsnd = DTerm ("Lambda",
                     [bx; DTerm ("Lambda", [by; DVar "y"])]) in
 
-  let hsnd, hsnd_names = create_term_with_names lsnd in
+  let hsnd = create_term lsnd in
 
   (* pretty_print hsnd; *)
   (* Format.printf "[%s]@." @@ String.concat ", " hsnd_names; *)
 
-  assert (hsnd_names = ["x"; "y"]);
+  assert (hsnd.binders = ["x"; "y"]);
 
   let app = DTerm ("App", [lsnd; id3]) in
-  let happ, happ_names = create_term_with_names app in
+  let happ = create_term app in
 
   (* pretty_print happ; *)
   (* Format.printf "[%s]@." @@ String.concat ", " happ_names; *)
   (* dot happ "happgraph.dot"; *)
 
-  assert (happ_names = ["x"; "y"; "z"]);
+  assert (happ.binders = ["x"; "y"; "z"]);
 
   Format.printf "Binders names OK@."
 
@@ -202,20 +202,20 @@ let reconstruct_tests () =
 
   let lsnd = DTerm ("Lambda",
                     [bx; DTerm ("Lambda", [by; DVar "y"])]) in
-  let hsnd, hsnd_names = create_term_with_names lsnd in
+  let hsnd = create_term lsnd in
 
-  let snd = create_dterm hsnd_names hsnd in
-  Format.printf "Before: %s@." @@ string_of_term lsnd;
-  Format.printf "After: %s@." @@ string_of_term snd;
+  let snd = create_dterm hsnd in
+  (* Format.printf "Before: %s@." @@ string_of_term lsnd; *)
+  (* Format.printf "After: %s@." @@ string_of_term snd; *)
 
   assert (lsnd = snd);
 
   let app = DTerm ("App", [lsnd; id3]) in
-  let happ, happ_names = create_term_with_names app in
-  let recr_app = create_dterm happ_names happ in
+  let happ = create_term app in
+  let recr_app = create_dterm happ in
 
-  Format.printf "Before: %s@." @@ string_of_term app;
-  Format.printf "After: %s@." @@ string_of_term recr_app;
+  (* Format.printf "Before: %s@." @@ string_of_term app; *)
+  (* Format.printf "After: %s@." @@ string_of_term recr_app; *)
 
   assert (app = recr_app);
 
