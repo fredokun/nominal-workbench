@@ -13,19 +13,10 @@ type info = Lexing.position
 type ident = string
 
 type term_dag =
-  | DConst of ident
-  | DTerm of ident * term_dag list
-  | DBinder of ident
-  | DVar of ident
-
-(* Typed AST *)
-
-(* type type_name = string *)
-(* type type_binders = type_name list *)
-
-(* type type_application = *)
-(*   | TypeApplication of type_name * type_application list *)
-(*   | TypeName of type_name *)
+| DConst of ident
+| DTerm of ident * term_dag list
+| DBinder of ident
+| DVar of ident
 
 module TBinders_map = Map.Make(String)
 
@@ -36,13 +27,13 @@ type genericity =
 | Gen
 | Inst of bnd_typ_app
 | Simple
-
+    
 type term_type =
-  | TypedConst of bnd_typ_app
-  | TypedTerm of bnd_typ_app
-  | TypedBinder of type_application
-  | TypedVar of type_application
-
+| TypedConst of bnd_typ_app
+| TypedTerm of bnd_typ_app
+| TypedBinder of type_application
+| TypedVar of type_application
+    
 let rec string_of_term : term_dag -> string = function
   | DConst id -> id
   | DVar id -> "$" ^ id

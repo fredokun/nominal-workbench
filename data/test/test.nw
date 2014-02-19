@@ -25,3 +25,4 @@
 :load-test "data/test/run-fail/typecheck_unification1.nw" --failwith RewritingSystemError.TypeClash
 :load-test "data/test/run-fail/typecheck_unification2.nw" --failwith RewritingSystemError.TypeClash
 :load-test "data/test/run-pass/typecheck_unification.nw"
+:load-test "data/test/run-pass/term_type_checking.nw"

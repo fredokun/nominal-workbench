@@ -1,0 +1,25 @@
+kind K1 : type
+kind K2 : type
+kind List : type -> type
+kind Couple : type -> type -> type
+
+constant List_couple_k1_a : forall(A).List<Couple<K1,A>>
+constant List_couple_a_b : forall(A,B).List<Couple<A,B>>
+
+constant Nil : forall(A). List<A>
+
+constant X : K1
+constant Y : K2
+
+operator Mk_couple : forall(A,B). A * B -> Couple<A,B>
+operator Nothing : forall(A). A * A -> A
+operator Fst : forall(A,B).Couple<A,B> -> A
+operator Hd : forall(A).List<A> -> A
+operator Hd2 : forall(A). List<A> * List<A> -> Couple<A,A>
+operator Cons : forall(A). A * List<A> -> List<A>
+
+
+:test Nothing(X,Y) --failwith TermSystemError.TypeClash
+:test Hd(X) --failwith TermSystemError.TypeClash
+:test Cons(Mk_couple(X,Y),Nil) --equal Cons(Mk_couple(X,Y),Nil)
+:test Hd2(Cons(Y,List_couple_a_b), List_couple_k1_a) --failwith TermSystemError.TypeClash
