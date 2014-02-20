@@ -66,8 +66,11 @@ strategy Right(s) : proj(1, s)
 strategy Any(s) : 
   rec(a, s +> one(a))
 
+strategy Test(p, s, b) : 
+  test(p) ; s ; b
+
 strategy While(p, s) :
-  rec(b, (test(p) ; s ; b) +> id())
+  rec(b, Test(p, s, b) +> id())
 
 strategy TrySubst :
   [subst-var] +> [subst-nvar] +> [lambda] +> id()

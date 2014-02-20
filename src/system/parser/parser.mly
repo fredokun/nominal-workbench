@@ -53,7 +53,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %type <Parsing_ast.structure> start
 
 %start toplevel_phrase
-%type <Parsing_ast.structure_item> toplevel_phrase
+%type <Parsing_ast.structure> toplevel_phrase
 
 %right STAR DARROW ARROW COLON DOT EITHER
 
@@ -61,9 +61,10 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 
 start:
 | decls EOF { $1 }
+| EOF { raise End_of_file }
 
 toplevel_phrase:
-| decl SEMICOL SEMICOL { $1 }
+| decls COLON COLON { $1 }
 | EOF { raise End_of_file }
 ;
 
@@ -249,9 +250,9 @@ strategy_operator :
 
 strategy_advanced_expression :
 | LIDENT { SVar $1 }
-/* | REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) } */
+| REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) }
 | RULE LPAREN RPAREN { SRule None }
-| RULE LPAREN LIDENT RPAREN { SRule (Some $3) } 
+| RULE LPAREN LIDENT RPAREN { SRule (Some $3) }
 | PROJ LPAREN NUM COMMA strategy_expression RPAREN { SProj ($3, $5) }
 | LBRACKET LIDENT RBRACKET { SRule (Some $2) }
 | UIDENT { SCall ($1, []) }

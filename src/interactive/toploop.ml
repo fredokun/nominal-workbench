@@ -65,8 +65,8 @@ let loop ppf system =
       (* TODO : discriminer les termes, des règles.. combinaison des
 	 parsers? *)
 
-      let item = parse_toplevel_phrase lb in
-      ignore (execute_phrase true ppf system item)
+      let items = parse_toplevel_phrase lb in
+      ignore (List.iter (function item -> execute_phrase true ppf system item) items)
     with
     | End_of_file -> exit 0
     | Sys.Break -> Format.fprintf ppf "Interrupted.@."

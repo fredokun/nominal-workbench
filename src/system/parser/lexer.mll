@@ -29,7 +29,7 @@
       ; "with", WITH
       ; "let", LET
       ; "strategy", STRATEGY
-(*      ; "rec", REC *)
+      ; "rec", REC
       ; "proj", PROJ
       ]
 
