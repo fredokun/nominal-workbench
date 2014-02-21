@@ -3,23 +3,28 @@
   (C) Copyright Pierrick Couderc
 *)
 
-open Term_ast
+open Term_ast_dag
 open Rewriting_ast
 
-(* Placeholders bindings *)
-module SMap = Map.Make(String)
+type placeholder = PTerm of string | PBinder of string
 
-type placeholders = Term_ast.term_ast SMap.t
+(* Placeholders bindings *)
+module SMap = Map.Make(struct
+    type t = placeholder
+    let compare = Pervasives.compare
+end)
+
+type placeholders = term_dag SMap.t
 
 let raise_placeholder_already_defined id =
   let open Rewriting_error in
   raise (RewritingError(PlaceholderAlreadyDefined, id))
 
-let matching (term : Term_ast.term_ast) pattern =
-  let rec step (term : Term_ast.term_ast) pattern placeholders =
-    match term.desc, pattern with
-    | Term (t_terms), POperator (p_id, p_terms) ->
-      if term.name = p_id then
+let matching term pattern =
+  let rec step term pattern placeholders =
+    match term, pattern with
+    | DTerm (t_id, t_terms), POperator (p_id, p_terms) ->
+      if t_id = p_id then
         List.fold_left
           (fun placeholders (term, pattern) ->
             match placeholders with
@@ -29,20 +34,27 @@ let matching (term : Term_ast.term_ast) pattern =
 	  ( List.combine t_terms p_terms )
       else None
 
-    | Const , PConstant p_id ->
-        if term.name = p_id then placeholders else None
+    | DConst t_id, PConstant p_id ->
+        if t_id = p_id then placeholders else None
+
+    | DVar _, PPlaceholder p_id ->
+      let ph = match placeholders with
+        | None -> SMap.empty
+        | Some ph -> ph in
+      Some (SMap.add (PTerm p_id) term ph)
 
     | _, PPlaceholder id ->
-        let ph = match placeholders with None -> SMap.empty
+      let ph = match placeholders with
+        | None -> SMap.empty
         | Some ph -> ph in
-      (* Testing placeholder unicity at typing phase ? *)
-      if SMap.mem id ph then raise_placeholder_already_defined id
-      else Some (SMap.add id term ph)
+      let pl = match term with
+        | DBinder _ -> PBinder id
+        | _ -> PTerm id in
+
+      if SMap.mem pl ph then raise_placeholder_already_defined id
+      else Some (SMap.add pl term ph)
 
     | _, PAny -> placeholders
     | _, _ -> None
   in
   step term pattern (Some SMap.empty)
-
-
-
