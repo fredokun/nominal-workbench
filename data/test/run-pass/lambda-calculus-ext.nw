@@ -66,6 +66,9 @@ strategy Right(s) : proj(1, s)
 strategy Any(s) : 
   s +> one(Any(s))
 
+strategy Test(p, s, b) : 
+  test(p) ; s ; b
+
 strategy While(p, s) :
   (test(p) ; s ; While(p, s)) +> id()
 
