@@ -21,7 +21,11 @@ let nil2 = []
 type hterm_raw =
   | HConst of ident
   | HTerm of ident * hterm_raw hlist
-  | HBinder of (id * id) list
+  | HBinder of (id * id) list (* the first parameter is only for hashconsing,
+                                 while the second one refers to the id of the
+                                 head of an hashconsed list. This will change
+                                 for a 'id hashed list', but there are problems
+                                 to solve first because that breaks the hashconsing *)
   | HVar
   | HFreeVar of ident
 
