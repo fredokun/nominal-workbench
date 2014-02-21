@@ -1,24 +1,27 @@
 
 open Rewriting_ast
 open Rewriting_error
-open Term_ast
+open Term_ast_dag
 open Strategy_ast
 open Symbols
+open Matching
 
 let raise_unknown_placeholder ident =
   raise @@ RewritingError(UnknownPlaceholder, ident)
 
 let rec substitute placeholders effect =
   match effect with
-  | EConstant ident -> Term_ast.create_term ident Const
+  | EConstant ident -> DConst ident
   | EPlaceholder ident ->
     begin
-      try Matching.SMap.find ident placeholders
-      with Not_found -> 
-        raise_unknown_placeholder ident
+      try SMap.find (PBinder ident) placeholders
+      with Not_found ->
+        try SMap.find (PTerm ident) placeholders
+        with Not_found ->
+          raise_unknown_placeholder ident
     end
   | EOperator (ident, operands) ->
-    Term_ast.create_term ident (Term (List.map (substitute placeholders) operands))
+    DTerm (ident, List.map (substitute placeholders) operands)
 
 
 let rewrite (pattern, effect) ifmatch elsef term =
@@ -42,9 +45,9 @@ let rec replace ident new_strategy = function
   | SFail -> SFail
   | SSeq(s1, s2) ->
     SSeq(replace ident new_strategy s1, replace ident new_strategy s2)
-  | SEither(s1, s2) -> 
+  | SEither(s1, s2) ->
     SEither(replace ident new_strategy s1, replace ident new_strategy s2)
-  | SChoice(s1, s2) -> 
+  | SChoice(s1, s2) ->
     SChoice(replace ident new_strategy s1, replace ident new_strategy s2)
 (*  | SRec(var, s) ->
     SRec(var, replace ident new_strategy s) *)
@@ -57,17 +60,17 @@ let rec replace ident new_strategy = function
   | SSome(s) -> SSome(replace ident new_strategy s)
   | SOne(s) -> SOne(replace ident new_strategy s)
   | SProj(i, s) -> SProj(i, replace ident new_strategy s)
-  | SCall(name, s_list) -> 
+  | SCall(name, s_list) ->
     SCall(name, List.map (replace ident new_strategy) s_list)
 
 let rec apply_strategy system rec_env strategy term_list =
   let apply = apply_strategy system rec_env in
-  (* Printf.printf ">> rewriting : %s \n\twith %s\n" 
+  (* Printf.printf ">> rewriting : %s \n\twith %s\n"
     (string_of_term_list term) (string_of_strategy strategy); *)
   match strategy with
   | SId -> term_list
   | SFail -> []
-  | SSeq(s1, s2) -> 
+  | SSeq(s1, s2) ->
     begin
       match apply s1 term_list with
       | [] -> []
@@ -96,7 +99,7 @@ let rec apply_strategy system rec_env strategy term_list =
       | [] -> term_list
       | _ -> []
     end
-  | SVar(name) -> 
+  | SVar(name) ->
     begin
       try
         let rec_strat = List.assoc name rec_env in
@@ -107,8 +110,8 @@ let rec apply_strategy system rec_env strategy term_list =
     begin
       try
         let (_, rule) = System_map.find name system.rules in
-        let rewrite_term t = 
-          rewrite rule (fun ph ef -> [substitute ph ef]) (fun x -> []) t 
+        let rewrite_term t =
+          rewrite rule (fun ph ef -> [substitute ph ef]) (fun x -> []) t
         in
         List.flatten @@ List.map rewrite_term term_list
       with Not_found -> raise @@ RewritingError(UnknownRule, name)
@@ -117,7 +120,7 @@ let rec apply_strategy system rec_env strategy term_list =
   | SAll(s) -> apply_to_children system rec_env s term_list
   | SSome(s) -> apply_to_some_children system rec_env s term_list
   | SOne(s) -> apply_to_one_child system rec_env s term_list
-  | SProj(i, s) -> apply_to_child i system rec_env s term_list 
+  | SProj(i, s) -> apply_to_child i system rec_env s term_list
   | SCall(name, s_list) ->
     begin
       try
@@ -139,17 +142,17 @@ let rec apply_strategy system rec_env strategy term_list =
       with Not_found -> raise @@ RewritingError(UnknownStrategy, name)
     end
 
-and apply_to_children system rec_env strategy term_list = 
+and apply_to_children system rec_env strategy term_list =
   let apply_to_children' = function
     | {name=name; desc=Term(terms); _} ->
       let rec apply_to_children acc = function
         | [] -> [Term_ast.create_term name (Term ( List.rev acc))]
-        | head :: tail -> 
+        | head :: tail ->
           begin
             match apply_strategy system rec_env strategy [head] with
             | [] -> []
-            | ts -> 
-              List.flatten  @@ 
+            | ts ->
+              List.flatten  @@
                 List.map (fun t -> apply_to_children (t::acc) tail) ts
           end
       in
@@ -158,18 +161,18 @@ and apply_to_children system rec_env strategy term_list =
   in
   List.flatten @@ List.map apply_to_children' term_list
 
-and apply_to_some_children system rec_env strategy term_list = 
+and apply_to_some_children system rec_env strategy term_list =
   let apply_to_some_children' = function
     | {name=name; desc=Term(terms); _} ->
       let rec apply_to_children acc one_ok = function
-        | [] -> 
+        | [] ->
           if not one_ok then []
           else [Term_ast.create_term name (Term ( List.rev acc))]
-        | head :: tail -> 
+        | head :: tail ->
           begin
             match apply_strategy system rec_env strategy [head] with
             | [] -> apply_to_children (head::acc) one_ok tail
-            | ts -> 
+            | ts ->
               List.flatten @@
                 List.map (fun t -> apply_to_children (t::acc) true tail) ts
           end
@@ -179,16 +182,16 @@ and apply_to_some_children system rec_env strategy term_list =
   in
   List.flatten @@ List.map apply_to_some_children' term_list
 
-and apply_to_one_child system rec_env strategy term_list = 
+and apply_to_one_child system rec_env strategy term_list =
   let apply_to_one_child' = function
     | {name=name; desc=Term(terms); _} ->
       let rec apply_to_children acc = function
         | [] -> []
-        | head :: tail -> 
+        | head :: tail ->
           begin
             match apply_strategy system rec_env strategy [head] with
             | [] -> apply_to_children (head::acc) tail
-            | ts -> 
+            | ts ->
               let create_new_terms t =
                 let new_children = (List.rev acc) @ (t::tail) in
                 Term_ast.create_term name (Term new_children)
@@ -201,29 +204,29 @@ and apply_to_one_child system rec_env strategy term_list =
   in
   List.flatten @@ List.map apply_to_one_child' term_list
 
-and apply_to_child nth system rec_env strategy term_list = 
+and apply_to_child nth system rec_env strategy term_list =
   let apply_to_child' = function
     | {name=name; desc=Term(terms); _} ->
       let rec apply_to_nth i acc = function
         | [] -> [Term_ast.create_term name (Term ( List.rev acc))]
-        | head :: tail when i = nth -> 
+        | head :: tail when i = nth ->
           begin
             match apply_strategy system rec_env strategy [head] with
             | [] -> []
-            | ts -> 
+            | ts ->
               List.flatten @@
                 List.map (fun t -> apply_to_nth (i + 1) (t::acc) tail) ts
           end
         | head :: tail -> apply_to_nth (i + 1) (head :: acc) tail
       in
-      apply_to_nth 0 [] terms 
+      apply_to_nth 0 [] terms
     | const_or_var -> [const_or_var]
   in
-  List.flatten @@ List.map apply_to_child' term_list    
+  List.flatten @@ List.map apply_to_child' term_list
 
 let rec rewrite_rec strategy system term =
 (*
-  Printf.printf "rewriting : %s \n\twith %s\n" 
+  Printf.printf "rewriting : %s \n\twith %s\n"
     (string_of_term term) (string_of_strategy strategy);
 *)
   match apply_strategy system [] strategy term with
