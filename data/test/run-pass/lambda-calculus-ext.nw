@@ -64,10 +64,10 @@ strategy Left(s) : proj(0, s)
 strategy Right(s) : proj(1, s)
 
 strategy Any(s) : 
-  rec(a, s +> one(a))
+  s +> one(Any(s))
 
 strategy While(p, s) :
-  rec(b, (test(p) ; s ; b) +> id())
+  (test(p) ; s ; While(p, s)) +> id()
 
 strategy TrySubst :
   [subst-var] +> [subst-nvar] +> [lambda] +> id()
@@ -76,12 +76,10 @@ strategy SubstAll :
   While(Any([is-subst]), Bottomup(TrySubst))
 
 strategy Dummy :
-  rec(x,
     SubstAll ;
-    (IsAppLambdaValue ; [beta]; x) +>
-    (IsApp ; Left(x) ; Right(x)) +>
+    (IsAppLambdaValue ; [beta]; Dummy) +>
+    (IsApp ; Left(x) ; Right(Dummy)) +>
     id()
-  )
     
 :test rewrite Lambda(x, Var(x)) with id() --equal Lambda(x, Var(x))
 
