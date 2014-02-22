@@ -17,25 +17,29 @@ let lookup_op sys op =
   try
     Symbols.lookup_op sys op
   with
-  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+  | RewritingSystemError (_, desc) -> (* Format.printf "op Not found: %s@." op; *)
+    raise (TermSystemError (UnknownSymbol, desc))
 
 let lookup_rule sys rule =
   try
     Symbols.lookup_rule sys rule
   with
-  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+  | RewritingSystemError (_, desc) -> (* Format.printf "rule Not found: %s@." rule; *)
+    raise (TermSystemError (UnknownSymbol, desc))
 
 let lookup_kind sys kind =
   try
     Symbols.lookup_kind sys kind
   with
-  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+  | RewritingSystemError (_, desc) -> (* Format.printf "kind Not found: %s@." kind; *)
+    raise (TermSystemError (UnknownSymbol, desc))
 
 let lookup_const sys const =
   try
     Symbols.lookup_const sys const
   with
-  | RewritingSystemError (_, desc) -> raise (TermSystemError (UnknownSymbol, desc))
+  | RewritingSystemError (_, desc) -> (* Format.printf "const Not found: %s@." const; *)
+    raise (TermSystemError (UnknownSymbol, desc))
 
 let rec string_of_bnd_typ_app indent b =
   let BndTypApp(bnd, t_app) = b in
@@ -45,6 +49,7 @@ let rec string_of_bnd_typ_app indent b =
 
 (* Return the list of binder positions in the operator op_name *)
 let binders_pos_in_op system op_name =
+  (* Format.printf "binders_pos: %s@." op_name; *)
   let (_,op) = lookup_op system op_name in
   let (_,args,_) = op in
   let rec give_pos l n = function
@@ -59,6 +64,7 @@ let rec construct_ast_checked_rec
     system curr_op pos_in_op (term : Term_ast.term_ast) =
   match term.desc with
   | Const ->
+    (* Format.printf "Const: %s@." term.name; *)
     begin
       try
         ignore (lookup_op system term.name);
@@ -69,12 +75,14 @@ let rec construct_ast_checked_rec
         DConst (Some term.info, term.name)
     end
   | Var ->
+    (* Format.printf "Var: %s@." term.name; *)
     let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
     if at_binder_pos then
       DBinder (Some term.info, term.name)
     else
       DVar (Some term.info, term.name)
   | Term(terms) ->
+    (* Format.printf "Term: %s@." term.name; *)
     begin
       let (_,(_,args,_)) = lookup_op system term.name in
       if List.length args != List.length terms then
@@ -131,7 +139,7 @@ let subst_bnd_typ_app bndtypapp =
           match t_subst with
           | TypeName tn -> subst_bnd_typ_app_rec fresh_name (TBinders_map.find tn bnd_subst)
           | TypeApplication (tn, tapps) ->
-            let (tapps_subst, fresh) = 
+            let (tapps_subst, fresh) =
               List.fold_left
                 (fun (tapp, fresh) t ->
                   let (new_t, new_fresh) = subst_bnd_typ_app_rec fresh (BndTypApp (bnd_subst, t)) in
@@ -237,6 +245,7 @@ let rec check_sub_terms system gen_binders =
         | _ -> raise (TermSystemError (TypeClash, "todo1" (* todo *) ))
       end
     | DConst (info, ident) ->
+      (* Format.printf "DConst: %s@." ident; *)
       let (_,(type_binders,const_type)) = lookup_const system ident in
       let const_tbinders = binders_to_TBinds type_binders in
       begin
@@ -268,6 +277,7 @@ and check_type_of_term system term_ast =
   | DBinder _ -> failwith("you should not be here")
   | DVar _ -> failwith("you should not be here")
   | DTerm (info, ident, sub_terms) ->
+    (* Format.printf "check_type: %s@." ident; *)
     (* raise (Invalid_argument (string_of_term term_dag)); *)
     let (_,(type_binders,args,res)) = lookup_op system ident in
     let gen_binders = binders_to_TBinds type_binders in
@@ -323,4 +333,3 @@ and check_type_of_term system term_ast =
 (* unify_types empty_binders (TypeName "Int") (TypeName "Int") *)
 
 (* unify_types (TBinders_map.add "A" "A" empty_binders) (TypeApplication ( "List" , [TypeName "A"])) (TypeApplication ("List" , [TypeName "Int"]));; *)
-
