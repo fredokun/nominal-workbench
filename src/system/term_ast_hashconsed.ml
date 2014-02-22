@@ -21,11 +21,8 @@ let nil2 = []
 type hterm_raw =
   | HConst of ident
   | HTerm of ident * hterm_raw hlist
-  | HBinder of (id * id) list (* the first parameter is only for hashconsing,
-                                 while the second one refers to the id of the
-                                 head of an hashconsed list. This will change
-                                 for a 'id hashed list', but there are problems
-                                 to solve first because that breaks the hashconsing *)
+  | HBinder of id hlist (* refers to the id of the head of an hashconsed
+                           list. *)
   | HVar
   | HFreeVar of ident
 
@@ -78,21 +75,22 @@ module HListtbl = Hashtbl.Make(struct
     let hash = hash_hlist
   end)
 
+let hash_idlist = function
+  | [] -> 0
+  | id :: [] -> id.value
+  | id1 :: id2 :: _ -> id1.value + 17 * id2.hash
+
 module IdListtbl = Hashtbl.Make(
     struct
-      type t = (id * id) list
+      type t = id hlist
 
       let equal il1 il2 =
         match il1, il2 with
         | [], [] -> true
-        | (_, hd1) :: tl1, (_, hd2) :: tl2 -> hd1 = hd2 && tl1 == tl2
+        | hd1 :: tl1, hd2 :: tl2 -> hd1.value = hd2.value && tl1 == tl2
         | _, _ -> false
 
-      let hash l =
-        let rec step acc = function
-          | [] -> acc
-          | (_, id) :: tl -> step (id + 17 * acc) tl in
-        step 1 l
+      let hash = hash_idlist
     end)
 
 module SMap = Map.Make(String)
@@ -209,13 +207,14 @@ and create_id_list_raw =
   let lid = ref 0 in
   add t nil2 nil2;
   fun id hl ->
-    let hl = (!lid, id) :: hl in
+    let new_hl = { id = !lid; value = id;
+                  hash = id + 17 * hash_idlist hl } :: hl in
     try
-      find t hl
+      find t new_hl
     with Not_found ->
-      add t hl hl;
+      add t new_hl new_hl;
       incr lid;
-      hl
+      new_hl
 
 and create_id_list l =
   match l with
@@ -246,7 +245,7 @@ let create_dterm td =
     | HFreeVar i, _ -> DVar i, names, bindings
     | HBinder binded, var :: names ->
       DBinder var, names, List.fold_left
-        (fun b (_, id) -> IMap.add id var bindings)
+        (fun b id -> IMap.add id.value var bindings)
         bindings binded
     | HTerm (i, terms), names ->
       let terms, names, bindings = List.fold_left
@@ -271,8 +270,8 @@ let rec string_of_hlist hl names =
 and string_of_idlist il =
   let rec step acc = function
   | [] -> ""
-  | [(_, i)] -> Format.sprintf "%s%d" acc i
-  | (_, i) :: tl -> step (Format.sprintf "%s%d, " acc i) tl
+  | [i] -> Format.sprintf "%s%d" acc i.value
+  | i :: tl -> step (Format.sprintf "%s%d, " acc i.value) tl
   in
   step "" il
 
@@ -336,8 +335,8 @@ let dot t filename =
           (1, "") args in
         Hashtbl.add term_tbl key value;
         List.iter (fun t -> browse t.id t.value) args
-      | HBinder binded -> let value = List.fold_left (fun acc (_, id) ->
-          Format.sprintf "%s\"%s\" -> \"var:%d\"[style=dotted]@\n" acc key id)
+      | HBinder binded -> let value = List.fold_left (fun acc id ->
+          Format.sprintf "%s\"%s\" -> \"var:%d\"[style=dotted]@\n" acc key id.value)
           "" binded in
         Hashtbl.add term_tbl key value
       | _ -> Hashtbl.add term_tbl key ""
