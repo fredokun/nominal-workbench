@@ -2,6 +2,8 @@ kind K1 : type
 kind K2 : type
 kind List : type -> type
 kind Couple : type -> type -> type
+kind Var : atom
+
 
 constant List_couple_k1_a : forall(A).List<Couple<K1,A>>
 constant List_couple_a_b : forall(A,B).List<Couple<A,B>>
@@ -17,9 +19,16 @@ operator Fst : forall(A,B).Couple<A,B> -> A
 operator Hd : forall(A).List<A> -> A
 operator Hd2 : forall(A). List<A> * List<A> -> Couple<A,A>
 operator Cons : forall(A). A * List<A> -> List<A>
-
+operator Test_var : [Var]. Var -> K1
 
 :test Nothing(X,Y) --failwith TermSystemError.TypeClash
 :test Hd(X) --failwith TermSystemError.TypeClash
-:test Cons(Mk_couple(X,Y),Nil) --equal Cons(Mk_couple(X,Y),Nil)
 :test Hd2(Cons(Y,List_couple_a_b), List_couple_k1_a) --failwith TermSystemError.TypeClash
+:test Test_var(test, X) --failwith TermSystemError.TypeClash
+:test Test_var(X, test) --failwith TermSystemError.TypeClash
+:test Hd2(Cons(Mk_couple(Y,X),Nil), List_couple_k1_a) --failwith TermSystemError.TypeClash
+
+:test Cons(Mk_couple(X,Y),Nil) --equal Cons(Mk_couple(X,Y),Nil)
+:test Hd2(Cons(Mk_couple(X,Y),Nil), List_couple_a_b) --equal Hd2(Cons(Mk_couple(X,Y),Nil), List_couple_a_b)
+:test Hd2(Cons(Mk_couple(X,Y),Nil), List_couple_k1_a) --equal Hd2(Cons(Mk_couple(X,Y),Nil), List_couple_k1_a)
+:test Nothing(Nil, List_couple_k1_a) --equal Nothing(Nil, List_couple_k1_a)

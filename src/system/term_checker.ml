@@ -10,6 +10,8 @@ open Rewriting_ast
 open Term_system_error
 open Rewriting_system_error
 open Map
+open Utils
+open Lexing
 
 let lookup_op sys op =
   try
@@ -97,10 +99,10 @@ let binders_to_TBinds tbinds =
   List.fold_left (fun map x -> TBinders_map.add x (BndTypApp (TBinders_map.empty, (TypeName x))) map)
     map tbinds
 
-let type_clash_error t1 t2 =
+let type_clash_error ?(pos=Lexing.dummy_pos) t1 t2 =
   let s1 = Pretty.(string_of pp_type_application t1) in
   let s2 = Pretty.(string_of pp_type_application t2) in
-  raise (TermSystemError(TypeClash, s1 ^ " and " ^ s2))
+  raise (TermSystemError(TypeClash, s1 ^ " and " ^ s2 ^ " at position " ^ (Utils.pos_to_string pos)))
 
 let rec genericity tb t =
   match t with
@@ -226,14 +228,13 @@ let rec check_sub_terms system gen_binders =
       begin
 	match arg with
 	| OpBinderArg t -> TypedBinder (TypeName t)
-	| t -> raise (TermSystemError (BinderClash,
-				       Pretty.(string_of pp_operator_arg t)))
+	| t -> raise (TermSystemError (TypeClash, "todo" (* todo *) ))
       end
     | DVar _ ->
       begin
 	match arg with
 	| OpTypeArg t -> TypedVar t
-	| _ -> raise (TermSystemError (VarClash, "todo1" (* todo *) ))
+	| _ -> raise (TermSystemError (TypeClash, "todo1" (* todo *) ))
       end
     | DConst (info, ident) ->
       let (_,(type_binders,const_type)) = lookup_const system ident in
