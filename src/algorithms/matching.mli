@@ -7,11 +7,11 @@ type placeholder = PTerm of string | PBinder of string
 
 module SMap : Map.S with type key = placeholder
 
-type placeholders = Term_ast_dag.term_dag SMap.t
+type placeholders = Term_ast_typed.term_ast_with_binders SMap.t
 
 (** [matching term pattern] returns a boolean and a map containing the possible
   placeholders if the term matches the pattern given.
     We suppose that the term and the pattern are well-constructed since there is
   a typing phase.
 *)
-val matching : Term_ast_dag.term_dag -> Rewriting_ast.pattern -> placeholders option
+val matching : Term_ast_typed.term_ast_with_binders -> Rewriting_ast.pattern -> placeholders option

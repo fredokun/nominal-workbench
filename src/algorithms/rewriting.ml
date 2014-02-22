@@ -2,7 +2,7 @@
 open Rewriting_ast
 open Rewriting_error
 open Term_ast
-open Term_ast_dag
+open Term_ast_typed
 open Strategy_ast
 open Symbols
 
@@ -10,9 +10,9 @@ let raise_unknown_placeholder ident =
   raise @@ RewritingError(UnknownPlaceholder, ident)
 
 let rec create_term = function
-  | DConst i -> Term_ast.create_term i Const
-  | DBinder i | DVar i -> Term_ast.create_term i Const
-  | DTerm (i, ts) ->
+  | DConst (_, i) -> Term_ast.create_term i Const
+  | DBinder (_, i) | DVar (_, i) -> Term_ast.create_term i Const
+  | DTerm (_, i, ts) ->
     Term_ast.create_term i (Term (List.map create_term ts))
 
 let rec substitute placeholders effect =

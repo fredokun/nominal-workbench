@@ -3,7 +3,7 @@
   (C) Copyright Pierrick Couderc
 *)
 
-open Term_ast_dag
+open Term_ast_typed
 open Rewriting_ast
 
 type placeholder = PTerm of string | PBinder of string
@@ -14,7 +14,7 @@ module SMap = Map.Make(struct
     let compare = Pervasives.compare
 end)
 
-type placeholders = term_dag SMap.t
+type placeholders = term_ast_with_binders SMap.t
 
 let raise_placeholder_already_defined id =
   let open Rewriting_error in
@@ -23,7 +23,7 @@ let raise_placeholder_already_defined id =
 let matching term pattern =
   let rec step term pattern placeholders =
     match term, pattern with
-    | DTerm (t_id, t_terms), POperator (p_id, p_terms) ->
+    | DTerm (_, t_id, t_terms), POperator (p_id, p_terms) ->
       if t_id = p_id then
         List.fold_left
           (fun placeholders (term, pattern) ->
@@ -34,7 +34,7 @@ let matching term pattern =
 	  ( List.combine t_terms p_terms )
       else None
 
-    | DConst t_id, PConstant p_id ->
+    | DConst (_, t_id), PConstant p_id ->
         if t_id = p_id then placeholders else None
 
     | DVar _, PPlaceholder p_id ->

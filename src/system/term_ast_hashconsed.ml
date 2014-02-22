@@ -3,7 +3,7 @@
   (C) Copyright Pierrick Couderc
 *)
 
-open Term_ast_dag
+open Term_ast_typed
 open Term_system_error
 
 type id = int
@@ -101,12 +101,12 @@ type bindings = (ident * id list ref) list
 
 let add_binder t bindings =
   match t with
-  | DBinder id -> (id, ref []) :: bindings
+  | DBinder (_, id) -> (id, ref []) :: bindings
   | _ -> bindings
 
 let remove_binder t bindings =
   match t with
-  | DBinder id -> List.remove_assoc id bindings
+  | DBinder (_, id) -> List.remove_assoc id bindings
   | _ -> bindings
 
 let string_of_bindings b =
@@ -119,12 +119,12 @@ let is_var t =
 
 let get_var_id t =
   match t with
-  | DVar id -> id
+  | DVar (_, id) -> id
   | _ -> assert false
 
 let add_binder_name t l =
   match t with
-  | DBinder id -> id :: l
+  | DBinder (_, id) -> id :: l
   | _ -> l
 
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
@@ -182,13 +182,13 @@ and create_term_raw =
   fun (bindings : bindings) names td ->
     let term, bindings, names =
       match td with
-      | DConst i -> HConst i, bindings, names
-      | DVar id when not (List.mem_assoc id bindings) -> HFreeVar id, bindings, names
-      | DVar id -> hvar, bindings, names
-      | DTerm (id, l) ->
+      | DConst (_, i) -> HConst i, bindings, names
+      | DVar (_, id) when not (List.mem_assoc id bindings) -> HFreeVar id, bindings, names
+      | DVar (_, id) -> hvar, bindings, names
+      | DTerm (_, id, l) ->
         let hl, names = create_hlist bindings names l in
         HTerm (id, hl), bindings, names
-      | DBinder id ->
+      | DBinder (_, id) ->
         let binded = !(List.assoc id bindings) in
         let binded = create_id_list binded in
         HBinder binded, remove_binder td bindings, names
@@ -222,7 +222,7 @@ and create_id_list l =
   | id :: tl -> create_id_list_raw id (create_id_list tl)
 
 
-(* Main function to hashcons a term_dag *)
+(* Main function to hashcons a term_ast_with_binders *)
 (* let create_term td = *)
 (*   let term, _, _ = create_term_raw [] [] td in *)
 (*   term *)
@@ -240,11 +240,11 @@ let create_dterm td =
   let td, names = td.term, td.binders in
   let rec step names bindings cell td =
     match td, names with
-    | HConst i, _ -> DConst i, names, bindings
-    | HVar, _ -> DVar (IMap.find cell bindings), names, bindings
-    | HFreeVar i, _ -> DVar i, names, bindings
+    | HConst i, _ -> DConst (None, i), names, bindings
+    | HVar, _ -> DVar (None, (IMap.find cell bindings)), names, bindings
+    | HFreeVar i, _ -> DVar (None, i), names, bindings
     | HBinder binded, var :: names ->
-      DBinder var, names, List.fold_left
+      DBinder (None, var), names, List.fold_left
         (fun b id -> IMap.add id.value var bindings)
         bindings binded
     | HTerm (i, terms), names ->
@@ -252,7 +252,7 @@ let create_dterm td =
           (fun (l, names, bindings) t ->
              let term, names, bindings = step names bindings t.id t.value in
              term :: l, names, bindings) ([], names, bindings) terms in
-      DTerm (i, List.rev terms), names, bindings
+      DTerm (None, i, List.rev terms), names, bindings
     | _, _ -> assert false
   in
   let t, _, _ = step names IMap.empty (-1) td in t

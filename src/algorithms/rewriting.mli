@@ -4,7 +4,7 @@
 val rewrite:
   Rewriting_ast.pattern * Rewriting_ast.effect ->
   (Matching.placeholders -> Rewriting_ast.effect -> 'b) ->
-  (Term_ast_dag.term_dag -> 'b) -> Term_ast_dag.term_dag -> 'b
+  (Term_ast_typed.term_ast_with_binders -> 'b) -> Term_ast_typed.term_ast_with_binders -> 'b
 
 
 val rewrite_rec: Strategy_ast.strategy ->
