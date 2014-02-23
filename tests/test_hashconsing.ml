@@ -56,6 +56,7 @@ let create_tests () =
       | _ -> ()
     ) hl1 hl2;
 
+
   assert(hl1 == hl2);
 
   Format.printf "Binded variables OK@.";
