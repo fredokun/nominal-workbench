@@ -12,12 +12,12 @@ type name = string
 type domain = string
 type error = Error of domain * name
 
-type term_expr = 
+type term_expr =
 | PTermLet of string * term_expr
 | PTermRewrite of term_expr * strategy
 | PTerm of term_ast
 
-type term_predicate = 
+type term_predicate =
 | InPredicate of term_expr * term_expr list
 | EqualPredicate of term_expr * term_expr list
 
@@ -32,6 +32,7 @@ type expectation =
 type interactive_ast =
 | LoadTest of filename * expectation
 | TermTest of term_test
+| TermMatch of term_expr * pattern
 | Quit
 
 type structure = structure_item list

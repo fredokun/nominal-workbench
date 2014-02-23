@@ -43,6 +43,7 @@
       ; ":q", QUIT
       ; ":load-test", LOAD_TEST
       ; ":test", TEST
+      ; ":match", MATCH
       ]
 
   let directive_option_table = Hashtbl.create 16
@@ -51,6 +52,7 @@
       [ "--failwith", FAILWITH
       ; "--in", IN_CMD_OPTION
       ; "--equal", EQUAL_CMD_OPTION
+      ; "--with", WITH_CMD_OPTION
       ]
 }
 
@@ -131,20 +133,20 @@ let directive_opt = dash dash lower_ident
   | plus { PLUS }
   | num as i { NUM (int_of_string i) }
   | any { ANY }
-  | newline { 
+  | newline {
     Lexing.new_line lexbuf;
     token lexbuf }
-  | double_quote { 
-    Buffer.reset str_buff; 
+  | double_quote {
+    Buffer.reset str_buff;
     string lexbuf }
   | eof { EOF }
   | _ { failwith ("Unknown symbol " ^ Lexing.lexeme lexbuf) }
 
 and string = parse
-  | not_double_quote as c { 
-    Buffer.add_char str_buff c; 
+  | not_double_quote as c {
+    Buffer.add_char str_buff c;
     string lexbuf }
-  | double_quote { STRING (Buffer.contents str_buff) } 
+  | double_quote { STRING (Buffer.contents str_buff) }
   | _ { failwith ("Unfinished string") }  (* TODO actual exception *)
 {
 }

@@ -27,7 +27,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
     info = Parsing.symbol_start_pos ();
     desc = desc;
   }
-    
+
 %}
 
 /* values */
@@ -39,8 +39,8 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %token STRATEGY REC PROJ
 
 /* interactive commands */
-%token LOAD_TEST FAILWITH HELP QUIT TEST
-%token IN_CMD_OPTION EQUAL_CMD_OPTION
+%token LOAD_TEST FAILWITH MATCH HELP QUIT TEST
+%token IN_CMD_OPTION EQUAL_CMD_OPTION WITH_CMD_OPTION
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
@@ -100,6 +100,7 @@ interactive_command:
 | LOAD_TEST STRING expectation { LoadTest ($2, $3) }
 | TEST test_term_predicate { TermTest(TMustPass($2)) }
 | TEST term_expr FAILWITH domain_error { TermTest(TMustFail($2, $4)) }
+| MATCH term_expr WITH_CMD_OPTION rule_side_pattern { TermMatch($2, $4) }
 | QUIT { Quit }
 
 test_term_predicate:
@@ -160,7 +161,7 @@ word_list:
 /* operators */
 
 operator_decl:
-| OPERATOR UIDENT COLON type_binders operator_type ARROW operator_without_binder_type 
+| OPERATOR UIDENT COLON type_binders operator_type ARROW operator_without_binder_type
     { create_decl $2 (DOperator ($4, $5, $7)) }
 | OPERATOR UIDENT COLON operator_type ARROW operator_without_binder_type
     { create_decl $2 (DOperator ([], $4, $6)) }
@@ -219,8 +220,8 @@ rule_side_list_effect:
 /* strategies */
 
 strategy_decl:
-| strategy_head strategy_expression 
-  { 
+| strategy_head strategy_expression
+  {
     let name, signature = $1 in
     create_decl name (DStrategy (signature, $2))
   }
@@ -283,5 +284,5 @@ term:
 term_params:
 | term {  [$1] }
 | term COMMA term_params { $1::$3 }
-    
+
 %%
