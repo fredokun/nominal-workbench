@@ -33,7 +33,7 @@ type term_ast_typed =
 | TypedTerm of bnd_typ_app
 | TypedBinder of type_application
 | TypedVar of type_application
-    
+
 let rec string_of_term : term_ast_with_binders -> string = function
   | DConst (_, id) -> id
   | DVar (_, id) -> "$" ^ id

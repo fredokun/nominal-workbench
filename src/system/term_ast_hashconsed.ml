@@ -8,7 +8,6 @@ open Term_system_error
 
 type id = int
 type ident = string
-(* type hash = int *)
 
 type 'a hashed = { id : int; hash : int; value : 'a}
 
@@ -189,6 +188,8 @@ and create_term_raw =
         let hl, names = create_hlist bindings names l in
         HTerm (id, hl), bindings, names
       | DBinder (_, id) ->
+      (* We go through the operators sub-terms from right to left so we already have added the binded variables.
+         in the bindings list. *)
         let binded = !(List.assoc id bindings) in
         let binded = create_id_list binded in
         HBinder binded, remove_binder td bindings, names
