@@ -144,21 +144,17 @@ let add_binder_name t l =
    from right to left actually, to retrieve the binded variables before
    hashconsing the binder. *)
 let rec create_hlist bindings names = function
-  | [] -> nil, names
+  | [] -> nil, []
   | hd :: tl ->
     (* If it's a binder, we add it in our bindings *)
     let bindings = add_binder hd bindings in
 
     (* We evaluate the rest of the list *)
     let htl, names = create_hlist bindings names tl in
-    (* let names = if is_binder hd then add_binder_name hd names *)
-    (*   else names in *)
 
     (* we can evaluate the actual term *)
     let term, bindings, name = create_term_raw bindings names hd in
     let names = name :: names in
-
-    (* Format.printf "[%s]@." @@ String.concat ", " names; *)
 
     (* we create a new list with our term *)
     let res = create_cons term htl in
@@ -237,11 +233,6 @@ and create_id_list l =
   | id :: tl -> create_id_list_raw id (create_id_list tl)
 
 
-(* Main function to hashcons a term_ast_with_binders *)
-(* let create_term td = *)
-(*   let term, _, _ = create_term_raw [] [] td in *)
-(*   term *)
-
 let create_term td =
   let term, _, binders = create_term_raw [] [] td in
   { term; binders }
@@ -253,24 +244,18 @@ module IMap = Map.Make (struct
 
 let create_dterm td =
   let td, names = td.term, td.binders in
-  let rec step names bindings cell td =
+  let rec step names td =
     match td, names with
-    | HConst i, _ -> DConst (None, i)(* , names *)(* , bindings *)
-    | HVar, NName n -> DVar (None, n) (* (None, (IMap.find cell bindings)) *)(* , names, bindings *)
-    | HFreeVar i, _ -> DVar (None, i)(* , names, bindings *)
-    | HBinder binded, NName n ->
-      DBinder (None, n)(* , names, List.fold_left *)
-        (* (fun b id -> IMap.add id.value var bindings) *)
-        (* bindings binded *)
-    | HTerm (i, terms), names ->
-      let terms(* , names, bindings *) = List.fold_left
-          (fun (l(* , names, bindings *)) t ->
-             let term(* , names, bindings *) = step names bindings t.id t.value in
-             term :: l(* , names, bindings *)) ([](* , names, bindings *)) terms in
-      DTerm (None, i, List.rev terms)(* , names, bindings *)
+    | HConst i, _ -> DConst (None, i)
+    | HVar, NName n -> DVar (None, n)
+    | HFreeVar i, _ -> DVar (None, i)
+    | HBinder binded, NName n -> DBinder (None, n)
+    | HTerm (i, terms), NTerm names ->
+      let terms = List.map2 (fun t n -> step n t.value) terms names in
+      DTerm (None, i, terms)
     | _, _ -> assert false
   in
-  let t(* , _, _ *) = step names IMap.empty (-1) td in t
+  step names td
 
 (* Pretty printing function *)
 
