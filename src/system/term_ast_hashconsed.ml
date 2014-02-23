@@ -25,7 +25,12 @@ type hterm_raw =
   | HVar
   | HFreeVar of ident
 
-type hterm = { term: hterm_raw; binders: string list }
+type hterm_name =
+  | NTerm of hterm_name list
+  | NName of string
+  | NAny
+
+type hterm = { term: hterm_raw; binders: hterm_name }
 
 let rec hash_hlist = function
     | [] -> 0
@@ -121,28 +126,34 @@ let get_var_id t =
   | DVar (_, id) -> id
   | _ -> assert false
 
+let is_binder = function
+  | DBinder _ -> true
+  | _ -> false
+
+let get_binder_id = function
+  | DBinder (_, id) -> id
+  | _ -> assert false
+
 let add_binder_name t l =
   match t with
-  | DBinder (_, id) -> id :: l
+  | DBinder (_, id) -> NName id :: l
   | _ -> l
 
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
    from right to left actually, to retrieve the binded variables before
    hashconsing the binder. *)
 let rec create_hlist bindings names = function
-  | [] -> nil, names
+  | [] -> nil, []
   | hd :: tl ->
     (* If it's a binder, we add it in our bindings *)
     let bindings = add_binder hd bindings in
 
     (* We evaluate the rest of the list *)
     let htl, names = create_hlist bindings names tl in
-    let names = add_binder_name hd names in
 
     (* we can evaluate the actual term *)
-    let term, bindings, names = create_term_raw bindings names hd in
-
-    (* Format.printf "[%s]@." @@ String.concat ", " names; *)
+    let term, bindings, name = create_term_raw bindings names hd in
+    let names = name :: names in
 
     (* we create a new list with our term *)
     let res = create_cons term htl in
@@ -181,18 +192,18 @@ and create_term_raw =
   fun (bindings : bindings) names td ->
     let term, bindings, names =
       match td with
-      | DConst (_, i) -> HConst i, bindings, names
-      | DVar (_, id) when not (List.mem_assoc id bindings) -> HFreeVar id, bindings, names
-      | DVar (_, id) -> hvar, bindings, names
+      | DConst (_, i) -> HConst i, bindings, NAny
+      | DVar (_, id) when not (List.mem_assoc id bindings) -> HFreeVar id, bindings, NAny
+      | DVar (_, id) -> hvar, bindings, NName id
       | DTerm (_, id, l) ->
         let hl, names = create_hlist bindings names l in
-        HTerm (id, hl), bindings, names
+        HTerm (id, hl), bindings, NTerm names
       | DBinder (_, id) ->
       (* We go through the operators sub-terms from right to left so we already have added the binded variables.
          in the bindings list. *)
         let binded = !(List.assoc id bindings) in
         let binded = create_id_list binded in
-        HBinder binded, remove_binder td bindings, names
+        HBinder binded, remove_binder td bindings, NName id
     in
 
     (* Should we add the current bindings in the hashtbl ? Technically no, we
@@ -223,11 +234,6 @@ and create_id_list l =
   | id :: tl -> create_id_list_raw id (create_id_list tl)
 
 
-(* Main function to hashcons a term_ast_with_binders *)
-(* let create_term td = *)
-(*   let term, _, _ = create_term_raw [] [] td in *)
-(*   term *)
-
 let create_term td =
   let term, _, binders = create_term_raw [] [] td in
   { term; binders }
@@ -239,24 +245,18 @@ module IMap = Map.Make (struct
 
 let create_dterm td =
   let td, names = td.term, td.binders in
-  let rec step names bindings cell td =
+  let rec step names td =
     match td, names with
-    | HConst i, _ -> DConst (None, i), names, bindings
-    | HVar, _ -> DVar (None, (IMap.find cell bindings)), names, bindings
-    | HFreeVar i, _ -> DVar (None, i), names, bindings
-    | HBinder binded, var :: names ->
-      DBinder (None, var), names, List.fold_left
-        (fun b id -> IMap.add id.value var bindings)
-        bindings binded
-    | HTerm (i, terms), names ->
-      let terms, names, bindings = List.fold_left
-          (fun (l, names, bindings) t ->
-             let term, names, bindings = step names bindings t.id t.value in
-             term :: l, names, bindings) ([], names, bindings) terms in
-      DTerm (None, i, List.rev terms), names, bindings
+    | HConst i, _ -> DConst (None, i)
+    | HVar, NName n -> DVar (None, n)
+    | HFreeVar i, _ -> DVar (None, i)
+    | HBinder binded, NName n -> DBinder (None, n)
+    | HTerm (i, terms), NTerm names ->
+      let terms = List.map2 (fun t n -> step n t.value) terms names in
+      DTerm (None, i, terms)
     | _, _ -> assert false
   in
-  let t, _, _ = step names IMap.empty (-1) td in t
+  step names td
 
 (* Pretty printing function *)
 
@@ -283,6 +283,12 @@ and string_of_hterm names = function
   | HBinder binded -> Format.sprintf "[.\\{%s}]" @@ string_of_idlist binded
   | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl names)
 
+let rec string_of_hterm_name = function
+  | NAny -> "_"
+  | NName n -> n
+  | NTerm n -> Format.sprintf "(%s)" @@
+    String.concat "," @@ List.map string_of_hterm_name n
+
 let pretty_print_list hl =
   Format.printf "[%s]@." @@ string_of_hlist hl []
 
@@ -290,6 +296,9 @@ let pretty_print hterm =
   print_endline @@ string_of_hterm [] hterm
 
 let pretty_print_with_names names term = assert false
+
+let pretty_print_names name =
+  print_endline @@ string_of_hterm_name name
 
 (* Dot representation, which is well suited to show sharing *)
 
