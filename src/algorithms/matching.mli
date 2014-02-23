@@ -1,11 +1,10 @@
 (* Distributed under the MIT License.
   (See accompanying file LICENSE.txt)
   (C) Copyright Pierrick Couderc
+  (C) Copyright Pierre Talbot
 *)
 
-type placeholder = PTerm of string | PBinder of string
-
-module SMap : Map.S with type key = placeholder
+module SMap : Map.S with type key = string
 
 type placeholders = Term_ast_typed.term_ast_with_binders SMap.t
 

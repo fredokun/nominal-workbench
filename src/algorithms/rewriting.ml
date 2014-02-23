@@ -21,11 +21,9 @@ let rec substitute placeholders effect =
   | EPlaceholder ident ->
     let open Matching in
       let res =
-        try SMap.find (PBinder ident) placeholders
+        try SMap.find ident placeholders
         with Not_found ->
-          try SMap.find (PTerm ident) placeholders
-          with Not_found ->
-            raise_unknown_placeholder ident in
+          raise_unknown_placeholder ident in
       create_term res
   | EOperator (ident, operands) ->
     Term_ast.create_term ident (Term (List.map (substitute placeholders) operands))

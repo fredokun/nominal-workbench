@@ -7,13 +7,8 @@ open Term_ast_typed
 open Term_ast_hashconsed
 open Rewriting_ast
 
-type placeholder = PTerm of string | PBinder of string
-
 (* Placeholders bindings *)
-module SMap = Map.Make(struct
-    type t = placeholder
-    let compare = Pervasives.compare
-end)
+module SMap = Map.Make(String)
 
 type placeholders = term_ast_with_binders SMap.t
 type hplaceholders = hterm_raw SMap.t
@@ -38,8 +33,8 @@ let matching term pattern =
        but the fold operation don't recall "step" if placeholders is equal to
        None. The second place we call "step" is in the initialization phase with
        (Some SMap.empty). *)
-    let ph = match placeholders with 
-      | Some (ph) -> ph 
+    let ph = match placeholders with
+      | Some (ph) -> ph
       | None -> failwith "Cannot call step with placeholders map set to None." in
     let hph = hplaceholders in (* alias *)
 
@@ -61,50 +56,48 @@ let matching term pattern =
     | DVar (_, v), HVar, PPlaceholder p_id
     | DVar (_, v), HFreeVar _, PPlaceholder p_id ->
       begin
-        let t_id = PTerm p_id in
         try
         begin
-          match SMap.find t_id ph with
-          (* Term variable must have the same name, otherwise they cannot share a same placeholder. 
+          match SMap.find p_id ph with
+          (* Term variable must have the same name, otherwise they cannot share a same placeholder.
              TODO: Factorize with the _, _, PPlaceholder id matching, it will work when the HVar will be
              correctly hash-consed in every contexts. *)
-          | DVar (_, x) when x = v -> (placeholders, hph)
+          | DBinder (_, x) | DVar (_, x) when x = v -> (placeholders, hph)
           | _ -> (None, hph)
         end
         with
         (* This is the first variable with this placeholder we meet. *)
         | Not_found ->
-          (Some (SMap.add t_id term ph),
-           SMap.add t_id hashed_term hph)
+          (Some (SMap.add p_id term ph),
+           SMap.add p_id hashed_term hph)
       end
 
     | DBinder (_, b), HBinder _, PPlaceholder p_id ->
       begin
-        let b_id = PBinder p_id in
         try
           (* We probably don't want that binders have the same names? Is there any notion of scope? *)
-          ignore @@ SMap.find b_id ph;
+          ignore @@ SMap.find p_id ph;
           (None, hph)
         with
         | Not_found ->
-          (Some (SMap.add b_id term ph),
-           SMap.add b_id hashed_term hph)
+          (Some (SMap.add p_id term ph),
+           SMap.add p_id hashed_term hph)
       end
 
     | _, _, PPlaceholder id ->
       begin
         try
-          let pterm = SMap.find (PTerm id) hph in
+          let pterm = SMap.find id hph in
           (* We already hit this placeholder, need a term comparison. *)
-          if (equal pterm hashed_term) then
+          if pterm == hashed_term then
             (placeholders, hph)
           else
             (None, hph)
         with
         (* First time we hit this placeholder. *)
-        | Not_found -> 
-          (Some(SMap.add (PTerm id) term ph), 
-           SMap.add (PTerm id) hashed_term hph)
+        | Not_found ->
+          (Some(SMap.add id term ph),
+           SMap.add id hashed_term hph)
       end
 
     | _, _, PAny -> (placeholders, hph)
