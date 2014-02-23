@@ -1,13 +1,14 @@
-open Term_ast_dag
+open Term_ast_typed
+open Term_checker
 open Term_ast_hashconsed
 
 let create_tests () =
   Format.printf "Create tests@.";
   (* Testing for Const *)
 
-  let c1 = DConst "A" in
-  let c2 = DConst "B" in
-  let c3 = DConst "B" in
+  let c1 = DConst (None, "A") in
+  let c2 = DConst (None, "B") in
+  let c3 = DConst (None, "B") in
 
   let hc1 = create_term c1 in
   let hc2 = create_term c2 in
@@ -20,9 +21,9 @@ let create_tests () =
 
   (* Testing for FreeVars *)
 
-  let fv1 = DVar "v" in
-  let fv2 = DVar "u" in
-  let fv3 = DVar "v" in
+  let fv1 = DVar (None, "v") in
+  let fv2 = DVar (None, "u") in
+  let fv3 = DVar (None, "v") in
 
   let hfv1 = create_term fv1 in
   let hfv2 = create_term fv2 in
@@ -35,11 +36,11 @@ let create_tests () =
 
   (* Testing for Vars *)
 
-  let b1 = DBinder "a"in
-  let b2 = DBinder "b" in
-  let v1 = DVar "a" in
-  let v2 = DVar "b" in
-  let v3 = DVar "b" in
+  let b1 = DBinder (None, "a") in
+  let b2 = DBinder (None, "b") in
+  let v1 = DVar (None, "a") in
+  let v2 = DVar (None, "b") in
+  let v3 = DVar (None, "b") in
 
   (* We have to encapsulate the binders and variables into lsits to have a
     correctly binded term *)
@@ -70,11 +71,11 @@ let create_tests () =
      - Add : Nat * Nat -> Nat
   *)
 
-  let add1 = DTerm ("Add", [v1; c1]) in
-  let t1 = DTerm ("Bind", [b1; add1]) in
+  let add1 = DTerm (None, "Add", [v1; c1]) in
+  let t1 = DTerm (None, "Bind", [b1; add1]) in
 
-  let add2 = DTerm ("Add", [v2; c1]) in
-  let t2 = DTerm ("Bind", [b2; add2]) in
+  let add2 = DTerm (None, "Add", [v2; c1]) in
+  let t2 = DTerm (None, "Bind", [b2; add2]) in
 
   let ht1 = create_term t1 in
   let ht2 = create_term t2 in
@@ -90,14 +91,14 @@ let peano_tests () =
      There is no binders in this system.
   *)
 
-  let zero = DConst "Zero" in
-  let one = DTerm ("Successor", [zero]) in
-  let one2 = DTerm ("Successor", [zero]) in
+  let zero = DConst (None, "Zero") in
+  let one = DTerm (None, "Successor", [zero]) in
+  let one2 = DTerm (None, "Successor", [zero]) in
 
-  let add1 = DTerm ("Add", [one; one]) in
-  let add2 = DTerm ("Add", [one; one2]) in
-  let add3 = DTerm ("Add", [one2; one]) in
-  let add4 = DTerm ("Add", [one2; one2]) in
+  let add1 = DTerm (None, "Add", [one; one]) in
+  let add2 = DTerm (None, "Add", [one; one2]) in
+  let add3 = DTerm (None, "Add", [one2; one]) in
+  let add4 = DTerm (None, "Add", [one2; one2]) in
 
   let ha1 = create_term add1 in
   let ha2 = create_term add2 in
@@ -122,10 +123,10 @@ let lambda_tests () =
 
 
   (* First, we try on two identical id functions, modulo apha-conversion *)
-  let bx = DBinder "x" in
-  let id1 = DTerm ("Lambda", [bx; DVar "x"]) in
-  let by = DBinder "y" in
-  let id2 = DTerm ("Lambda", [by; DVar "y"]) in
+  let bx = DBinder (None, "x") in
+  let id1 = DTerm (None, "Lambda", [bx; DVar (None, "x")]) in
+  let by = DBinder (None, "y") in
+  let id2 = DTerm (None, "Lambda", [by; DVar (None, "y")]) in
 
   let hid1 = create_term id1 in
   let hid2 = create_term id2 in
@@ -134,8 +135,8 @@ let lambda_tests () =
 
   (* Term for getting the second element of a pair in lambda calculus, which is
   also the encoding for "false". *)
-  let lsnd = DTerm ("Lambda",
-                   [bx; DTerm ("Lambda", [by; DVar "y"])]) in
+  let lsnd = DTerm (None, "Lambda",
+                   [bx; DTerm (None, "Lambda", [by; DVar (None, "y")])]) in
   let hsnd = create_term lsnd in
 
   (* We open the term and get the second lambda, which is basically id *)
@@ -162,15 +163,15 @@ let naming_tests () =
      hashconsing it. We reuse some previously defined terms, especially in the
      lambda calculus examples.  *)
 
-  let bx = DBinder "x" in
-  let id1 = DTerm ("Lambda", [bx; DVar "x"]) in
-  let by = DBinder "y" in
-  let id2 = DTerm ("Lambda", [by; DVar "y"]) in
-  let bz = DBinder "z" in
-  let id3 = DTerm ("Lambda", [bz; DVar "z"]) in
+  let bx = DBinder (None, "x") in
+  let id1 = DTerm (None, "Lambda", [bx; DVar (None, "x")]) in
+  let by = DBinder (None, "y") in
+  let id2 = DTerm (None, "Lambda", [by; DVar (None, "y")]) in
+  let bz = DBinder (None, "z") in
+  let id3 = DTerm (None, "Lambda", [bz; DVar (None, "z")]) in
 
-  let lsnd = DTerm ("Lambda",
-                    [bx; DTerm ("Lambda", [by; DVar "y"])]) in
+  let lsnd = DTerm (None, "Lambda",
+                    [bx; DTerm (None, "Lambda", [by; DVar (None, "y")])]) in
 
   let hsnd = create_term lsnd in
 
@@ -179,7 +180,7 @@ let naming_tests () =
 
   assert (hsnd.binders = ["x"; "y"]);
 
-  let app = DTerm ("App", [lsnd; id3]) in
+  let app = DTerm (None, "App", [lsnd; id3]) in
   let happ = create_term app in
 
   (* pretty_print happ; *)
@@ -194,15 +195,15 @@ let reconstruct_tests () =
   (* Tests the reconstruction of the hterms into terms
      *)
 
-  let bx = DBinder "x" in
-  let id1 = DTerm ("Lambda", [bx; DVar "x"]) in
-  let by = DBinder "y" in
-  let id2 = DTerm ("Lambda", [by; DVar "y"]) in
-  let bz = DBinder "z" in
-  let id3 = DTerm ("Lambda", [bz; DVar "z"]) in
+  let bx = DBinder (None, "x") in
+  let id1 = DTerm (None, "Lambda", [bx; DVar (None, "x")]) in
+  let by = DBinder (None, "y") in
+  let id2 = DTerm (None, "Lambda", [by; DVar (None, "y")]) in
+  let bz = DBinder (None, "z") in
+  let id3 = DTerm (None, "Lambda", [bz; DVar (None, "z")]) in
 
-  let lsnd = DTerm ("Lambda",
-                    [bx; DTerm ("Lambda", [by; DVar "y"])]) in
+  let lsnd = DTerm (None, "Lambda",
+                    [bx; DTerm (None, "Lambda", [by; DVar (None, "y")])]) in
   let hsnd = create_term lsnd in
 
   let snd = create_dterm hsnd in
@@ -211,7 +212,7 @@ let reconstruct_tests () =
 
   assert (lsnd = snd);
 
-  let app = DTerm ("App", [lsnd; id3]) in
+  let app = DTerm (None, "App", [lsnd; id3]) in
   let happ = create_term app in
   let recr_app = create_dterm happ in
 
