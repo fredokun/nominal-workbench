@@ -45,7 +45,10 @@ let flatten_string_of_terms ts =
 let equal_terms t1s t2s =
   let t1s_str = string_of_terms t1s in
   let t2s_str = string_of_terms t2s in
-  List.for_all2 equal_term t1s_str t2s_str
+  try 
+    List.for_all2 equal_term t1s_str t2s_str
+  with
+  | Invalid_argument _ -> false
 
 let rewritten_success t1 t2 =
   print_success (sprintf "Terms have been correctly rewritten in : %s\n%!"

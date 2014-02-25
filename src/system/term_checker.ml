@@ -62,6 +62,7 @@ let binders_pos_in_op system op_name =
 
 let rec construct_ast_checked_rec
     system curr_op pos_in_op (term : Term_ast.term_ast) =
+  (* Format.printf "curr_op : %s@." curr_op; *)
   match term.desc with
   | Const ->
     (* Format.printf "Const: %s@." term.name; *)
@@ -76,11 +77,17 @@ let rec construct_ast_checked_rec
     end
   | Var ->
     (* Format.printf "Var: %s@." term.name; *)
-    let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
-    if at_binder_pos then
-      DBinder (Some term.info, term.name)
-    else
-      DVar (Some term.info, term.name)
+    begin (* FIXME *)
+      try
+        let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
+        if at_binder_pos then
+          DBinder (Some term.info, term.name)
+        else
+          DVar (Some term.info, term.name)
+      with 
+      | TermSystemError (UnknownSymbol, _) ->
+        DVar (Some term.info, term.name)
+    end      
   | Term(terms) ->
     (* Format.printf "Term: %s@." term.name; *)
     begin

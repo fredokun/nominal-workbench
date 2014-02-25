@@ -69,7 +69,7 @@ strategy BottomupRules :
   --equal Prefix(In(a), Prefix(Out(b), Zero))
 
 :test rewrite Sum(Prefix(In(a), Zero), Prefix(In(b), Zero)) 
-  with BottomupRules 
+  with BottomupRules
   --equal Prefix(In(a), Zero) ; Prefix(In(b), Zero)
 
 :test rewrite Par(Prefix(In(c), Prefix(In(a), Zero)), Prefix(In(b), Zero)) 

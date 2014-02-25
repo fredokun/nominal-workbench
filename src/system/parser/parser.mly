@@ -43,7 +43,8 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %token IN_CMD_OPTION EQUAL_CMD_OPTION WITH_CMD_OPTION
 
 /* punctuation */
-%token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL COLON EQUAL ARROW
+%token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL 
+%token SEMICOLSEMICOL COLON EQUAL ARROW
 %token DARROW STAR COMMA LT GT DOT ANY SEITHER PLUS
 
 /* comments */
@@ -55,7 +56,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 %start toplevel_phrase
 %type <Parsing_ast.structure> toplevel_phrase
 
-%right STAR DARROW ARROW COLON DOT EITHER
+%right STAR DARROW ARROW COLON SEMICOL DOT EITHER
 
 %%
 
@@ -64,7 +65,7 @@ start:
 | EOF { raise End_of_file }
 
 toplevel_phrase:
-| decls COLON COLON { $1 }
+| decls SEMICOLSEMICOL { $1 }
 | EOF { raise End_of_file }
 ;
 
@@ -251,7 +252,6 @@ strategy_operator :
 
 strategy_advanced_expression :
 | LIDENT { SVar $1 }
-| REC LPAREN LIDENT COMMA strategy_expression RPAREN { SRec ($3, $5) }
 | RULE LPAREN RPAREN { SRule None }
 | RULE LPAREN LIDENT RPAREN { SRule (Some $3) }
 | PROJ LPAREN NUM COMMA strategy_expression RPAREN { SProj ($3, $5) }

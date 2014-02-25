@@ -10,7 +10,6 @@ type strategy =
   | SSeq of strategy * strategy
   | SEither of strategy * strategy
   | SChoice of strategy * strategy
-  | SRec of string * strategy
   | SVar of string
   | SRule of string option
   | SCall of string * strategy list

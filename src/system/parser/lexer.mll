@@ -73,6 +73,7 @@ let lt = '<'
 let gt = '>'
 let dot = '.'
 let semicol = ';'
+let semicolsemicol = ";;"
 let colon = ':'
 let equal = '='
 let arrow = "->"
@@ -123,6 +124,7 @@ let directive_opt = dash dash lower_ident
   | gt { GT }
   | dot { DOT }
   | semicol { SEMICOL }
+  | semicolsemicol { SEMICOLSEMICOL }
   | equal { EQUAL }
   | colon { COLON }
   | arrow { ARROW }

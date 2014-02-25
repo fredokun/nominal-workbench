@@ -11,7 +11,7 @@ let raise_unknown_placeholder ident =
 
 let rec create_term = function
   | DConst (_, i) -> Term_ast.create_term i Const
-  | DBinder (_, i) | DVar (_, i) -> Term_ast.create_term i Const
+  | DBinder (_, i) | DVar (_, i) -> Term_ast.create_term i Var
   | DTerm (_, i, ts) ->
     Term_ast.create_term i (Term (List.map create_term ts))
 
@@ -118,6 +118,7 @@ let rec apply_strategy system rec_env strategy term_list =
         let rewrite_term t =
           rewrite rule (fun ph ef -> [substitute ph ef]) (fun x -> []) t
         in
+        (* List.iter (fun x -> Format.printf "=> %a\n@." Pretty.pp_term x) term_list; *)
         let term_list =
           List.map (Term_checker.construct_ast_checked system) term_list in
         List.flatten @@ List.map rewrite_term term_list
@@ -148,7 +149,6 @@ let rec apply_strategy system rec_env strategy term_list =
         apply new_s term_list
       with Not_found -> raise @@ RewritingError(UnknownStrategy, name)
     end
-  | _ -> assert false
 
 and apply_to_children system rec_env strategy term_list =
   let apply_to_children' = function
