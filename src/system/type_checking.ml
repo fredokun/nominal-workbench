@@ -22,7 +22,6 @@ let raise_unbound_symbol pos id =
     Printf.sprintf "%s at %s." id (pos_to_string pos)))
 
 let raise_type_clash t1 t2 =
-  Printf.printf "Type clash between %s and %s\n" (type_to_string t1) (type_to_string t2);
   raise (RewritingSystemError (
     TypeClash,
     Printf.sprintf "%s and %s." (type_to_string t1) (type_to_string t2)))
@@ -379,10 +378,6 @@ let clean_type (tb, ta) =
   (binders, ta)
 
 let check_pattern sys pat =
-  let _, (tb, ta) = type_of_pat sys pat in
-  (*let tb, ta = clean_type (tb, ta) in
-  Format.fprintf Format.std_formatter "%a %a\n"
-    Pretty.print_type_binders tb Pretty.print_type_application ta;*)
   match pat with
   | PAny
   | PConstant _ -> []
