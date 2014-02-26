@@ -53,7 +53,7 @@ let matching term pattern =
     | DConst (_, t_id), HConst(_), PConstant(p_id) ->
         if t_id = p_id then (placeholders, hph) else (None, hph)
 
-    | DVar (_, v), HVar, PPlaceholder p_id
+    | DVar (_, v), HVar _, PPlaceholder p_id
     | DVar (_, v), HFreeVar _, PPlaceholder p_id ->
       begin
         try

@@ -22,7 +22,7 @@ type hterm_raw =
   | HTerm of ident * hterm_raw hlist
   | HBinder of id hlist (* refers to the id of the head of an hashconsed
                            list. *)
-  | HVar
+  | HVar of int
   | HFreeVar of ident
 
 type hterm_name =
@@ -43,7 +43,7 @@ and hash_term = function
   | HConst i -> Hashtbl.hash i
   | HFreeVar i -> 2 + Hashtbl.hash i
   | HTerm (i, htl) -> (3 + Hashtbl.hash i) + hash_hlist htl
-  | HVar -> 4 (* a var is unique and defined by its binder *)
+  | HVar i -> i (* a var is unique and defined by its binder *)
   | HBinder b -> 5 + Hashtbl.hash b (* Hashing a int list is efficient *)
 
 
@@ -60,7 +60,7 @@ and equal ht1 ht2 =
   | HConst i1, HConst i2 | HFreeVar i1, HFreeVar i2 -> i1 = i2
   | HTerm (i1, htl1), HTerm (i2, htl2) ->
     i1 = i2 && equal_hlist htl1 htl2
-  | HVar, HVar -> true
+  | HVar i1, HVar i2 -> i1 = i2
   (* Two binders are equal if their ref is the same *)
   | HBinder b1, HBinder b2 -> b1 == b2
   | _, _ -> false
@@ -108,6 +108,11 @@ let add_binder t bindings =
   | DBinder (_, id) -> (id, ref []) :: bindings
   | _ -> bindings
 
+let add_index t index =
+  match t with
+  | DBinder (_, id) -> (id, 0) :: (List.map (fun (id, v) -> (id, v+1)) index)
+  | _ -> index
+
 let remove_binder t bindings =
   match t with
   | DBinder (_, id) -> List.remove_assoc id bindings
@@ -142,17 +147,18 @@ let add_binder_name t l =
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
    from right to left actually, to retrieve the binded variables before
    hashconsing the binder. *)
-let rec create_hlist bindings names = function
+let rec create_hlist bindings names index = function
   | [] -> nil, []
   | hd :: tl ->
     (* If it's a binder, we add it in our bindings *)
     let bindings = add_binder hd bindings in
+    let index = add_index hd index in
 
     (* We evaluate the rest of the list *)
-    let htl, names = create_hlist bindings names tl in
+    let htl, names = create_hlist bindings names index tl in
 
     (* we can evaluate the actual term *)
-    let term, bindings, name = create_term_raw bindings names hd in
+    let term, bindings, name = create_term_raw bindings names index hd in
     let names = name :: names in
 
     (* we create a new list with our term *)
@@ -187,16 +193,16 @@ and create_cons =
 and create_term_raw =
   let open HTermtbl in
   let term_tbl = create 43 in
-  let hvar = HVar in
-  add term_tbl hvar hvar;
-  fun (bindings : bindings) names td ->
+  (* let hvar = HVar in *)
+  (* add term_tbl hvar hvar; *)
+  fun (bindings : bindings) names index td ->
     let term, bindings, names =
       match td with
       | DConst (_, i) -> HConst i, bindings, NAny
       | DVar (_, id) when not (List.mem_assoc id bindings) -> HFreeVar id, bindings, NAny
-      | DVar (_, id) -> hvar, bindings, NName id
+      | DVar (_, id) -> HVar (List.assoc id index), bindings, NName id
       | DTerm (_, id, l) ->
-        let hl, names = create_hlist bindings names l in
+        let hl, names = create_hlist bindings names index l in
         HTerm (id, hl), bindings, NTerm names
       | DBinder (_, id) ->
       (* We go through the operators sub-terms from right to left so we already have added the binded variables.
@@ -235,7 +241,7 @@ and create_id_list l =
 
 
 let create_term td =
-  let term, _, binders = create_term_raw [] [] td in
+  let term, _, binders = create_term_raw [] [] [] td in
   { term; binders }
 
 module IMap = Map.Make (struct
@@ -248,7 +254,7 @@ let create_dterm td =
   let rec step names td =
     match td, names with
     | HConst i, _ -> DConst (None, i)
-    | HVar, NName n -> DVar (None, n)
+    | HVar _, NName n -> DVar (None, n)
     | HFreeVar i, _ -> DVar (None, i)
     | HBinder binded, NName n -> DBinder (None, n)
     | HTerm (i, terms), NTerm names ->
@@ -278,7 +284,7 @@ and string_of_idlist il =
 
 and string_of_hterm names = function
   | HConst i -> i
-  | HVar -> "#"
+  | HVar i -> "#" ^ string_of_int i
   | HFreeVar i -> i
   | HBinder binded -> Format.sprintf "[.\\{%s}]" @@ string_of_idlist binded
   | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl names)
@@ -312,7 +318,7 @@ let dot t filename =
   let term_tbl = Hashtbl.create 19 in
   let repr_tbl = ReprH.create 19 in
   let is_binder = function HBinder _ -> true | _ -> false in
-  let is_var = function HVar -> true | _ -> false in
+  let is_var = function HVar _ -> true | _ -> false in
   let binder_id = ref 0 in
   let term_id = ref 0 in
   let repr t =
@@ -320,7 +326,7 @@ let dot t filename =
       ReprH.find repr_tbl t
     with Not_found ->
       let r = match t with
-        | HVar -> "var"
+        | HVar _ -> "var"
         | HFreeVar ident -> ident
         | HBinder _ ->
           let res = Format.sprintf "[binder:%d]" !binder_id in
