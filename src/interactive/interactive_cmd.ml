@@ -191,6 +191,15 @@ let match_term eval_term term_expr pattern system =
         | None -> "The term doesn't match the pattern." in
       print_endline res) @@ eval_term term_expr
 
+let print_type_of_term eval_term term_expr system =
+  let open Term_checker in
+  List.iter (fun term -> print_endline
+    @@ Pretty.(string_of pp_type_application)
+    @@ type_of_typed_term
+    @@ check_type_of_term system
+    @@ construct_ast_checked system term)
+    (eval_term term_expr)
+
 let eval_interactive_cmd process_term_expr eval_system system = function
 | LoadTest(filename, expectation) ->
   launch_test (eval_system system) (RewritingTest(filename, expectation));
@@ -198,5 +207,8 @@ let eval_interactive_cmd process_term_expr eval_system system = function
 | TermTest(term) -> check_term (process_term_expr system) term; system
 | TermMatch(term, pattern) ->
   match_term (process_term_expr system) term pattern system;
+  system
+| TermType(term_expr) ->
+  print_type_of_term (process_term_expr system) term_expr system;
   system
 | Quit -> exit 0

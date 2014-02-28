@@ -44,6 +44,7 @@
       ; ":load-test", LOAD_TEST
       ; ":test", TEST
       ; ":match", MATCH
+      ; ":type", CTYPE
       ]
 
   let directive_option_table = Hashtbl.create 16

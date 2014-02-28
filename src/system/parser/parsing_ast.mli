@@ -33,6 +33,7 @@ type interactive_ast =
 | LoadTest of filename * expectation
 | TermTest of term_test
 | TermMatch of term_expr * pattern
+| TermType of term_expr
 | Quit
 
 type structure = structure_item list

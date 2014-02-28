@@ -41,6 +41,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 /* interactive commands */
 %token LOAD_TEST FAILWITH MATCH HELP QUIT TEST
 %token IN_CMD_OPTION EQUAL_CMD_OPTION WITH_CMD_OPTION
+%token CTYPE
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL 
@@ -102,6 +103,7 @@ interactive_command:
 | TEST test_term_predicate { TermTest(TMustPass($2)) }
 | TEST term_expr FAILWITH domain_error { TermTest(TMustFail($2, $4)) }
 | MATCH term_expr WITH_CMD_OPTION rule_side_pattern { TermMatch($2, $4) }
+| CTYPE term_expr { TermType $2 }
 | QUIT { Quit }
 
 test_term_predicate:
