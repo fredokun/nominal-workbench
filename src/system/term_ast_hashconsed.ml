@@ -144,6 +144,8 @@ let add_binder_name t l =
   | DBinder (_, id) -> NName id :: l
   | _ -> l
 
+type binders_raw = id * id list ref
+
 (* Not tailrec, but an operator doesn't have thousands of subterm. It evaluates
    from right to left actually, to retrieve the binded variables before
    hashconsing the binder. *)
@@ -266,11 +268,11 @@ let create_dterm td =
 
 (* Pretty printing function *)
 
-let rec string_of_hlist hl names =
+let rec string_of_hlist hl =
   let rec step acc = function
   | [] -> ""
-  | [ht] -> Format.sprintf "%s%s" acc (string_of_hterm names ht.value)
-  | ht :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm names ht.value)) tl
+  | [ht] -> Format.sprintf "%s%s" acc (string_of_hterm ht.value)
+  | ht :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm ht.value)) tl
   in
   step "" hl
 
@@ -282,12 +284,12 @@ and string_of_idlist il =
   in
   step "" il
 
-and string_of_hterm names = function
+and string_of_hterm = function
   | HConst i -> i
   | HVar i -> "#" ^ string_of_int i
   | HFreeVar i -> i
   | HBinder binded -> Format.sprintf "[.\\{%s}]" @@ string_of_idlist binded
-  | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl names)
+  | HTerm (i, hl) -> Format.sprintf "%s(%s)" i (string_of_hlist hl)
 
 let rec string_of_hterm_name = function
   | NAny -> "_"
@@ -296,10 +298,10 @@ let rec string_of_hterm_name = function
     String.concat "," @@ List.map string_of_hterm_name n
 
 let pretty_print_list hl =
-  Format.printf "[%s]@." @@ string_of_hlist hl []
+  Format.printf "[%s]@." @@ string_of_hlist hl
 
 let pretty_print hterm =
-  print_endline @@ string_of_hterm [] hterm
+  print_endline @@ string_of_hterm hterm.term
 
 let pretty_print_with_names names term = assert false
 
@@ -357,7 +359,7 @@ let dot t filename =
         Hashtbl.add term_tbl key value
       | _ -> Hashtbl.add term_tbl key ""
   in
-  browse (-1) t;
+  browse (-1) t.term;
   let f = open_out filename in
   output_string f "digraph output {\n";
   Hashtbl.iter (fun _ value -> output_string f value) term_tbl;
