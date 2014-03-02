@@ -34,6 +34,7 @@ type interactive_ast =
 | TermTest of term_test
 | TermMatch of term_expr * pattern
 | TermType of term_expr
+| TermMatchType of term_expr * type_binders * operator_arg list
 | Quit
 
 type structure = structure_item list

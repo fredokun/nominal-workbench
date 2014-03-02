@@ -54,6 +54,7 @@
       ; "--in", IN_CMD_OPTION
       ; "--equal", EQUAL_CMD_OPTION
       ; "--with", WITH_CMD_OPTION
+      ; "--with-type", WITH_TYPE_OPTION
       ]
 }
 

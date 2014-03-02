@@ -1,9 +1,9 @@
 (* Distributed under the MIT License.
-  (See accompanying file LICENSE.txt)
-  (C) Copyright Roven Gabriel
-  (C) Copyright Vincent Botbol
-  (C) Copyright Pierrick Couderc
-  (C) Copyright Matthieu Dien
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Roven Gabriel
+   (C) Copyright Vincent Botbol
+   (C) Copyright Pierrick Couderc
+   (C) Copyright Matthieu Dien
 *)
 
 open Rewriting_ast

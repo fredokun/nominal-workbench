@@ -28,7 +28,10 @@ operator Test_var : [Var]. Var -> K1
 :test Test_var(X, test) --failwith TermSystemError.TypeClash
 :test Mk_couple_of_hds(Cons(Mk_couple(Y,X),Nil), List_couple_k1_a) --failwith TermSystemError.TypeClash
 
+:test Fst(Mk_couple(X,Y)) --equal Fst(Mk_couple(X,Y))
 :test Cons(Mk_couple(X,Y),Nil) --equal Cons(Mk_couple(X,Y),Nil)
 :test Mk_couple_of_hds(Cons(Mk_couple(X,Y),Nil), List_couple_a_b) --equal Mk_couple_of_hds(Cons(Mk_couple(X,Y),Nil), List_couple_a_b)
-:test Mk_couple_of_hds(Cons(Mk_couple(X,Y),Nil), List_couple_k1_a) --equal Mk_couple_of_hds(Cons(Mk_couple(X,Y),Nil), List_couple_k1_a)
 :test Nothing(Nil, List_couple_k1_a) --equal Nothing(Nil, List_couple_k1_a)
+:test Nothing(List_couple_k1_a, List_couple_a_b) --equal Nothing(List_couple_k1_a, List_couple_a_b)
+:test Nothing(Cons(Mk_couple(X,Y),Nil), List_couple_k1_a) --equal Nothing(Cons(Mk_couple(X,Y),Nil), List_couple_k1_a)
+

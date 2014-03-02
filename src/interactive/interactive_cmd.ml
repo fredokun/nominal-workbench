@@ -200,6 +200,34 @@ let print_type_of_term eval_term term_expr system =
     @@ construct_ast_checked system term)
     (eval_term term_expr)
 
+let term_match_type eval_term term_expr system type_binders arg_types =
+  if List.length arg_types <> 1 then
+    print_failure "Give one type please"
+  else
+    let arg_type = List.hd arg_types in
+    let open Term_checker in
+    let open Term_system_error in
+    let gen_binders = binders_to_TBinds type_binders in
+    List.iter
+      (fun term ->
+        let term_checked = construct_ast_checked system term in
+        try
+          begin
+            ignore (unify_term_and_type system gen_binders term_checked arg_type);
+            print_success (sprintf "The term %s match the type %s\n"
+                             (Pretty.(string_of pp_term term))
+                             (Pretty.(string_of pp_operator_arg arg_type)))
+          end
+        with
+        | TermSystemError (code, info) ->
+          print_failure (sprintf "The term %s does not match the type %s with error :\n%s\n"
+                           (Pretty.(string_of pp_term term))
+                           (Pretty.(string_of pp_operator_arg arg_type))
+                           (error_msg code info))
+        | e -> print_unknown_exc e (sprintf "type checking of the term %s\n"
+                                      (Pretty.(string_of pp_term term))))
+      (eval_term term_expr)
+
 let eval_interactive_cmd process_term_expr eval_system system = function
 | LoadTest(filename, expectation) ->
   launch_test (eval_system system) (RewritingTest(filename, expectation));
@@ -210,5 +238,8 @@ let eval_interactive_cmd process_term_expr eval_system system = function
   system
 | TermType(term_expr) ->
   print_type_of_term (process_term_expr system) term_expr system;
+  system
+| TermMatchType (term_expr, type_binders, arg_types) ->
+  term_match_type (process_term_expr system) term_expr system type_binders arg_types;
   system
 | Quit -> exit 0

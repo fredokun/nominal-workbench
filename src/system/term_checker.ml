@@ -183,8 +183,8 @@ let rec merge_tbs_option k tb1_op tb2_op =
             (TBinders_map.add k b1 TBinders_map.empty)
             (TBinders_map.add k b2 TBinders_map.empty)
             t1 t2)
-            (* tb1 tb2 *)
-            (* t1 t2) *)
+(* tb1 tb2 *)
+(* t1 t2) *)
 (* (TypeName k) *)
 (* (TypeName k)) *)
 
@@ -215,13 +215,16 @@ and unify_types tb1 tb2 t1 t2 =
       | Gen -> 
         (* print_endline "ici 1"; *)
         let inst = BndTypApp (tb2, t2) in
-               BndTypApp (TBinders_map.add tn1 inst tb1, t2)
+        let r = BndTypApp (TBinders_map.add tn1 inst tb1, t1) in
+        (* print_endline (string_of_bnd_typ_app "" r); *)
+        r
       | Inst ((BndTypApp (tb, t)) as b) ->
         begin
           match genericity tb2 t2 with
           | Inst (BndTypApp (tbi2, ti2)) ->
-            ignore (unify_types tb tbi2 t ti2);
-            BndTypApp (tb1, t1)
+            (* ignore (unify_types tb tbi2 t ti2); *)
+            (* BndTypApp (tb1, t1) *)
+            unify_types tb tbi2 t ti2
           | _ -> unify_types tb2 tb1 t2 t1
         end
       | Simple ->
@@ -237,7 +240,7 @@ and unify_types tb1 tb2 t1 t2 =
                   BndTypApp (tb2, t1)
                 else
                   type_clash_error t1 t2 ~annot:"err 0"
-      (* raise (TermSystemError(TypeClash, string_of_bnd_typ_app "" (BndTypApp (tb, t)) )) *)
+              (* raise (TermSystemError(TypeClash, string_of_bnd_typ_app "" (BndTypApp (tb, t)) )) *)
               | _ -> type_clash_error t1 t2 ~annot:"err 1"
             end
           | Simple -> if t1 = t2 then BndTypApp (tb1, t1) else type_clash_error t1 t2 ~annot:"err 2"
@@ -250,17 +253,27 @@ and unify_types tb1 tb2 t1 t2 =
         if tn1 = tn2 then
           try
             (* print_endline "begin 1"; *)
-            let new_tbs_apps =
-              List.map2 (unify_types tb1 tb2) tapps1 tapps2 in
             let (new_tbs, new_apps) =
-              List.fold_right
-                (fun (BndTypApp (tb, t)) (tb_acc, apps) ->
-                  (merge_tbs tb tb_acc, t::apps))
-                new_tbs_apps
-                (TBinders_map.empty, [])
+              (* List.map2 (unify_types tb1 tb2) tapps1 tapps2 in *)
+              List.fold_left2 
+                (fun (tbs, apps) tapp1 tapp2 ->
+                  let BndTypApp (new_tbs, new_app) = unify_types tbs tb2 tapp1 tapp2 in
+                  (new_tbs, new_app :: apps))
+                (tb1,[]) tapps1 tapps2
             in
+            (* let (new_tbs, new_apps) = *)
+            (*   List.fold_right *)
+            (*     (fun (BndTypApp (tb, t)) (tb_acc, apps) -> *)
+            (*       (merge_tbs tb tb_acc, t::apps)) *)
+            (*     new_tbs_apps *)
+            (*     (TBinders_map.empty, []) *)
+            (* let new_tbs = merge_tbs tb1 tb2 *)
+            (* in *)
             (* print_endline "ici 2"; *)
-            BndTypApp (new_tbs, TypeApplication(tn1, new_apps))
+            let r = BndTypApp (new_tbs, TypeApplication(tn1, new_apps)) in
+            (* print_endline "DEBUG :"; *)
+            (* print_endline (string_of_bnd_typ_app "" r); *)
+            r
           with
           | Invalid_argument _ -> type_clash_error t1 t2 ~annot:"err 3"
         else
@@ -268,46 +281,45 @@ and unify_types tb1 tb2 t1 t2 =
       | _ -> unify_types tb2 tb1 t2 t1
     end
 
-let rec check_sub_terms system gen_binders =
-  fun term arg ->
-    match term with
-    | DBinder _ ->
-      begin
-        match arg with
-        | OpBinderArg t -> TypedBinder (TypeName t)
-        | t -> raise (TermSystemError (TypeClash, "todo" (* todo *) ))
-      end
-    | DVar _ ->
-      begin
-        match arg with
-        | OpTypeArg t -> TypedVar t
-        | _ -> raise (TermSystemError (TypeClash, "todo1" (* todo *) ))
-      end
-    | DConst (info, ident) ->
+let rec unify_term_and_type system gen_binders term arg =
+  match term with
+  | DBinder _ ->
+    begin
+      match arg with
+      | OpBinderArg t -> TypedBinder (TypeName t)
+      | t -> raise (TermSystemError (TypeClash, "todo" (* todo *) ))
+    end
+  | DVar _ ->
+    begin
+      match arg with
+      | OpTypeArg t -> TypedVar t
+      | _ -> raise (TermSystemError (TypeClash, "todo1" (* todo *) ))
+    end
+  | DConst (info, ident) ->
       (* Format.printf "DConst: %s@." ident; *)
-      let (_,(type_binders,const_type)) = lookup_const system ident in
-      let const_tbinders = binders_to_TBinds type_binders in
-      begin
-        match arg with
-        | OpTypeArg arg_type ->
-          let typ = unify_types gen_binders const_tbinders arg_type const_type in
+    let (_,(type_binders,const_type)) = lookup_const system ident in
+    let const_tbinders = binders_to_TBinds type_binders in
+    begin
+      match arg with
+      | OpTypeArg arg_type ->
+        let typ = unify_types gen_binders const_tbinders arg_type const_type in
           (*  print_endline "debug 1"; *)
           (* print_endline (string_of_bnd_typ_app "" typ); *)
-          TypedConst typ
-        | _ -> raise (TermSystemError (TypeClash, "todo" (* todo *) ))
-      end
-    | DTerm (info, _, _) as t ->
-      begin
-        match arg with
-        | OpTypeArg arg_type ->
-          begin
-            match check_type_of_term system term with
-            | TypedTerm (BndTypApp (binds,typ)) ->
-              TypedTerm (unify_types gen_binders binds arg_type typ)
-            | _ -> failwith "What the hell with this term ?!"
-          end
-        | _ -> raise (TermSystemError (TypeClash, "todo" (* todo *) ))
-      end
+        TypedConst typ
+      | _ -> raise (TermSystemError (TypeClash, "todo" (* todo *) ))
+    end
+  | DTerm (info, _, _) as t ->
+    begin
+      match arg with
+      | OpTypeArg arg_type ->
+        begin
+          match check_type_of_term system term with
+          | TypedTerm (BndTypApp (binds,typ)) ->
+            TypedTerm (unify_types gen_binders binds arg_type typ)
+          | _ -> failwith "What the hell with this term ?!"
+        end
+      | _ -> raise (TermSystemError (TypeClash, "todo" (* todo *) ))
+    end
 
 and check_type_of_term system term_ast =
   match term_ast with
@@ -325,7 +337,7 @@ and check_type_of_term system term_ast =
     let new_binders =
       List.fold_left2
         (fun gen_binders term arg ->
-          let sub_term = check_sub_terms system gen_binders term arg in
+          let sub_term = unify_term_and_type system gen_binders term arg in
           match sub_term with
           | TypedVar _ -> gen_binders
           | TypedBinder _ -> gen_binders
