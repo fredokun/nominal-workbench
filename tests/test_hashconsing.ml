@@ -131,7 +131,7 @@ let lambda_tests () =
   let hid1 = create_term id1 in
   let hid2 = create_term id2 in
 
-  pretty_print hid1.term;
+  pretty_print hid1;
   (* pretty_print hid2; *)
 
   assert (hid1.term == hid2.term);
@@ -148,14 +148,14 @@ let lambda_tests () =
       (List.hd @@ List.tl hl).value
     | _ -> assert false in
 
-  pretty_print hid2.term;
-  pretty_print hid3;
+  (* pretty_print hid2; *)
+  (* pretty_print hid3; *)
 
   (* dot hsnd "graphsnd.dot"; *)
 
   assert (hid2.term == hid3);
 
-  pretty_print hsnd.term;
+  (* pretty_print hsnd.term; *)
 
   (* let app = DTerm ("App", [id1; id2]) in *)
   (* let happ = create_term app in *)
