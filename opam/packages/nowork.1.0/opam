@@ -1,0 +1,15 @@
+opam-version: "1"
+maintainer: "pierrickcouderc@gmail.com"
+build: [
+  [ "./configure.sh" ]
+  [ make "-k" ]
+  [ make "install" ]
+]
+
+remove: [
+  ["ocp-build" "-uninstall" "nowork"]
+]
+
+depends: [ "ocp-build" "xml-light" ]
+
+share: [ "data/test" ]
