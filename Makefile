@@ -19,6 +19,12 @@ main: launch_gen
 test: main
 	./$(NOWORK_BIN) --no-repl --debug data/test/test.nw
 
+install:
+	ocp-build install nowork
+
+uninstall:
+	ocp-build -uninstall nowork 
+
 clean:
 	ocp-build clean
 	rm -f $(AUTO_GEN_DIR)/*.ml*
