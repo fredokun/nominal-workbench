@@ -3,7 +3,7 @@ open Term_checker
 open Term_ast_hashconsed
 
 let create_tests () =
-  Format.printf "Create tests@.";
+  Format.printf "Starting hashconsed terms creation tests@.";
   (* Testing for Const *)
 
   let c1 = DConst (None, "A") in
@@ -40,27 +40,6 @@ let create_tests () =
   let b2 = DBinder (None, "b") in
   let v1 = DVar (None, "a") in
   let v2 = DVar (None, "b") in
-  let v3 = DVar (None, "b") in
-
-  (* (\* We have to encapsulate the binders and variables into lsits to have a *)
-  (*   correctly binded term *\) *)
-
-  (* let l1 = [b1; b1; b2; v1; v2; v3] in *)
-  (* let l2 = [b1; b1; b2; v1; v2; v3] in *)
-
-  (* let hl1, _ = create_hlist [] [] [] l1 in *)
-  (* let hl2, _ = create_hlist [] [] [] l2 in *)
-
-  (* List.iter2 (fun t1 t2 -> *)
-  (*     match t1.value, t2.value with *)
-  (*     | HBinder b1, HBinder b2 -> assert (b1 == b2) *)
-  (*     | _ -> () *)
-  (*   ) hl1 hl2; *)
-
-
-  (* assert(hl1 == hl2); *)
-
-  (* Format.printf "Binded variables OK@."; *)
 
   (* We now test term creation, since other constructs and lists can be
      correctly hashconsed. *)
@@ -90,6 +69,8 @@ let peano_tests () =
      Only one constant : Zero, and two operators : Successor and Add.
      There is no binders in this system.
   *)
+
+  Format.printf "Starting Peano terms hashconsing@.";
 
   let zero = DConst (None, "Zero") in
   let one = DTerm (None, "Successor", [zero]) in
@@ -122,6 +103,8 @@ let lambda_tests () =
   *)
 
 
+  Format.printf "Starting Lambda-calculus hashconsing tests@.";
+
   (* First, we try on two identical id functions, modulo apha-conversion *)
   let bx = DBinder (None, "x") in
   let id1 = DTerm (None, "Lambda", [bx; DVar (None, "x")]) in
@@ -130,9 +113,6 @@ let lambda_tests () =
 
   let hid1 = create_term id1 in
   let hid2 = create_term id2 in
-
-  pretty_print hid1;
-  (* pretty_print hid2; *)
 
   assert (hid1.term == hid2.term);
 
@@ -148,18 +128,7 @@ let lambda_tests () =
       (List.hd @@ List.tl hl).value
     | _ -> assert false in
 
-  (* pretty_print hid2; *)
-  (* pretty_print hid3; *)
-
-  dot hsnd "graphsnd.dot";
-
   assert (hid2.term == hid3);
-
-  (* pretty_print hsnd.term; *)
-
-  let app = DTerm (None, "App", [id1; id2]) in
-  let happ = create_term app in
-  dot happ "graphapp.dot";
 
   Format.printf "Lambda calculs OK@."
 
@@ -167,10 +136,10 @@ let reconstruct_tests () =
   (* Tests the reconstruction of the hterms into terms
      *)
 
+  Format.printf "Starting reconstruction tests@.";
+
   let bx = DBinder (None, "x") in
-  let id1 = DTerm (None, "Lambda", [bx; DVar (None, "x")]) in
   let by = DBinder (None, "y") in
-  let id2 = DTerm (None, "Lambda", [by; DVar (None, "y")]) in
   let bz = DBinder (None, "z") in
   let id3 = DTerm (None, "Lambda", [bz; DVar (None, "z")]) in
 

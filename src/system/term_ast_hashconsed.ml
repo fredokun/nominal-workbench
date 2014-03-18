@@ -195,8 +195,6 @@ and create_cons =
 and create_term_raw =
   let open HTermtbl in
   let term_tbl = create 43 in
-  (* let hvar = HVar in *)
-  (* add term_tbl hvar hvar; *)
   fun (bindings : bindings) names index td ->
     let term, bindings, names =
       match td with
@@ -271,8 +269,8 @@ let create_dterm td =
 let rec string_of_hlist hl =
   let rec step acc = function
   | [] -> ""
-  | [ht] -> Format.sprintf "%s%s" acc (string_of_hterm ht.value)
-  | ht :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm ht.value)) tl
+  | [ht] -> Format.sprintf "%s%s" acc (string_of_hterm_raw ht.value)
+  | ht :: tl -> step (Format.sprintf "%s%s, " acc (string_of_hterm_raw ht.value)) tl
   in
   step "" hl
 
@@ -284,7 +282,7 @@ and string_of_idlist il =
   in
   step "" il
 
-and string_of_hterm = function
+and string_of_hterm_raw = function
   | HConst i -> i
   | HVar i -> "#" ^ string_of_int i
   | HFreeVar i -> i
@@ -297,11 +295,13 @@ let rec string_of_hterm_name = function
   | NTerm n -> Format.sprintf "(%s)" @@
     String.concat "," @@ List.map string_of_hterm_name n
 
+let string_of_hterm ht = string_of_hterm_raw ht.term
+
 let pretty_print_list hl =
   Format.printf "[%s]@." @@ string_of_hlist hl
 
 let pretty_print hterm =
-  print_endline @@ string_of_hterm hterm.term
+  print_endline @@ string_of_hterm hterm
 
 let pretty_print_with_names names term = assert false
 

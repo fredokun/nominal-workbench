@@ -14,8 +14,7 @@ type ident = string
     the hlist and permits a more efficient hashconsing of lists *)
 type 'a hashed = private { id: id; hash : int; value : 'a }
 
-(** /!\ Should be private but causes a typing issue in matching. To fix /!\
-
+(**
     Type of a hashsconsed list, for the subterms of a term.
 *)
 type 'a hlist = 'a hashed list
@@ -56,5 +55,8 @@ val create_dterm : hterm -> Term_ast_typed.term_ast_with_binders
 (** [dot ht filename] prints the dot representation of [t] into [filename]. *)
 val dot : hterm -> string -> unit
 
-(** Pretty prints a hterm without its name, to be able to see the representation *)
+(** [string_of_hterm ht] returns the string representation of ht *)
+val string_of_hterm : hterm -> string
+
+(** [pretty_print ht] prints [ht] without its names *)
 val pretty_print : hterm -> unit

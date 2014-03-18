@@ -60,9 +60,8 @@ let matching term pattern =
         try
         begin
           match SMap.find p_id ph with
-          (* Term variable must have the same name, otherwise they cannot share a same placeholder.
-             TODO: Factorize with the _, _, PPlaceholder id matching, it will work when the HVar will be
-             correctly hash-consed in every contexts. *)
+          (* Term variable must have the same name, otherwise they cannot share
+             a same placeholder. *)
           | DBinder (_, x) | DVar (_, x) when x = v -> (placeholders, hph)
           | _ -> (None, hph)
         end
@@ -76,7 +75,8 @@ let matching term pattern =
     | DBinder (_, b), HBinder _, PPlaceholder p_id ->
       begin
         try
-          (* We probably don't want that binders have the same names? Is there any notion of scope? *)
+          (* We probably don't want that binders have the same names? Is there
+             any notion of scope? *)
           ignore @@ SMap.find p_id ph;
           (None, hph)
         with
