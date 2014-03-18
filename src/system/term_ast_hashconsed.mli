@@ -56,22 +56,5 @@ val create_dterm : hterm -> Term_ast_typed.term_ast_with_binders
 (** [dot ht filename] prints the dot representation of [t] into [filename]. *)
 val dot : hterm -> string -> unit
 
-
-(* All those functions and types are debug functions, only used for unit tests.
-   Will disappear when push in "production" *)
-
-
-type bindings = (ident * id list ref) list
-
-val create_hlist : bindings -> hterm_name list ->(Term_ast_typed.ident * int) list ->
-           Term_ast_typed.term_ast_with_binders list ->
-           hterm_raw hlist * hterm_name list
-
-val string_of_hterm : hterm_raw -> string
-
-val pretty_print_list : hterm_raw hlist -> unit
-
 (** Pretty prints a hterm without its name, to be able to see the representation *)
 val pretty_print : hterm -> unit
-
-val pretty_print_names : hterm_name -> unit

@@ -42,25 +42,25 @@ let create_tests () =
   let v2 = DVar (None, "b") in
   let v3 = DVar (None, "b") in
 
-  (* We have to encapsulate the binders and variables into lsits to have a
-    correctly binded term *)
+  (* (\* We have to encapsulate the binders and variables into lsits to have a *)
+  (*   correctly binded term *\) *)
 
-  let l1 = [b1; b1; b2; v1; v2; v3] in
-  let l2 = [b1; b1; b2; v1; v2; v3] in
+  (* let l1 = [b1; b1; b2; v1; v2; v3] in *)
+  (* let l2 = [b1; b1; b2; v1; v2; v3] in *)
 
-  let hl1, _ = create_hlist [] [] [] l1 in
-  let hl2, _ = create_hlist [] [] [] l2 in
+  (* let hl1, _ = create_hlist [] [] [] l1 in *)
+  (* let hl2, _ = create_hlist [] [] [] l2 in *)
 
-  List.iter2 (fun t1 t2 ->
-      match t1.value, t2.value with
-      | HBinder b1, HBinder b2 -> assert (b1 == b2)
-      | _ -> ()
-    ) hl1 hl2;
+  (* List.iter2 (fun t1 t2 -> *)
+  (*     match t1.value, t2.value with *)
+  (*     | HBinder b1, HBinder b2 -> assert (b1 == b2) *)
+  (*     | _ -> () *)
+  (*   ) hl1 hl2; *)
 
 
-  assert(hl1 == hl2);
+  (* assert(hl1 == hl2); *)
 
-  Format.printf "Binded variables OK@.";
+  (* Format.printf "Binded variables OK@."; *)
 
   (* We now test term creation, since other constructs and lists can be
      correctly hashconsed. *)
@@ -151,50 +151,17 @@ let lambda_tests () =
   (* pretty_print hid2; *)
   (* pretty_print hid3; *)
 
-  (* dot hsnd "graphsnd.dot"; *)
+  dot hsnd "graphsnd.dot";
 
   assert (hid2.term == hid3);
 
   (* pretty_print hsnd.term; *)
 
-  (* let app = DTerm ("App", [id1; id2]) in *)
-  (* let happ = create_term app in *)
-  (* dot happ "graphapp.dot" *)
+  let app = DTerm (None, "App", [id1; id2]) in
+  let happ = create_term app in
+  dot happ "graphapp.dot";
 
   Format.printf "Lambda calculs OK@."
-
-let naming_tests () =
-  (* Tests the naming capture, to be able to recreate a term_dag after
-     hashconsing it. We reuse some previously defined terms, especially in the
-     lambda calculus examples.  *)
-
-  let bx = DBinder (None, "x") in
-  let id1 = DTerm (None, "Lambda", [bx; DVar (None, "x")]) in
-  let by = DBinder (None, "y") in
-  let id2 = DTerm (None, "Lambda", [by; DVar (None, "y")]) in
-  let bz = DBinder (None, "z") in
-  let id3 = DTerm (None, "Lambda", [bz; DVar (None, "z")]) in
-
-  let lsnd = DTerm (None, "Lambda",
-                    [bx; DTerm (None, "Lambda", [by; DVar (None, "y")])]) in
-
-  let hsnd = create_term lsnd in
-
-  (* pretty_print hsnd; *)
-  (* Format.printf "[%s]@." @@ String.concat ", " hsnd_names; *)
-
-  (* assert (hsnd.binders = ["x"; "y"]); *)
-
-  let app = DTerm (None, "App", [lsnd; id3]) in
-  let happ = create_term app in
-
-  (* pretty_print happ; *)
-  (* Format.printf "[%s]@." @@ String.concat ", " happ_names; *)
-  (* dot happ "happgraph.dot"; *)
-
-  (* assert (happ.binders = ["x"; "y"; "z"]); *)
-
-  Format.printf "Binders names OK@."
 
 let reconstruct_tests () =
   (* Tests the reconstruction of the hterms into terms
@@ -210,19 +177,13 @@ let reconstruct_tests () =
   let lsnd = DTerm (None, "Lambda",
                     [bx; DTerm (None, "Lambda", [by; DVar (None, "y")])]) in
   let hsnd = create_term lsnd in
-
   let snd = create_dterm hsnd in
-  Format.printf "Before: %s@." @@ string_of_term lsnd;
-  Format.printf "After: %s@." @@ string_of_term snd;
 
   assert (lsnd = snd);
 
   let app = DTerm (None, "App", [lsnd; id3]) in
   let happ = create_term app in
   let recr_app = create_dterm happ in
-
-  Format.printf "Before: %s@." @@ string_of_term app;
-  Format.printf "After: %s@." @@ string_of_term recr_app;
 
   assert (app = recr_app);
 
@@ -233,5 +194,4 @@ let _ =
   create_tests ();
   peano_tests ();
   lambda_tests ();
-  naming_tests ();
   reconstruct_tests ()

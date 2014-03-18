@@ -1,6 +1,7 @@
 (* Distributed under the MIT License.
-  (See accompanying file LICENSE.txt)
-  (C) Copyright Pierrick Couderc
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Pierrick Couderc
+   (C) Copyright Pierre Talbot
 *)
 
 open Term_ast_typed
