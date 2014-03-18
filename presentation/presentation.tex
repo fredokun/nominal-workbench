@@ -1,0 +1,88 @@
+\documentclass[xcolor=dvipsnames]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{url}
+\usepackage{lmodern}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{textcomp} 
+\usepackage{hyperref}
+%% \usepackage{subcaption}
+\usepackage[T1]{fontenc}
+
+\usepackage{color}
+ 
+\setbeamertemplate{footline}{\hspace*{.5cm}\scriptsize{\insertauthor\hspace*{50pt} \hfill\insertframenumber\hspace*{.5cm}}}
+
+\setbeamertemplate{section in toc}{%
+\textcolor{MidnightBlue}{$\blacktriangleright$ \inserttocsection}
+}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>{}
+    \tableofcontents[currentsection,hideothersubsections]
+  \end{frame}
+} 
+
+\usecolortheme{seahorse}
+\usecolortheme{rose}
+\useoutertheme{infolines}
+
+\usecolortheme[named=SkyBlue]{structure}
+\setbeamercolor{block title}{fg=MidnightBlue}
+
+\title[Nominal Workbench]{Nominal Workbench\\Système de Réécriture Nominale}
+
+\author[\'Equipe NoWork]{Rémy B. Yohan B. Vincent B. Mathieu C. Pierrick C. Matthieu D. Roven G. I\~nigo M. Pierre T.}
+
+\institute[UPMC]{Université Pierre et Marie Curie}
+
+\date{Jeudi 20 mars 2014}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+%% Recette
+
+%% présentation générale du système de réécriture / architecture
+\section{Introduction}
+\input{introduction.tex}
+
+%% syntaxe/langage du bouzin
+\section{Langage}
+\input{langage.tex}
+
+%% type-checking
+\section{Typage}
+\input{type-checking.tex}
+
+%% pattern-matching / hash-consing
+\section{Pattern Matching}
+\input{pattern_matching.tex}
+
+%% réécriture / stratégie
+\section{Réécriture Nominale}
+\input{reecriture.tex}
+
+%% utilisation du bouzin
+\section{Mode Interactif}
+\input{interactif.tex}
+
+%% démo
+\section{Démonstration}
+\input{demo.tex}
+
+
+%% Bilan
+
+%% partie chiante pour Pierre
+\section{Bilan}
+\input{bilan.tex}
+
+\end{document}
