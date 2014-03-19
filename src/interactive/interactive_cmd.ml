@@ -7,6 +7,22 @@ open Printf
 open Display_test
 open Parsing_ast
 
+let directive_usage =
+  String.concat "\n\t"
+    [ "Available commands :"
+    ; ":help            -- Displays this help"
+    ; ":?               -- Displays this help"
+    ; ":load-test f exp -- Load a test file f and check that the result matches the expectation"
+    ; ":test            -- Test an expression (consult user-doc for more infos)"
+    ; ":match           -- Check that an expression matches the given type or strategy"
+    ; ":type            -- Returns the type of the expression"
+    ; ":dot t out       -- Output the hash-consed version of a term into a dot file graph"
+    ; ":quit            -- Exits the REPL"
+    ; ":exit            -- Exits the REPL"
+    ; ":q               -- Exits the REPL"
+    ]
+  ^ "More detailled informations may be found in the user-documentation"
+
 (* Test framework. *)
 type result =
   | Passed
@@ -260,3 +276,4 @@ let eval_interactive_cmd process_term_expr eval_system system = function
   dot_of_expr (process_term_expr system) term_expr filename system;
   system
 | Quit -> exit 0
+| Help -> print_endline directive_usage; system

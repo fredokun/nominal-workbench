@@ -67,13 +67,11 @@ start:
 toplevel_phrase:
 | decls SEMICOLSEMICOL { $1 }
 | EOF { raise End_of_file }
-;
+  ;
 
 decls:
-| decl decls
-    { $1::$2}
-| decl
-    { [$1] }
+| decl decls { $1::$2}
+| decl { [$1] }
 
 
 decl:
@@ -88,15 +86,15 @@ decl:
 | OPEN UIDENT { PFile_include $2 }
 | OPEN LIDENT { PFile_include $2 }
 
-/* | OPEN STRING
-    { match Include.nw_include files_included include_paths $2 with
-      | None -> (None, None)
-      | Some(f) ->(None, Some f)
-    }
-*/
+  /* | OPEN STRING
+      { match Include.nw_include files_included include_paths $2 with
+	| None -> (None, None)
+	| Some(f) ->(None, Some f)
+      }
+    */
 
-/* Top-level commands */
-
+    /* Top-level commands */
+      
 interactive_command:
 | LOAD_TEST STRING expectation { LoadTest ($2, $3) }
 | TEST test_term_predicate { TermTest(TMustPass($2)) }
@@ -106,155 +104,156 @@ interactive_command:
 | MATCH term_expr WITH_TYPE_OPTION operator_type { TermMatchType($2, [], $4) }
 | DOT term_expr STRING { TermToDot($2, $3) }
 | CTYPE term_expr { TermType $2 }
+| HELP { Help }
 | QUIT { Quit }
 
-test_term_predicate:
+    test_term_predicate:
 | term_expr IN_CMD_OPTION term_expr_list { InPredicate($1, $3) }
 | term_expr EQUAL_CMD_OPTION term_expr_list { EqualPredicate($1, $3) }
 
-expectation:
+    expectation:
 | FAILWITH domain_error { MustFail ($2) }
 | { MustPass }
 
-domain_error:
+    domain_error:
 | UIDENT DOT UIDENT { Error($1, $3) }
 
-/* kinds */
+      /* kinds */
 
 kind_decl:
 | KIND UIDENT COLON kind_type { create_decl $2 (DKind $4) }
 
-kind_type:
+	    kind_type:
 | kind_type ARROW kind_type { $1 @ $3 }
 | TYPE { [Type] }
 | ATOM { [Atom] }
 
-/* constants */
+  /* constants */
 
-constant_decl:
+    constant_decl:
 | CONSTANT UIDENT COLON type_binders constant_type
-    { create_decl $2 (DConstant ($4, $5)) }
+	{ create_decl $2 (DConstant ($4, $5)) }
 | CONSTANT UIDENT COLON constant_type
-    { create_decl $2 (DConstant ([],$4)) }
+	    { create_decl $2 (DConstant ([],$4)) }
 | CONSTANT NUM COLON type_binders constant_type  /* TODO : factorize */
-    { create_decl (string_of_int $2) (DConstant ($4, $5)) }
+		{ create_decl (string_of_int $2) (DConstant ($4, $5)) }
 | CONSTANT NUM COLON constant_type
-    { create_decl (string_of_int $2) (DConstant ([],$4)) }
+		    { create_decl (string_of_int $2) (DConstant ([],$4)) }
 
-type_binders:
+		    type_binders:
 | FORALL LPAREN word_list RPAREN DOT { $3 }
 | FORALL LPAREN word_list RPAREN DOT type_binders { $3 @ $6 }
 
-constant_type:
+    constant_type:
 | UIDENT application_constant_type_list { TypeApplication ($1, $2) }
 | UIDENT { TypeName $1 }
 
-application_constant_type_list:
+    application_constant_type_list:
 | LT constant_type_list GT { $2 }
 | LT constant_type_list GT application_constant_type_list { $2 @ $4 }
 
-constant_type_list:
+    constant_type_list:
 | constant_type COMMA constant_type_list { $1 :: $3 }
 | constant_type { [$1] }
 
-word_list:
+    word_list:
 | UIDENT COMMA word_list { $1 :: $3 }
 | UIDENT { [$1] }
 | LIDENT COMMA word_list { $1 :: $3 }
 | LIDENT { [$1] }
 
-/* operators */
+  /* operators */
 
-operator_decl:
+    operator_decl:
 | OPERATOR UIDENT COLON type_binders operator_type ARROW operator_without_binder_type
-    { create_decl $2 (DOperator ($4, $5, $7)) }
+	{ create_decl $2 (DOperator ($4, $5, $7)) }
 | OPERATOR UIDENT COLON operator_type ARROW operator_without_binder_type
-    { create_decl $2 (DOperator ([], $4, $6)) }
+	    { create_decl $2 (DOperator ([], $4, $6)) }
 
-operator_type:
+	    operator_type:
 | operator_without_binder_type { [OpTypeArg $1] }
 | LBRACKET UIDENT RBRACKET DOT operator_type { (OpBinderArg $2) :: $5 }
 | operator_type STAR operator_type { $1 @ $3 }
 
-operator_without_binder_type:
+    operator_without_binder_type:
 | UIDENT application_operator_without_binder_type_list { TypeApplication ($1, $2) }
 | UIDENT { TypeName $1 }
 
-application_operator_without_binder_type_list:
+    application_operator_without_binder_type_list:
 | LT operator_without_binder_type_list GT { $2 }
 | LT operator_without_binder_type_list GT application_operator_without_binder_type_list { $2 @ $4 }
 
-operator_without_binder_type_list:
+    operator_without_binder_type_list:
 | operator_without_binder_type COMMA operator_without_binder_type_list { $1 :: $3 }
 | operator_without_binder_type { [$1] }
 
 
-/* rules */
+  /* rules */
 
-rule_decl:
+    rule_decl:
 | rule_head rule_body { create_decl $1 (DRule $2) }
 
-rule_head:
+	rule_head:
 | RULE LBRACKET LIDENT RBRACKET COLON { $3 }
 | RULE LBRACKET UIDENT RBRACKET COLON { $3 }
 
-rule_body:
+    rule_body:
 | rule_side_pattern DARROW rule_side_effect { $1,$3 }
 
-rule_side_pattern:
+	rule_side_pattern:
 | NUM { PConstant (string_of_int $1) }
 | UIDENT { PConstant $1 }
 | UIDENT LPAREN rule_side_list_pattern RPAREN { POperator ($1, $3) }
 | PLACEHOLDER { PPlaceholder $1 }
 | ANY { PAny }
 
-rule_side_list_pattern:
+    rule_side_list_pattern:
 | rule_side_pattern COMMA rule_side_list_pattern { $1 :: $3 }
 | rule_side_pattern { [$1] }
 
-rule_side_effect:
+    rule_side_effect:
 | NUM { EConstant (string_of_int $1) }
 | UIDENT { EConstant $1 }
 | UIDENT LPAREN rule_side_list_effect RPAREN { EOperator ($1, $3) }
 | PLACEHOLDER { EPlaceholder $1 }
 
-rule_side_list_effect:
+    rule_side_list_effect:
 | rule_side_effect COMMA rule_side_list_effect { $1 :: $3 }
 | rule_side_effect { [$1] }
 
-/* strategies */
+  /* strategies */
 
-strategy_decl:
+    strategy_decl:
 | strategy_head strategy_expression
-  {
-    let name, signature = $1 in
-    create_decl name (DStrategy (signature, $2))
-  }
+	{
+	  let name, signature = $1 in
+	  create_decl name (DStrategy (signature, $2))
+	}
 
-strategy_head :
+	strategy_head :
 | STRATEGY UIDENT COLON { ($2, []) }
 | STRATEGY UIDENT LPAREN strategy_param_list RPAREN COLON { ($2, $4) }
 
-strategy_param_list :
+    strategy_param_list :
 | LIDENT { [$1] }
 | LIDENT COMMA strategy_param_list { $1 :: $3 }
 
-strategy_expression :
+    strategy_expression :
 | LPAREN strategy_expression RPAREN { $2 }
 | strategy_simple_expression { $1 }
 | strategy_operator { $1 }
 | strategy_advanced_expression { $1 }
 
-strategy_simple_expression :
+    strategy_simple_expression :
 | LIDENT LPAREN RPAREN { base_strat_simple $1 }
 | LIDENT LPAREN strategy_expression RPAREN { base_strat $1 $3 }
 
-strategy_operator :
+    strategy_operator :
 | strategy_expression SEITHER strategy_expression { SEither ($1, $3) }
 | strategy_expression PLUS strategy_expression { SChoice ($1, $3) }
 | strategy_expression SEMICOL strategy_expression { SSeq ($1, $3) }
 
-strategy_advanced_expression :
+    strategy_advanced_expression :
 | LIDENT { SVar $1 }
 | RULE LPAREN RPAREN { SRule None }
 | RULE LPAREN LIDENT RPAREN { SRule (Some $3) }
@@ -263,29 +262,29 @@ strategy_advanced_expression :
 | UIDENT { SCall ($1, []) }
 | UIDENT LPAREN strategy_expression_list RPAREN { SCall ($1, $3) }
 
-strategy_expression_list :
+    strategy_expression_list :
 | strategy_expression { [$1] }
 | strategy_expression COMMA strategy_expression_list { $1 :: $3 }
 
-/* terms */
+  /* terms */
 
-term_expr_list :
+    term_expr_list :
 | term_expr { [$1] }
 | term_expr SEMICOL term_expr_list { $1 :: $3 }
 
-term_expr:
+    term_expr:
 | LPAREN term_expr RPAREN { $2 }
 | LET LIDENT EQUAL term_expr { PTermLet ($2, $4) }
 | REWRITE term_expr WITH strategy_expression { PTermRewrite ($2, $4) }
 | term { PTerm $1 }
 
-term:
+    term:
 | UIDENT LPAREN term_params RPAREN { create_term $1 (Term $3) }
 | UIDENT { create_term $1 Const }
 | NUM { create_term (string_of_int $1) Const }
 | LIDENT { create_term $1 Var }
 
-term_params:
+    term_params:
 | term {  [$1] }
 | term COMMA term_params { $1::$3 }
 
