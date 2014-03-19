@@ -369,7 +369,21 @@ let dot t filename =
   output_string f "}\n";
   close_out f
 
+let hash_of_hterm ht = hash_term ht.term
+
 let sort_hashed_terms hl =
+  let rec bucket_list terms = 
+    let rec bucket hd = function
+    | hd' :: tl when (hash_of_hterm hd) = (hash_of_hterm hd') ->
+      let tl, b = bucket hd' tl in
+      (tl, hd :: b)
+    | l -> (l, [hd]) in
+    match terms with
+    | [] -> []
+    | hd :: [] -> [[hd]]
+    | hd :: tl ->
+      let tl, b = bucket hd tl in
+      b :: (bucket_list tl) in
   let compare_hterm ht ht' =
-    compare (hash_term ht.term) (hash_term ht.term) in
-  List.sort compare_hterm hl
+    compare (hash_of_hterm ht) (hash_of_hterm ht') in
+  bucket_list (List.sort compare_hterm hl)
