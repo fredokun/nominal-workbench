@@ -58,7 +58,6 @@ type rule = pattern * effect
 
 type info = Lexing.position
 
-    
 type rewriting_decl =
   {
     name : string;
