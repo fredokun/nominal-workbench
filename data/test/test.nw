@@ -16,9 +16,9 @@
 :load-test "data/test/run-fail/typecheck_placeholder_unknown_in_effect.nw" --failwith RewritingSystemError.UnknownPlaceholder
 :load-test "data/test/run-fail/typecheck_type_ill_formed.nw" --failwith RewritingSystemError.TypeIllFormed
 :load-test "data/test/run-fail/typecheck_typing_clash_wrong_operation_in_effect.nw" --failwith RewritingSystemError.TypeClash
-:load-test "data/test/run-fail/typecheck_typing_clash_wrong_operation_in_pattern.nw" --failwith RewritingSystemError.WrongBinderKind
+:load-test "data/test/run-fail/typecheck_typing_clash_wrong_operation_in_pattern.nw" --failwith RewritingSystemError.TypeClash
 :load-test "data/test/run-fail/typecheck_wrong_binder_kind.nw" --failwith RewritingSystemError.WrongBinderKind
-:load-test "data/test/run-fail/typecheck_placeholder_clash.nw" --failwith RewritingSystemError.WrongBinderKind
+:load-test "data/test/run-fail/typecheck_placeholder_clash.nw" --failwith RewritingSystemError.TypeClash
 :load-test "data/test/run-fail/typecheck_generics.nw" --failwith RewritingSystemError.IllegalKind
 :load-test "data/test/run-pass/simple_peano.nw"
 :load-test "data/test/run-pass/negative_peano.nw"
