@@ -9,10 +9,10 @@ open Rewriting_ast
 
 let usage = "Usage: nowork [options] <rules files> \noptions are:"
 
-let eprint_and_exit msg err_code =  
+let eprint_and_exit msg err_code =
   eprintf "%s\n%!" msg;
   exit err_code
-  
+
 let files : string list ref = ref []
 
 let file_argument name =
@@ -26,13 +26,12 @@ let find_file fname =
   let is_file_in_dir dir =
     Sys.file_exists (dir ^ "/" ^ fname)
   in
-  try 
+  try
     List.find is_file_in_dir (Config.get_path ())
     ^ "/" ^ fname
-  with Not_found -> 
-    eprint_and_exit 
+  with Not_found ->
+    eprint_and_exit
       (sprintf "[Error] Cannot find the file %s\n%!" fname) 1
-
 
 let process_file system fname =
   let fpath =
@@ -40,17 +39,16 @@ let process_file system fname =
       find_file fname
     else if Sys.file_exists fname then
       fname
-    else 
+    else
       eprint_and_exit (sprintf "[Error] Cannot find the file %s\n%!" fname) 1 in
   begin
-    if !Config.verbose then 
+    if !Config.verbose then
       printf "Evaluating file %s...\n%!" fname;
     let ic = open_in fpath in
     try
-      let ast = Parser_include.parse_nowork_file ic in
+      let ast = Util.parse_channel ic in
       let new_system = List.fold_left Eval.evaluate_structure_item system ast in
       (* Pretty.print_system Format.std_formatter new_system; *)
-      close_in ic;
       (* todo type check. before or after ? *)
       new_system
     with
@@ -70,7 +68,7 @@ let main k =
       Printexc.record_backtrace true);
 
     (* Parse & Eval the files *)
-    let system = 
+    let system =
       if !Config.reset_system then
       begin
         List.iter (fun fname -> ignore (process_file empty_system fname))

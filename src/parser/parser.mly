@@ -10,7 +10,6 @@ open Rewriting_ast
 open Term_ast
 open Strategy_ast
 open Parsing_ast
-open Include
 open Hashtbl
 open Sys
 

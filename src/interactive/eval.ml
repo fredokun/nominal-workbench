@@ -8,15 +8,15 @@ module Term_env = Map.Make(String)
 
 (* Todo : virer la ref global *)
 let term_env = ref Term_env.empty
-  
+
 let find_file fname =
   let is_file_in_dir dir =
     Sys.file_exists (dir ^ "/" ^ fname)
   in
-  try 
+  try
     List.find is_file_in_dir (Config.get_path ())
     ^ "/" ^ fname
-  with Not_found -> 
+  with Not_found ->
     Printf.eprintf "[Error] Cannot find the file %s\n%!" fname;
     exit 1
 
@@ -27,7 +27,7 @@ let rec process_file system fname =
       find_file fname
     else if Sys.file_exists fname then
       fname
-    else 
+    else
     begin
       Printf.eprintf "[Error] Cannot find the file %s\n%!" fname;
       exit 1
@@ -37,7 +37,7 @@ let rec process_file system fname =
     let ic = open_in fpath in
     try
       let structure = Parser.start Lexer.token (Lexing.from_channel ic) in
-      let new_system = 
+      let new_system =
         List.fold_left evaluate_structure_item system structure in
       close_in ic;
       new_system
@@ -48,16 +48,16 @@ let rec process_file system fname =
       system
   end
 
-and subst_vars system = 
+and subst_vars system =
   let open Term_ast in
       fun term ->
       match term.desc with
       | Term (tlist) -> create_term_info term.name (Term (List.map (subst_vars system) tlist)) term.info
-      | Var -> 
+      | Var ->
       begin
         try
-          Term_env.find term.name !term_env 
-        with 
+          Term_env.find term.name !term_env
+        with
         | Not_found -> term
       end
       | _ -> term
@@ -82,13 +82,13 @@ and process_term system strategy ts  : Term_ast.term_ast list =
 *)
 
 and process_term_expr system : Parsing_ast.term_expr -> Term_ast.term_ast list  = function
-  | PTermLet (ident, term_expr) -> 
+  | PTermLet (ident, term_expr) ->
     let rewritten_term = process_term_expr system term_expr in
 (*    term_env := Term_env.add ident rewritten_term !term_env; *)
     rewritten_term
   | PTermRewrite (term_expr, strategy) ->
     let rewritten_subterm = process_term_expr system term_expr in
-    (* Printf.printf "%s with %s \n" 
+    (* Printf.printf "%s with %s \n"
       (Term_ast.string_of_term  rewritten_subterm)
       (Strategy_ast.string_of_strategy strategy); *)
     let rewritten_terms = process_term system strategy rewritten_subterm in
@@ -102,19 +102,19 @@ and evaluate_structure_item system =
   let open Strategy_ast in
   function
   | PInteractiveCmd cmd -> eval_interactive_cmd process_term_expr eval_and_check system cmd
-  | PDecl rewriting_decl -> 
+  | PDecl rewriting_decl ->
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl system rewriting_decl
   | PTermExpr term -> ignore (process_term_expr system term); system
   | PFile_include fname -> process_file system fname
 
-and run_type_check filled_system ast = 
+and run_type_check filled_system ast =
   List.iter (function
-    | PDecl d -> 
+    | PDecl d ->
       Type_checking.check_decl filled_system d
     | _ -> ())
     ast
 
-and eval_and_check system ast = 
+and eval_and_check system ast =
   let new_system = List.fold_left evaluate_structure_item system ast in
   run_type_check new_system ast
