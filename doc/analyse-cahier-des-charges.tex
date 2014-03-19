@@ -7,16 +7,60 @@
 \usepackage[utf8]{inputenc}
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
+\usepackage{verbatim}
 
 \title{NoWork\\
 Analyse du cahier des charges}
 \author{Équipe de développement NoWork\\[2em]}
 \date\today
 
+\newcommand{\latex}{\LaTeX\space}
+
 \begin{document}
 \maketitle
 
+\section{Introduction}
+
+Ce document analyse le cahier des charges initialement décrit par M. Frédéric Peschanski qui nous a été remis le 6 novembre 2013. L'objectif de ce travail est d'étudier les systèmes de réécriture afin de développer un logiciel permettant la réécriture de terme suivant une stratégie.
+
 \section{Infrastructure technique}
+
+\subsection{Dépendances}
+
+\begin{itemize}
+\item Compilateur OCaml 4.00.1 et la librairie standard OCaml ;
+\item Le moteur de production \textit{GNU make} ;
+\item Le moteur de production et de test \textit{ocp-build} version 1.99 ;
+\item Le gestionnaire de paquet \textit{opam} version 1.1.0 ;
+\item Le gestionnaire de version git.
+\end{itemize}
+\vspace{10pt}
+
+Il n'y a pas de version web disponible donc il n'y a pas de dépendance vers \textit{js-of-ocaml}.
+
+\subsection{Guide de style}
+
+Le guide de style a été développé avec le client et est disponible en \latex dans le répertoire \verb=doc/coding-style.tex=. La documentation a été rédigée en \textit{OCamlDoc} et est disponible dans le répertoire \verb=doc/reference/=.
+
+\subsection{Tests}
+
+Le code est testé et les tests fonctionnels sont directement embarqués dans le langage. Les utilisateurs pourront donc eux-mêmes tester le code qu'ils auront écrit. Le répertoire \verb=data/test/= contient tous nos fichiers de tests et se décline en deux sous-dossiers \verb=run-fail/= et \verb=run-pass=, le premier contenant les fichiers testant les erreurs devant être déclenchées, et le deuxième testant qu'aucune erreur n'est lancée. Les tests unitaires sont réalisés dans le dossier \verb=tests/= et \textit{ocp-build} est utilisé pour déclencher ces tests.
+
+\subsection{Organisation du projet}
+
+Le cahier des charges initial spécifiait un module différent pour la représentation des termes et du système or il s'est avéré que les deux étaient trop fortement couplé et que des simplifications au niveau du code impliquait ses deux modules d'être unifié. Pour rappel, les modules sont :
+
+\begin{itemize}
+\item Module d'analyse lexicale et syntaxique (\verb=src/parser/=) ;
+\item Module de représentation du système de réécriture et des termes (\verb=src/system/=) ;
+\item Module de gestion du simulateur (\verb=src/algorithm=) ;
+\item Module pour le \textit{top-level} (\verb=src/interactive=) ;
+\item Module pour les tests unitaires (\verb=tests/=).
+\end{itemize}
+
+Il n'y a pas de module de gestion de l'exploration car cette fonctionnalité n'a pas été implémentée.
+
+\section{Fonctionnalités}
 
 
 
