@@ -27,7 +27,7 @@ type genericity =
 | Gen
 | Inst of bnd_typ_app
 | Simple
-    
+
 type term_ast_typed =
 | TypedConst of bnd_typ_app
 | TypedTerm of bnd_typ_app
