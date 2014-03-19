@@ -107,13 +107,13 @@ let directive_opt = dash dash lower_ident
     try
       Hashtbl.find directive_table s
     with Not_found ->
-      assert false (* todo *)
+      failwith @@ "Unknown directive : " ^ s
   }
   | directive_opt as s {
     try
       Hashtbl.find directive_option_table s
     with Not_found ->
-      failwith @@ "Unknown directive : " ^ s (* TODO *)
+      failwith @@ "Unknown directive : " ^ s
   }
   | upper_ident as s { UIDENT(s) }
   | placeholder as p { PLACEHOLDER(p) }

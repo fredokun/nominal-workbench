@@ -1,3 +1,9 @@
+(* Distributed under the MIT License.
+   (See accompanying file LICENSE.txt)
+   (C) Copyright Matthieu Dien
+   (C) Copyright Vincent Botbol
+*)
+
 open Parsing_ast
 open Printf
 open Interactive_cmd
