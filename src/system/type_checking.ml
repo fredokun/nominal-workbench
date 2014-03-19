@@ -53,11 +53,6 @@ let raise_illegal_kind id pos =
     IllegalKind,
     Printf.sprintf "Illegal kind %s %s" id (pos_to_string pos)))
 
-let my_raise msg =
-  Printf.printf "%s\n" msg;
-  raise (RewritingSystemError (
-    ToDoExn,
-    msg))
 
 
 
@@ -175,8 +170,7 @@ let is_atom sys tb = function
 let check_type sys (tb, ta) =
   let rec loop = function
     | TypeApplication (_, args) -> List.iter loop args
-    | ta ->
-      if is_atom sys tb ta then my_raise "vazi c'est quoi cet atom ?"
+    | ta -> ()
   in
   match ta with
   | TypeName id when not (List.mem id tb) -> ()
