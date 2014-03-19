@@ -3,15 +3,11 @@
    (C) Copyright NoWork Team *)
 
 open Parsing_ast
+open Term_ast
 open Printf
 open Display_test
 
 (* TODO : mli !! *)
-
-module Term_env = Map.Make(String)
-
-(* Todo : virer la ref global *)
-let term_env = ref Term_env.empty
 
 let directive_usage =
   String.concat "\n\t"
@@ -27,7 +23,7 @@ let directive_usage =
     ; ":exit            -- Exits the REPL"
     ; ":q               -- Exits the REPL"
     ]
-  ^ "More detailled informations may be found in the user-documentation"
+  ^ "\nMore detailled informations may be found in the user-documentation"
 
 let find_file fname =
   let is_file_in_dir dir =
@@ -82,20 +78,6 @@ let rec process_file env fname =
       env
   end
 
-and subst_vars env =
-  let open Term_ast in
-      fun term ->
-      match term.desc with
-      | Term (tlist) -> create_term_info term.name (Term (List.map (subst_vars env) tlist)) term.info
-      | Var ->
-      begin
-        try
-          Term_env.find term.name !term_env
-        with
-        | Not_found -> term
-      end
-      | _ -> term
-
 and run_term_type_check env term =
   let open Term_checker in
   let ast_checked = construct_ast_checked env term in
@@ -115,11 +97,22 @@ and process_term env strategy ts  : Term_ast.term_ast list =
     t
 *)
 
+and expanse_term env : term_ast -> term_ast = 
+    function {name=n; desc=d; info=info} as id ->
+      match d with
+	| Term l -> {id with desc = Term (List.map (expanse_term env) l)}
+	(* We only allows lower ident globals *)
+	| Var when n.[0] >= 'a' && n.[0] <= 'z' -> begin
+	  try
+	    Symbols.System_map.find n env.Symbols.globals
+	  with
+	    | Not_found -> print_endline ("[Warning] Unbound variable " ^ n); id
+	end
+	| _ -> id
+	  
 and process_term_expr env : Parsing_ast.term_expr -> Term_ast.term_ast list  = function
   | PTermLet (ident, term_expr) ->
-    let rewritten_term = process_term_expr env term_expr in
-(*    term_env := Term_env.add ident rewritten_term !term_env; *)
-    rewritten_term
+    failwith "Cannot declare global variables in declarations"
   | PTermRewrite (term_expr, strategy) ->
     let rewritten_subterm = process_term_expr env term_expr in
     (* Printf.printf "%s with %s \n"
@@ -127,7 +120,10 @@ and process_term_expr env : Parsing_ast.term_expr -> Term_ast.term_ast list  = f
       (Strategy_ast.string_of_strategy strategy); *)
     let rewritten_terms = process_term env strategy rewritten_subterm in
     rewritten_terms
-  | PTerm (term) -> run_term_type_check env term; [term]
+  | PTerm (term) ->
+    let term = expanse_term env term in
+    run_term_type_check env term; 
+    [term]
 
 (* todo : add process_rule + process_directive + process_kind + .. *)
 
@@ -139,6 +135,10 @@ and evaluate_structure_item env =
   | PDecl rewriting_decl ->
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl env rewriting_decl
+  | PTermExpr (PTermLet (ident, expr)) ->
+    let open Symbols in
+    let rewritten_term = process_term_expr env expr in
+    {env with globals = System_map.add ident (List.hd rewritten_term) env.globals}
   | PTermExpr term -> ignore (process_term_expr env term); env
   | PFile_include fname -> process_file env fname
 

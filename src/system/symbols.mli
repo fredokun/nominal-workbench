@@ -5,6 +5,7 @@
 
 open Rewriting_ast
 open Strategy_ast
+open Term_ast
 open Lexing
 
 module System_map : sig
@@ -43,6 +44,7 @@ type system = {
   operators : (info * operator) System_map.t;
   rules :(info * rule) System_map.t;
   strategies : (info * strategy_def) System_map.t;
+  globals : term_ast System_map.t
 }
 
 val empty_system : system

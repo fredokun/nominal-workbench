@@ -8,5 +8,5 @@ begin library "interactive"
     "toploop.mli" "toploop.ml"
     "main.ml"
   ]
-  requires = [ "algorithms" "rewriting_system_parser" "str" ]
+  requires = [ "algorithms" "rewriting_system_parser" "rewriting_system" "str" ]
 end
