@@ -18,6 +18,7 @@ type system = {
   operators : (info * operator) System_map.t;
   rules :(info * rule) System_map.t;
   strategies : (info * strategy_def) System_map.t;
+  globals : Term_ast.term_ast System_map.t;
 }
 
 let builtin_strategies m = 
@@ -37,10 +38,9 @@ let empty_system = {
   operators = System_map.empty;
   rules = System_map.empty;
   strategies = builtin_strategies System_map.empty;
+  globals = System_map.empty;
 }
 
-
-  
 (* Error utilities *)
 
 let raise_unknown_symbol pos sym_kind id =
@@ -98,21 +98,19 @@ let add_strategy redeclaration_policy sys id (info, value) =
   else
     {sys with strategies = System_map.add id (info, value) sys.strategies}
 
-
-
 let add_symbol_impl redeclaration_policy system 
     {name=name; info = info; desc=desc} =
   match desc with
-  | DKind k ->
-    add_kind redeclaration_policy system name (info, k)
-  | DConstant c ->
-    add_constant redeclaration_policy system name (info, c)
-  | DOperator op ->
-    add_operator redeclaration_policy system name (info, op)
-  | DRule r ->
-    add_rule redeclaration_policy system name (info, r)
-  | DStrategy s ->
-    add_strategy redeclaration_policy system name (info, s)
+    | DKind k ->
+      add_kind redeclaration_policy system name (info, k)
+    | DConstant c ->
+      add_constant redeclaration_policy system name (info, c)
+    | DOperator op ->
+      add_operator redeclaration_policy system name (info, op)
+    | DRule r ->
+      add_rule redeclaration_policy system name (info, r)
+    | DStrategy s ->
+      add_strategy redeclaration_policy system name (info, s)
 
 (*let add_symbol_impl redeclaration_policy system (name, info, desc) =
   let aux (map : (info * 'a) System_map.t) symbol_category value : (info * 'a) System_map.t =
