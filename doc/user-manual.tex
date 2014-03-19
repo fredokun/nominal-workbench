@@ -54,7 +54,135 @@ Presentation of the nowork executable and the options.
 
 \section{System language}
 %% Matthieu
-Presentation of the language (everything but the :command). A tutorial, example-oriented.
+%% Presentation of the language (everything but the :command). A tutorial, example-oriented.
+In this section, we will see how to describe a nominal rewriting
+system for NoWork. Let us begin by showing the different option
+offered by the language. Remember that the system is typed.
+
+
+\subsection{Kind}
+Firstly, to describe our rewriting sytem, we have to describe types
+manipulated by the system. Declarations of types are made using the
+\verb?kind? keyword.\\
+Since the system should be typed and we work on a \textbf{nominal}
+rewriting system, types declared with \verb?kind? can be constructed using
+\verb?type? for ``primary'' types and \verb?atom? for ``nominal''
+types. We can defined parametrized type using \verb?->?. But,
+constructions involving \verb?atom? and \verb?->? are (currently) forbidden.
+To summarize, we have the folowing grammar :
+\begin{verbatim}
+primary-kind := type | type -> primary-kind
+
+        kind := primary-kind | atom
+\end{verbatim}
+
+For example, some simple types :
+\begin{verbatim}
+kind Integer : type
+kind List : type -> type
+kind Couple : type -> type -> type
+kind Var : atom
+\end{verbatim}
+
+
+\subsection{Constant}
+Now, we can define types then we have to define term of a given type.
+To define a term, we should first define constant of the rewriting
+system.\\
+Defining a constant is made by using the \verb?constant? keyword followed
+by the constant name then the constant type. Be careful, the constant
+type is the type of the constant for the rewriting system then it must
+be defined using \verb?kind? declarations. For example :
+
+\begin{verbatim}
+kind Integer : type
+
+constant Zero : Integer
+\end{verbatim}
+
+To use parametrized type, we should decide by what is parametrized the
+given type : it can be parametrized by a \emph{generic} or by a
+\verb?kind?.\\
+To introduce a generic type, we should use the \verb?forall?
+construction. Otherwise, to instantiate a type we should put the type
+between \verb?<? and \verb?>?. For example :
+
+\begin{verbatim}
+kind Integer : type
+kind Bool : type
+kind List : type -> type
+kind Couple : type -> type -> type
+
+#generics
+constant Nil : forall(A).List<A>
+constant NilAssoc : forall(A,B).List<Couple<A,B>>
+
+#instatiated
+constant IntNil : List<Integer>
+\end{verbatim}
+
+\subsection{Operator}
+In the same way that for constants we define operators with the
+\verb?operator? keyword. Operators take terms as arguments and terms
+are are constructed by composing operators and constants :
+
+\begin{verbatim}
+kind Integer : type
+kind Bool : type
+kind List : type -> type
+
+
+constant True : Bool
+constant False : Bool
+constant Zero : Integer
+constant Nil : forall(A).List<A>
+
+operator Cons : forall(A).A * List<A> -> List<A>
+operator Hd : forall(A).List<A> -> A
+operator Tl : forall(A).List<A> -> List<A>
+
+# A term can be :
+# Hd(Tl(Cons(False, Cons(True, Nil))))
+
+# but not :
+# Cons(False, Cons(Zero, Nil))))
+# because False and Zero does not have the same type
+\end{verbatim}
+
+\section{Rule}
+Now, we want to declare rule used by the system to reduce a term.
+How the system apply rules will be explained later using the
+strategies.\\
+How you expect, we declare rule using the \verb?rule? keyword
+following by the rule's name then the term to rewrite and the term
+rewrited. Like as type, we can declared generic term in rules. This
+genericity is made by using placeholder terms \verb!x?!. For example :
+\begin{verbatim}
+kind Integer : type
+kind Bool : type
+kind List : type -> type
+
+
+constant True : Bool
+constant False : Bool
+constant Zero : Integer
+constant Nil : forall(A).List<A>
+
+operator Cons : forall(A).A * List<A> -> List<A>
+operator Hd : forall(A).List<A> -> A
+operator Tl : forall(A).List<A> -> List<A>
+
+rule [hd]:
+  Hd(Cons(?x, ?y)) => ?x
+
+rule [tl]:
+  Tl(Cons(?x, ?y)) => ?y
+\end{verbatim}
+
+
+Thus, we have all the basis language needed to describe a nominal
+rewriting system. With this we can design the rewriting system
+corresponding to the lambda calculus or the calculus of communicating systems.
 
 \subsection{Semantics}
 %% Rémy

@@ -1,0 +1,65 @@
+The hashconsing allows to express the structural equivalence (without
+congruence) by only allocating once two terms that are identical. To do so, we
+have to completely drop the names of binders and binded variables. The result is
+a term that looks a lot like the typed terms, with some subtlety with the
+binders and the binded variables.
+
+The type is the following:
+%% Lstlisting one
+\begin{verbatim}
+type 'a hashed = private { id: id; hash : int; value : 'a }
+
+type 'a hlist = 'a hashed list
+
+type hterm_raw = private
+  | HConst of ident
+  | HTerm of ident * hterm_raw hlist
+  | HBinder of id hlist (* refers to the id of the head of an hashconsed
+                           list. *)
+  | HVar of int
+  | HFreeVar of ident
+\end{verbatim}
+
+The most difficult part lies in the HBinder and HVar parts. To explain how it is
+constructed, the best idea is to explain the algorithm. 
+
+We cross our typed term from left to right, than at the end of the traversal, we
+go back to effectively create our hashconsed subterms. The second part is
+mandatory: when we create the subterms of a HTerm, the lsit has to be hashconsed
+and we have to begin by the tail. Each cell of this hashconsed list is a record
+containing a value and an id, which is the id of the actual hashconsed list
+where this cell is the head of the list.
+
+Now for the first part, it is moslty to capture the binders. And then while we
+go from right to left, we capture the id of its binded variables that are in
+hashconsed lists. This way, a binder is represented by an id list, which is
+morally its binded variables. We just need to hashcons this id list and the
+Binder can be hashconsed.
+
+However, there is still one problem with this method, and this is solved by the
+\texttt{HVar of int}. This is basically a de Bruijn index, which is mandatory
+unfortunately. For example, imagine the following term 
+\texttt{Lambda(x, Lambda(y, App(App(Var(y), Var(y)), App(Var(x), Var(y)))))}.
+Without using de Bruijn, by using for example juste HVar (that would be
+hashconsed once), the following pattern would match: 
+\texttt{Lambda(?x, Lambda(?y, App(?T, ?T)))} because this would extract the vars
+out of their context and they would became identical. Using the de Bruijn
+indices solves this issue.
+
+The hashing functions computes a hash value for each term and list. For list, it
+computes from the head and tail. If its an empty list its value is zero, else it
+is $head + 17 \times tail$ where $head$ and $tail$ are values given in
+argument of the \texttt{hash\_value\_hlist} function. An extract from the code:
+\begin{verbatim}
+  let rec hash_hlist = function
+    | [] -> 0
+    | v :: [] -> hash_term v.value
+    | v1 :: v2 :: _ -> hash_value_hlist (hash_term v1.value) v2.hash
+\end{verbatim}
+If you want to modify the hashing function, please change
+\texttt{hash\_value\_hlist}, since it is used multiple times.
+
+Finally, you can notice that a hterm is a record with the hashconsed term and a
+name field. This is simply a tree mapping the names that were lost during the
+hashconsing. This allows to recreate the typed term corresponding to the
+hashconsed term.

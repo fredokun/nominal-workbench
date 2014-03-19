@@ -1,6 +1,7 @@
 (* Distributed under the MIT License.
   (See accompanying file LICENSE.txt)
   (C) Copyright Matthieu Dien
+  (C) Copyright Vincent Botbol
 *)
 
 {
@@ -45,7 +46,7 @@
       ; ":test", TEST
       ; ":match", MATCH
       ; ":type", CTYPE
-      ; ":dot", DOT
+      ; ":dot", DOT_CMD
       ]
 
   let directive_option_table = Hashtbl.create 16

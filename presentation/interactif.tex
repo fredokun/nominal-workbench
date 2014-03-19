@@ -1,5 +1,81 @@
-\begin{frame}{Directives Toplevel}
+\begin{frame}{Toplevel}
 
+Le logiciel est accompagné d'un mode interactif permettant à
+l'utilisateur de manipuler directement le système en rajoutant règles,
+stratégies ou encore la réduction directe de terme.
 
+\end{frame}
+
+\begin{frame}{Directives}
+
+Plusieurs directives sont à la disposition de l'utilisateur pour lui
+permettre d'affiner le développement de son système de réécriture.
+\bigskip
+
+On peut ainsi : 
+\begin{itemize}
+\item Effectuer des tests sur une expression selon plusieurs modalités
+\item Afficher le type d'un terme
+\item Exporter la représentation d'un terme \emph{hash-consé} vers un graphe
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Tests}
+
+Nous disposons de plusieurs outils pour tester un programme.
+\medskip
+
+\begin{verbatim} 
+:test <terme> <predicat> <resultat> 
+\end{verbatim}
+
+Par exemple, sur un système décrivant les axiomes de Peano. Pour
+tester que l'addition se comporte correctement nous pourrons écrire :
+
+\begin{verbatim}
+:test rewrite Add(Successor(Zero), Successor(Zero)) 
+      with BottomupAll --equal Successor(Successor(Zero))
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]{Tests}
+
+Nous pouvons également tester l'échec d'un test par une exception pré-définie :
+\medskip
+
+Ainsi, le test suivant échouera comme prévu
+\begin{verbatim}
+:test Successor(Zero, Zero) 
+      --failwith TermSystemError.WrongTermArity
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]{Tests}
+  On peut aussi tester la correspondance d'un terme à un type ou à un
+  patron
+
+  \bigskip
+  Dans le lambda-calcul, on peut ainsi tester l'alpha-conversion
+\begin{verbatim}
+:match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+       --with App(?T, ?T) 
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}{Autres commandes}
+  
+  On peut également citer des directives utilitaires :
+  \bigskip
+
+  \begin{itemize}
+  \item :type <t> -- Permet d'afficher le type du terme t
+  \bigskip
+
+  \item :dot <t> <fichier> -- Crée un graphe ``dot'' de la version \emph{hash-consé} du term t
+  \end{itemize}
 
 \end{frame}
