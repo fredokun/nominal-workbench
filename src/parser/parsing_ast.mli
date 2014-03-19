@@ -3,6 +3,8 @@
   (C) Copyright Pierre Talbot
 *)
 
+(** Abstract Syntax Tree resulting from the parsing *)
+
 open Rewriting_ast
 open Strategy_ast
 open Term_ast
