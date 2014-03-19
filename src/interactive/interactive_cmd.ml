@@ -45,7 +45,7 @@ let flatten_string_of_terms ts =
 let equal_terms t1s t2s =
   let t1s_str = string_of_terms t1s in
   let t2s_str = string_of_terms t2s in
-  try 
+  try
     List.for_all2 equal_term t1s_str t2s_str
   with
   | Invalid_argument _ -> false
@@ -182,14 +182,18 @@ let launch_test eval_ast (RewritingTest(filename, _) as test) =
   Printexc.record_backtrace false
 
 let match_term eval_term term_expr pattern system =
-  List.iter (fun term ->
-      let res =
-        match Matching.matching
-                (Term_checker.construct_ast_checked system term)
-                pattern with
-        | Some _ -> "The term matches the pattern."
-        | None -> "The term doesn't match the pattern." in
-      print_endline res) @@ eval_term term_expr
+  try
+    ignore (Type_checking.check_pattern system pattern);
+    List.iter (fun term ->
+        let res =
+          match Matching.matching
+                  (Term_checker.construct_ast_checked system term)
+                  pattern with
+          | Some _ -> "The term matches the pattern."
+          | None -> "The term doesn't match the pattern." in
+        print_endline res) @@ eval_term term_expr
+  with Rewriting_system_error.RewritingSystemError _ ->
+    print_system_error "Pattern ill-formed\n"
 
 let print_type_of_term eval_term term_expr system =
   let open Term_checker in
