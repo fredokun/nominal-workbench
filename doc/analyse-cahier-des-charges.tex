@@ -8,6 +8,8 @@
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{listings}
 \usepackage{hyperref}
 
 \title{NoWork\\
@@ -124,4 +126,109 @@ Le livrable est constitué :
 
 Le tous sera livré via une \textit{pull-request} dans le dépôt officiel Github (\url{https://github.com/fredokun/nominal-workbench}).
 
+
+\section{Functionalités}
+
+La liste de functionalites est montre dans le diagram de cas
+d'utilisation de la figure~\ref{use-cases}. A continuation vous
+pouvais trouver une description de chacun des cas d'utilitation avec
+des examples:
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\linewidth,natwidth=\linewidth,natheight=\textheight]{use-case-diagram.png}
+  \caption{List of use cases for nowork}
+  \label{use-cases}
+\end{figure}
+
+\begin{description}
+
+\item[Help:]
+Montre une liste de command disponible avec une description des chacun
+des options.
+
+\begin{minipage}{\textwidth}
+Result:
+\begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
+Available commands :
+        :help            -- Displays this help
+        :?               -- Displays this help
+        :load-test f exp -- Load a test file f and check that the result matches the expectation
+        :test            -- Test an expression (consult user-doc for more infos)
+        :match           -- Check that an expression matches the given type or strategy
+        :type            -- Returns the type of the expression
+        :dot t out       -- Output the hash-consed version of a term into a dot file graph
+        :quit            -- Exits the REPL
+        :exit            -- Exits the REPL
+        :q               -- Exits the REPL
+More detailled informations may be found in the user-documentation
+\end{lstlisting}
+\end{minipage}
+
+\item[Load-test:]
+Permet de charger un fichier de text l'executer et verifier le resultat que on
+doit s'attendre. Le test passe si le resultat de l'execution
+correspond avec le resultat attendu. \\
+
+\begin{minipage}{\textwidth}
+Example :
+\begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
+  # :load-test "data/test/run-fail/typecheck_unification2.nw" --failwith RewritingSystemError.TypeClash ;;
+    Filename: data/test/run-fail/typecheck_unification2.nw
+    [ passed ]  Failure with RewritingSystemError.TypeClash as expected.
+        Info: Type clash between A and K2.
+\end{lstlisting}
+\end{minipage}
+
+\item[Test:]
+Permet de tester une terme ecrit dans la ligne des commandes.\\
+
+ \begin{minipage}{\textwidth}
+Example :
+\begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
+  # :test  --failwith RewritingSystemError.TypeClash ;;
+  Terms : Lambda (x, Var (x)) rewrote into :Lambda (x, Var (x))
+[ passed ]  Terms have been correctly rewritten in : Lambda (x, Var (x));;
+\end{lstlisting}
+\end{minipage}
+
+\item[Type:]
+Permet d'obtenir le type de une terme ecrit dans la ligne des commandes.\\
+
+\begin{minipage}{\textwidth}
+Example :
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+  # :type Lambda(x, Var(x));;
+   Term
+\end{lstlisting}
+\end{minipage}
+
+\item[Dot:]
+Permet de generer un fichier dot avec la representation hash-conse
+d'un term. \\
+
+\begin{minipage}{\textwidth}
+Example :
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+  # :dot Lambda(x, Var(x)) "lambda.dot" ;;
+\end{lstlisting}
+\end{minipage}
+
+\item[Match:]
+Permet de voir si une term match un pattern donne. \\
+
+\begin{minipage}{\textwidth}
+Example :
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+  # :match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+       --with App(?T, ?T)
+\end{lstlisting}
+\end{minipage}
+
+\item[Quit:]
+Arrete le program.
+
+\end{description}
+
 \end{document}
+
