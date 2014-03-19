@@ -49,7 +49,7 @@ type hterm = private { term: hterm_raw; binders: hterm_name }
 (** [create_term t] hashconses [t] into a hterm. *)
 val create_term : Term_ast_typed.term_ast_with_binders -> hterm
 
-(** [create_dterm ht] recreates a dterm from the hashconsed term [ht]. *)
+(** [create_dterm ht] recreates a term_ast_typed from the hashconsed term [ht]. *)
 val create_typed_term : hterm -> Term_ast_typed.term_ast_with_binders
 
 (** [dot ht filename] prints the dot representation of [t] into [filename]. *)
