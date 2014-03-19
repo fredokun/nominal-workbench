@@ -5,7 +5,6 @@ begin library "interactive"
     "config.mli" "config.ml"
     "eval.ml"
     "display_test.ml"
-    "interactive_cmd.ml"
     "toploop.mli" "toploop.ml"
     "main.ml"
   ]

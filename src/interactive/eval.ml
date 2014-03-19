@@ -4,7 +4,6 @@
 
 open Parsing_ast
 open Printf
-open Interactive_cmd
 open Display_test
 
 (* TODO : mli !! *)
