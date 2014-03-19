@@ -62,9 +62,6 @@ let loop ppf system =
     try
       Lexing.flush_input lb;
       first_line := true;
-      (* TODO : discriminer les termes, des règles.. combinaison des
-	 parsers? *)
-
       let items = parse_toplevel_phrase lb in
       ignore (List.iter (function item -> execute_phrase true ppf system item) items)
     with

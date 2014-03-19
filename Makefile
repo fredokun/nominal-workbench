@@ -21,7 +21,7 @@ main: launch_gen
 	cp $(NOWORK_BIN_TMP) $(NOWORK_BIN)
 
 test: main
-	./$(NOWORK_BIN) --no-repl --debug data/test/test.nw
+	./$(NOWORK_BIN) --no-repl --no-warning --debug data/test/test.nw
 
 install:
 	ocp-build install nowork

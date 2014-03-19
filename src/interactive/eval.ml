@@ -51,7 +51,6 @@ let equal_terms t1s t2s =
   | Invalid_argument _ -> false
 
 let rec process_file env fname =
-
   let fpath =
     if Filename.is_implicit fname then
       find_file fname
@@ -82,20 +81,15 @@ and run_term_type_check env term =
   let open Term_checker in
   let ast_checked = construct_ast_checked env term in
   ignore (check_type_of_term env ast_checked)
-  (* let ast_typed = check_type_of_term env ast_checked in *)
-  (* print_endline Pretty.(string_of pp_type_application (type_of_typed_term ast_typed)) *)
 
-and process_term env strategy ts  : Term_ast.term_ast list =
+and process_term env strategy ts : Term_ast.term_ast list =
   let nts = Rewriting.rewrite_rec strategy env ts in
-  Printf.printf "Terms : %s rewrote into :%s\n%!"
-    (String.concat "; " @@ List.map Pretty.(string_of pp_term) ts)
-    (String.concat "; " @@ List.map Pretty.(string_of pp_term) nts);
+  if not !Config.no_warning then begin
+    Printf.printf "Terms : %s rewrote into :%s\n%!"
+      (String.concat "; " @@ List.map Pretty.(string_of pp_term) ts)
+      (String.concat "; " @@ List.map Pretty.(string_of pp_term) nts)
+  end;
   nts
-(*  with
-  | _ ->
-    Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t);
-    t
-*)
 
 and expanse_term env : term_ast -> term_ast = 
     function {name=n; desc=d; info=info} as id ->
@@ -115,9 +109,6 @@ and process_term_expr env : Parsing_ast.term_expr -> Term_ast.term_ast list  = f
     failwith "Cannot declare global variables in declarations"
   | PTermRewrite (term_expr, strategy) ->
     let rewritten_subterm = process_term_expr env term_expr in
-    (* Printf.printf "%s with %s \n"
-      (Term_ast.string_of_term  rewritten_subterm)
-      (Strategy_ast.string_of_strategy strategy); *)
     let rewritten_terms = process_term env strategy rewritten_subterm in
     rewritten_terms
   | PTerm (term) ->
@@ -125,15 +116,12 @@ and process_term_expr env : Parsing_ast.term_expr -> Term_ast.term_ast list  = f
     run_term_type_check env term; 
     [term]
 
-(* todo : add process_rule + process_directive + process_kind + .. *)
-
 and evaluate_structure_item env =
   let open Rewriting_ast in
   let open Strategy_ast in
   function
   | PInteractiveCmd cmd -> eval_interactive_cmd env cmd
   | PDecl rewriting_decl ->
-    (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl env rewriting_decl
   | PTermExpr (PTermLet (ident, expr)) ->
     let open Symbols in

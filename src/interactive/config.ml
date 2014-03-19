@@ -14,6 +14,7 @@ let verbose = ref false
 let no_repl = ref false
 let debug = ref false
 let reset_system = ref false
+let no_warning = ref false
 
 (* functions *)
 let print_version () =
@@ -38,5 +39,6 @@ let list =
   ; "--debug", Set debug, "Launch nowork in debug mode, the exception backtrace is reported."
   ; "--reset-system", Set reset_system, "Start interpreting each file with an empty system instead of populating it"
   ; "--load-system-file", String (fun _ -> print_endline "'load-system' todo"), "Load the given file as the initial system to used"
+  ; "--no-warning", Set no_warning, "Do not print the warnings."
   ]
 
