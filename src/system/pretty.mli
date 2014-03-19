@@ -6,16 +6,16 @@ val pp_separated :
 val pp_kind_type: Format.formatter -> Rewriting_ast.kind_type -> unit
 
 val pp_kind: Format.formatter -> Rewriting_ast.kind -> unit
-  
+
 val pp_type_name: Format.formatter -> string -> unit
 
 val pp_type_application:
   Format.formatter -> Rewriting_ast.type_application -> unit
 
 val pp_operator_arg: Format.formatter -> Rewriting_ast.operator_arg -> unit
-  
+
 val pp_type_binders: Format.formatter -> string list -> unit
-  
+
 val pp_operator: Format.formatter ->
   string list * Rewriting_ast.operator_arg list *
     Rewriting_ast.type_application -> unit
@@ -38,12 +38,12 @@ val pp_rewriting_decl:
   Format.formatter -> Rewriting_ast.rewriting_decl -> unit
 
 val pp_strategy : Format.formatter -> Strategy_ast.strategy -> unit
-  
+
 val pp_strategy_def :
   Format.formatter -> string list * Strategy_ast.strategy -> unit
 
 val pp_system : Format.formatter -> Symbols.system -> unit
 
-val pp_term : Format.formatter -> Term_ast.term_ast -> unit 
-  
+val pp_term : Format.formatter -> Term_ast.term_ast -> unit
+
 val string_of : (Format.formatter -> 'a -> unit) -> 'a -> string
