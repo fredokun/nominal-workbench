@@ -40,7 +40,7 @@ let create_term (name : string) (desc : term_desc) : term_ast =
 /* interactive commands */
 %token LOAD_TEST FAILWITH MATCH HELP QUIT TEST
 %token IN_CMD_OPTION EQUAL_CMD_OPTION WITH_CMD_OPTION
-%token CTYPE WITH_TYPE_OPTION DOT
+%token CTYPE WITH_TYPE_OPTION DOT_CMD
 
 /* punctuation */
 %token LPAREN RPAREN LBRACKET RBRACKET LACCOL RACCOL SEMICOL
@@ -102,7 +102,7 @@ interactive_command:
 | MATCH term_expr WITH_CMD_OPTION rule_side_pattern { TermMatch($2, $4) }
 | MATCH term_expr WITH_TYPE_OPTION type_binders operator_type { TermMatchType($2, $4, $5) }
 | MATCH term_expr WITH_TYPE_OPTION operator_type { TermMatchType($2, [], $4) }
-| DOT term_expr STRING { TermToDot($2, $3) }
+| DOT_CMD term_expr STRING { TermToDot($2, $3) }
 | CTYPE term_expr { TermType $2 }
 | HELP { Help }
 | QUIT { Quit }

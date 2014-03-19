@@ -27,7 +27,7 @@ let directive_usage =
     ; ":exit            -- Exits the REPL"
     ; ":q               -- Exits the REPL"
     ]
-  ^ "More detailled informations may be found in the user-documentation"
+  ^ "\nMore detailled informations may be found in the user-documentation"
 
 let find_file fname =
   let is_file_in_dir dir =
