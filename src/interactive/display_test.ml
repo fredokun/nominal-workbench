@@ -31,10 +31,7 @@ let string_of_filename filename =
   sprintf "\n    %sFilename:%s %s\n" cyan_color reset_color filename
 
 let string_of_msg msg =
-  sprintf "    Message: %s\n" msg
-
-let string_of_test_info filename msg =
-  string_of_filename filename ^ string_of_msg msg
+  sprintf "    %sInfo:%s %s\n" cyan_color reset_color msg
 
 let print_result_line message color status =
   printf "%s%s%s  %s" color status reset_color message
