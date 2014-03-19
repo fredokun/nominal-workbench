@@ -8,6 +8,7 @@
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{verbatim}
+\usepackage{hyperref}
 
 \title{NoWork\\
 Analyse du cahier des charges}
@@ -49,6 +50,7 @@ Le code est testé et les tests fonctionnels sont directement embarqués dans le
 \subsection{Organisation du projet}
 
 Le cahier des charges initial spécifiait un module différent pour la représentation des termes et du système or il s'est avéré que les deux étaient trop fortement couplé et que des simplifications au niveau du code impliquait ses deux modules d'être unifié. Pour rappel, les modules sont :
+\newline
 
 \begin{itemize}
 \item Module d'analyse lexicale et syntaxique (\verb=src/parser/=) ;
@@ -57,11 +59,69 @@ Le cahier des charges initial spécifiait un module différent pour la représen
 \item Module pour le \textit{top-level} (\verb=src/interactive=) ;
 \item Module pour les tests unitaires (\verb=tests/=).
 \end{itemize}
+\vspace{10pt}
 
 Il n'y a pas de module de gestion de l'exploration car cette fonctionnalité n'a pas été implémentée.
 
-\section{Fonctionnalités}
+\section{Aspects algorithmiques}
 
+Une partie du résultat attendu comporte une partie de recherche pour implémenter des structures de données et algorithmes en concordance avec les critères du client. Les prochaines sections donnent une idée du travail réalisé mais ne rentre pas dans les détails, pour les spécifications exactes, vous pourrez vous référer au document \verb=doc/pdf/dev-manual.pdf=.
 
+\subsection{Structure de données}
+
+Les termes sont représentés par un DAG avec partage maximal des sous-termes (via une structure de type \textit{hash-consing}). Les termes sont également représentés tel que l'opération d'égalité est complètement indépendante du nommage des termes, il y a une alpha-conversion implicite.
+\newline
+Le système de réécriture est représenté par une structure comprenant 4 environnements pour les \textit{kind}, les constantes, les opérations et les règles de réécriture.
+\newline
+La représentation des structures est complètement implémenté.
+
+\subsection{Pattern matching nominal}
+
+L'algorithme de pattern matching non-linéaire est implémenté grâce à la structure de \textit{hash-consing} citée précédemment et respecte donc la contrainte d'alpha-conversion.
+
+\subsection{Réécriture nominale}
+
+L'algorithme de réécriture nominale avec stratégie est complètement implémenté. Il est capable de réécrire des termes via des règles complexes comme celle du lambda calcul ou du langage concurrent CCS. Les différentes stratégies axiomatiques implémentées permettent de définir, à notre connaissance, n'importe quelle stratégie de plus haut niveau.
+
+\subsection{Mode d'exploration}
+
+Le mode d'exploration n'est pas complètement implémenté. L'algorithme de réécriture retourne un ensemble de termes et les prédicats ensemblistes d'égalité et d'inclusion sont implémentés. L'équivalence entre deux termes n'est pas implémentée mais le code existant permettrait de faire cette modification aisément car les préparatifs (tel que l'ensemble de termes) sont implémentés.
+
+\section{Langage}
+
+Cette partie n'était pas décrite dans le cahier des charges initial et a été ajoutée durant le projet.
+\newline
+
+La description et la vérification de la sémantique du langage est complètement implémentée. Nous pouvons distinguer 4 langages différents dans ce projet :
+\newline
+
+\begin{itemize}
+\item Langage de description du système de réécriture avec typage comprenant les \textit{kind}, constantes, opérations et règles. Notons que les règles se décrivent avec deux sous-langages pour exprimer des \textit{patterns} et des \textit{effects}.
+\item Langage de termes avec vérification des types, assez proche du langage de description des patterns.
+\item Langage de stratégies comprenant les axiomes permettant de définir des stratégies de simulation.
+\item Langage de commandes interactives permettant de faire des tests dans un \textit{top-level}.
+\end{itemize}
+\vspace{10pt}
+
+\section{Aspects méthodologiques}
+
+Le document \verb=doc/pdf/methodology.pdf= décrit en détail la méthodologie appliquée tout au long du projet. Rétrospectivement, plusieurs réunion, à raison d'une par mois environ, on été organisée avec le client en comité de 3 à 4 personnes.
+
+La traçabilité du projet est garantie par l'utilisation de \textit{rallydev} qui nous a permis d'appliquer la méthode Scrum. Les itérations duraient entre 2 à 3 semaines et des pauses dans le développement ont été organisée pendant les examens qui pouvait s'étaler sur 3 semaines parfois.
+
+\section{Livrable}
+
+Le livrable est constitué :
+\newline
+
+\begin{itemize}
+\item Du code source dont tous les .mli sont correctement documentés.
+\item D'un jeu de scénarios utilisateurs qui suivent dans ce document.
+\item D'un guide utilisateur (\verb=doc/user-manual.tex=)
+\item D'un guide développeur (\verb=doc/dev-manual.tex=)
+\end{itemize}
+\vspace{10pt}
+
+Le tous sera livré via une \textit{pull-request} dans le dépôt officiel Github (\url{https://github.com/fredokun/nominal-workbench}).
 
 \end{document}
