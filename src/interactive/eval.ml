@@ -113,7 +113,7 @@ and expanse_term env : term_ast -> term_ast =
 	  try
 	    Symbols.System_map.find n env.Symbols.globals
 	  with
-	    | Not_found -> print_endline ("[Warning] Unbound variable " ^ n); id
+	    | Not_found -> id
 	end
 	| _ -> id
 	  
