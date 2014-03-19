@@ -243,8 +243,8 @@ and create_id_list l =
   | id :: tl -> create_id_list_raw id (create_id_list tl)
 
 
-let create_term td =
-  let term, _, binders = create_term_raw [] [] [] td in
+let create_term t =
+  let term, _, binders = create_term_raw [] [] [] t in
   { term; binders }
 
 module IMap = Map.Make (struct
@@ -252,10 +252,10 @@ module IMap = Map.Make (struct
     let compare = Pervasives.compare
   end)
 
-let create_dterm td =
-  let td, names = td.term, td.binders in
+let create_typed_term ht =
+  let ht, names = ht.term, ht.binders in
   let rec step names td =
-    match td, names with
+    match ht, names with
     | HConst i, _ -> DConst (None, i)
     | HVar _, NName n -> DVar (None, n)
     | HFreeVar i, _ -> DVar (None, i)
@@ -265,7 +265,7 @@ let create_dterm td =
       DTerm (None, i, terms)
     | _, _ -> assert false
   in
-  step names td
+  step names ht
 
 (* Pretty printing function *)
 

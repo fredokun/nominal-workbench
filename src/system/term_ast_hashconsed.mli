@@ -50,7 +50,7 @@ type hterm = private { term: hterm_raw; binders: hterm_name }
 val create_term : Term_ast_typed.term_ast_with_binders -> hterm
 
 (** [create_dterm ht] recreates a dterm from the hashconsed term [ht]. *)
-val create_dterm : hterm -> Term_ast_typed.term_ast_with_binders
+val create_typed_term : hterm -> Term_ast_typed.term_ast_with_binders
 
 (** [dot ht filename] prints the dot representation of [t] into [filename]. *)
 val dot : hterm -> string -> unit
