@@ -156,6 +156,7 @@ and load_test_cmd env (RewritingTest(filename, _) as test) =
         print_system_error (sprintf "%s: is a directory" filename)
       else
         let f = open_in filename in
+        Printf.printf "%s" (string_of_filename filename);
         test_rewriting_system env f test;
         close_in f
     with
@@ -191,24 +192,22 @@ and check_expectation filename expectation result domain =
   | MustPass, Failed(e, msg) ->
     print_failure (
       sprintf "Failure with error %s.\n" (string_of_error e) ^
-      string_of_test_info filename msg)
+      string_of_msg msg)
   | MustFail(e), Passed ->
     print_failure (
-      sprintf "Should have failed with %s.\n" (string_of_error e) ^
-      string_of_filename filename)
+      sprintf "Should have failed with %s.\n" (string_of_error e))
   | MustFail(expected), Failed(e, msg) when not ( equal_error expected e ) ->
       print_failure (sprintf "Expected error %s but failed with %s.\n"
         (string_of_error expected)
         (string_of_error e) ^
-        string_of_test_info filename msg)
+        string_of_msg msg)
   | MustFail(_), Failed(e, msg) ->
       print_success (
         sprintf "Failure with %s as expected.\n" (string_of_error e) ^
-        string_of_test_info filename msg)
+        string_of_msg msg)
   | MustPass, Passed ->
       print_success (
-        sprintf "%s passed.\n" (system_name filename) ^
-        string_of_filename filename)
+        sprintf "%s passed.\n" (system_name filename))
 
 and match_term_cmd env term_expr pattern =
   try
