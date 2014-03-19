@@ -7,6 +7,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[american]{babel}
 \usepackage[T1]{fontenc}
+\usepackage{color}
 
 \title{NoWork\\
 User manual}
@@ -23,7 +24,25 @@ What is NoWork and why is it interesting with regards to other rewriting system?
 
 \subsection{Rewriting system}
 %% Rémy
-Brief presentation of rewriting system in general.
+In computer science, we often define an operation of transition. From a
+given state we go to an other state by this operation. In arithmetics,
+we call this the \emph{evaluation} : we apply the calculus rules to
+compute the result of a formula. In language semantics, we also call
+this \emph{reduction}. A reduction step leads an expression in a given
+state in a new state. Morally, in languages, the reduction operation
+consists in replacing subterms of an expression by other terms.
+
+A rewriting system is a method to describe a language by defining a
+\emph{set of terms}, and the reduction operation on this language which
+is a \emph{set of reduction rules}. 
+To rewrite a term, you must first find the subterms which \emph{match} the left-hand side of one of the rules. Then you \emph{replace} it by the right-hand side of the choosen rules. It
+could be indeterministic. In a rewriting system, it's possible to implement a lot of concepts like
+$\lambda$-calculus $\beta$-Reducton, Peano's arithmetics, Milner's CCS,
+De Morgan's Laws, etc. 
+
+  For instance, if we considere Peano's arithmetics, 
+  given the rule (\texttt{Sub(Add(X))} $\rightarrow$ \texttt{X}),
+  the term \texttt{Sub(Add(0))} rewrites in \texttt{0}.
 
 \subsection{Getting started}
 %% Vincent
