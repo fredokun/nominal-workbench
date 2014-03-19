@@ -38,18 +38,6 @@ let find_file fname =
 
 let system_name filename = (Filename.chop_extension (Filename.basename filename))
 
-(* Only a textual equality test. *)
-let equal_term t1 t2 =
-  (strip_ws t1) = (strip_ws t2)
-
-let equal_terms t1s t2s =
-  let t1s_str = string_of_terms t1s in
-  let t2s_str = string_of_terms t2s in
-  try
-    List.for_all2 equal_term t1s_str t2s_str
-  with
-  | Invalid_argument _ -> false
-
 let rec process_file env fname =
   let fpath =
     if Filename.is_implicit fname then
@@ -288,14 +276,12 @@ and term_to_dot_cmd env term_expr filename =
         dot (create_term term) (sprintf "%s%d%s" filename n ext);
         n+1) 0 @@ process_term_expr env term_expr
 
-and term_test_cmd env = function
-  | TMustPass (InPredicate(t1, t2))
-  | TMustPass (EqualPredicate(t1, t2)) ->
-  begin
+and term_test_predicate env t t' predicate =
+  begin 
     try
-      let rt1s = process_term_expr env t1 in
-      let rt2s = List.flatten @@ List.map (process_term_expr env) t2 in
-      if (Terms_predicate.term_equality env rt1s rt2s) then
+      let rt1s = process_term_expr env t in
+      let rt2s = List.flatten @@ List.map (process_term_expr env) t' in
+      if (predicate env rt1s rt2s) then
         rewritten_success rt1s rt2s
       else
         rewritten_failure_unexpected rt1s rt2s
@@ -308,6 +294,12 @@ and term_test_cmd env = function
             (string_of_msg (error_msg code msg)))
     | e -> print_unknown_exc e "term rewriting"
   end
+
+and term_test_cmd env = function
+  | TMustPass (InPredicate(t1, t2)) -> 
+    term_test_predicate env t1 t2 Terms_predicate.term_equality
+  | TMustPass (EqualPredicate(t1, t2)) ->
+    term_test_predicate env t1 t2 Terms_predicate.term_inclusion
   | TMustFail (term, e) ->
     try
       let rt = flatten_string_of_terms @@ process_term_expr env term in
