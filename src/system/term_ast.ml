@@ -14,7 +14,7 @@ type term_desc =
   | Const
   | Term of term_ast list
   | Var
-and term_ast = 
+and term_ast =
   {
     name : string;
     info : info;
