@@ -365,3 +365,8 @@ let dot t filename =
   Hashtbl.iter (fun _ value -> output_string f value) term_tbl;
   output_string f "}\n";
   close_out f
+
+let sort_hashed_terms hl =
+  let compare_hterm ht ht' =
+    compare (hash_term ht.term) (hash_term ht.term) in
+  List.sort compare_hterm hl
