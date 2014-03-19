@@ -1,0 +1,11 @@
+digraph asts {
+				Parsing_ast -> Rewriting_ast[color=blue];
+				Parsing_ast -> Strategy_ast[color=blue];			
+				Parsing_ast -> Term_ast [color=red, style=dotted
+										label="term expressions"];
+				Term_ast -> Term_ast_typed [color=red, style=dotted
+										label="typing"]
+				Term_ast -> Term_ast_hashconsed [color=red, style=dotted
+										label="hashconsing"]
+
+}
