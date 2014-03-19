@@ -297,10 +297,13 @@ and term_match_type_cmd env term_expr type_binders arg_types =
 
 and term_to_dot_cmd env term_expr filename =
   let open Term_ast_hashconsed in
-  let filename = try Filename.chop_extension filename
-    with _ -> filename in
-  let ext = ".dot" in
-  ignore @@ List.fold_left (fun n term ->
+  if not (Filename.check_suffix filename ".dot") then
+    printf "The file should have a .dot extension."
+  else
+    let filename = try Filename.chop_extension filename
+      with _ -> filename in
+    let ext = ".dot" in
+    ignore @@ List.fold_left (fun n term ->
         let term = Term_checker.construct_ast_checked env term in
         dot (create_term term) (sprintf "%s%d%s" filename n ext);
         n+1) 0 @@ process_term_expr env term_expr

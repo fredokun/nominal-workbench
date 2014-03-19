@@ -32,10 +32,13 @@ type hterm_name =
 
 type hterm = { term: hterm_raw; binders: hterm_name }
 
+let hash_value_hlist head tail =
+  head + 17 * tail
+
 let rec hash_hlist = function
     | [] -> 0
     | v :: [] -> hash_term v.value
-    | v1 :: v2 :: _ -> (hash_term v1.value) + 17 * v2.hash
+    | v1 :: v2 :: _ -> hash_value_hlist (hash_term v1.value) v2.hash
 
 (** The hashtbl's hash function is efficient on string, so we can use it without
   any consequence *)
@@ -82,7 +85,7 @@ module HListtbl = Hashtbl.Make(struct
 let hash_idlist = function
   | [] -> 0
   | id :: [] -> id.value
-  | id1 :: id2 :: _ -> id1.value + 17 * id2.hash
+  | id1 :: id2 :: _ -> hash_value_hlist id1.value id2.hash
 
 module IdListtbl = Hashtbl.Make(
     struct
@@ -185,7 +188,7 @@ and create_cons =
   fun term hlist ->
     let new_hl =
       { id = !id; value = term;
-        hash = hash_term term + 17 * hash_hlist hlist} :: hlist in
+        hash = hash_value_hlist (hash_term term) (hash_hlist hlist)} :: hlist in
     try find t new_hl
     with Not_found ->
       add t new_hl new_hl;
@@ -226,7 +229,7 @@ and create_id_list_raw =
   add t nil2 nil2;
   fun id hl ->
     let new_hl = { id = !lid; value = id;
-                  hash = id + 17 * hash_idlist hl } :: hl in
+                  hash = hash_value_hlist id (hash_idlist hl) } :: hl in
     try
       find t new_hl
     with Not_found ->
@@ -240,8 +243,8 @@ and create_id_list l =
   | id :: tl -> create_id_list_raw id (create_id_list tl)
 
 
-let create_term td =
-  let term, _, binders = create_term_raw [] [] [] td in
+let create_term t =
+  let term, _, binders = create_term_raw [] [] [] t in
   { term; binders }
 
 module IMap = Map.Make (struct
@@ -249,10 +252,10 @@ module IMap = Map.Make (struct
     let compare = Pervasives.compare
   end)
 
-let create_dterm td =
-  let td, names = td.term, td.binders in
+let create_typed_term ht =
+  let ht, names = ht.term, ht.binders in
   let rec step names td =
-    match td, names with
+    match ht, names with
     | HConst i, _ -> DConst (None, i)
     | HVar _, NName n -> DVar (None, n)
     | HFreeVar i, _ -> DVar (None, i)
@@ -262,7 +265,7 @@ let create_dterm td =
       DTerm (None, i, terms)
     | _, _ -> assert false
   in
-  step names td
+  step names ht
 
 (* Pretty printing function *)
 

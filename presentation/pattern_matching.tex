@@ -1,15 +1,16 @@
 
 \begin{frame}
 
-L'un des éléments principal de la réécriture nominale est l'utilisation du
-pattern matching : si un terme est de la forme du \emph{pattern} (motif), on lui
-applique l'effet associé. 
+\'Elément principal de la réécriture nominal : pattern matching. Indique si un
+terme est de la forme d'un \emph{pattern} (motif) donné, et en extrait des informations
 
 \bigskip
 
-Deux types de pattern matching : linéaire et non linéaire. La version
-non linéaire implique d'avoir des égalités structurelles sur les termes, ce qui
-est résolu par du hashconsing. 
+Deux types de pattern matching : 
+\begin{itemize}
+\item Linéaire. 
+\item Non linéaire. 
+\end{itemize}
 
 \end{frame}
 
@@ -20,29 +21,36 @@ est résolu par du hashconsing.
 \frametitle{Exemple de pattern matching}
 
 Prenons ce terme :
-\texttt{Lambda(x, Var(x))}. Le pattern matching peut par exemple nous dire s'il est de la forme 
-\texttt{Lambda(\_, \_)}. Mais on pourrait aussi tester qu'il ait la forme
-\texttt{Var(\_)}, ce qui serait faux.
+\texttt{Lambda(x, Var(x))}. 
+\begin{itemize} 
 
-\medskip
+  \item matche \texttt{Lambda(\_, \_)}.
+  \item mais pas \texttt{Var(\_)}.
 
-Maintenant, on peut également récupérer ce que contient le terme :
+\end{itemize}
 
-\texttt{Lambda(?x, \_)} nous retourne une variable \emph{x} qui contient le
-premier sous-terme de \emph{Lambda}.
+\bigskip
+
+Extraction de sous-termes :
+
+\texttt{Lambda(?x, \_)} retourne le sous-terme correspondant à \emph{?x}.
 
 \end{frame}
 
 \begin{frame}
 \frametitle{Concrètement}
 
-Le pattern matching permet de reconnaître la forme du terme et d'en extraire des
-sous-termes, de la manière suivante :
+Exemple du déroulement du pattern-matching:
+\begin{itemize}
+  
+  \item Terme : \texttt{Lambda(y, Var(y))}.
 
-Prenons d'abord le terme \texttt{Lambda(y, Var(y))} et le pattern
-\texttt{Lambda(\_, Var(?x))}.
+  \item Pattern : \texttt{Lambda(\_, Var(?x))}.
+
+\end{itemize}
 
 \bigskip
+
 \begin{center}
   \only<2>
       {\includegraphics[scale=0.5]{pattern/trivial1.pdf}}
@@ -56,20 +64,15 @@ Prenons d'abord le terme \texttt{Lambda(y, Var(y))} et le pattern
       {\includegraphics[scale=0.5]{pattern/trivial5.pdf}}
 
 \end{center}
-%% Lambda  |||   Lambda -> match
-%% x       |||   \_     -> match
-%% Var     |||   Var    -> match
-%% y       |||   ?x     -> match et on ajoute une variable x avec pour valeur
-%% l'atome y
 
 \end{frame}
 
 \begin{frame}
 \frametitle{Non linéarité des atomes}
 
-De plus, il est possible de matcher si deux atomes sont identiques dans un
-pattern, dans le cas où l'un est le binder de l'autre. On reprend le même terme,
-mais avec le pattern \texttt{Lambda(?x, Var(?x))} :
+Possibilité de matcher deux atomes liés même dans le cas linéaire.
+
+Par exemple avec \texttt{Lambda(?x, Var(?x))} :
 
 \bigskip
 \begin{center}
@@ -94,16 +97,24 @@ mais avec le pattern \texttt{Lambda(?x, Var(?x))} :
 \begin{frame}
 \frametitle{Non linéarité avec les termes}
 
-On a pu voir un exemple de non linéarité, mais seulement pour le pattern
-matching des atomes. Dans le cas des termes, il faut pouvoir raisonner sur la
-structure du terme pour pouvoir décider au matching si deux sous termes sont
-identiques.
+Non linéarité : possiblité d'extraire plusieurs fois le même motif modulo
+alpha-conversion.
+\begin{itemize}
+\item Atomes : possible dans l'algorithme linéaire.
+\item Termes : nécessite la capacité de raisonner sur la structure du terme.
+\end{itemize}
 
 \bigskip
 
-Par exemple, on voudrait pouvoir faire matcher 
-\texttt{App(Lambda(x, Var(x)), Lambda(y, Var(y)))} avec 
-\texttt{App(?X, ?X)}, puisque le Lambda de droite n'est qu'un renommage du
+Exemple :
+\begin{itemize}
+\item Terme : \texttt{App(Lambda(x, Var(x)), Lambda(y, Var(y)))} matche 
+\item Pattern : \texttt{App(?X, ?X)}.
+\end{itemize} 
+
+\medskip
+
+Possible puisque le Lambda de droite n'est qu'un renommage du
 Lambda de gauche.
 
 \end{frame}
@@ -113,8 +124,12 @@ Lambda de gauche.
 
 Une solution élégante permet de régler ce problème : le hashconsing. 
 
-Principe du hashconsing : on ne va pas allouer deux fois deux structures
-identiques. Du coup, deux termes qui seront structurellement identiques seront
+Principe du hashconsing : ne pas allouer deux fois deux structures
+identiques. 
+
+\medskip
+
+$\Rightarrow$ Deux termes structurellement identiques seront
 le même objet alloué en mémoire.
 
 \bigskip
@@ -129,7 +144,7 @@ liées.
 
 \begin{columns}
   \column{.5\textwidth}
-  Reprenons notre terme 
+  Pour le terme 
   \begin{verbatim}
   App(
      Lambda(x, Var(x)), 
@@ -139,8 +154,8 @@ liées.
 
   \medskip
   
-  Il nous suffit ensuite de le hashconser, pour voir apparaître l'égalité structurelle.
-  
+  Le hashconsing fait apparaître l'égalité structurelle :
+
   \column{.5\textwidth}
     \begin{center}
       \includegraphics[scale=0.6]{pattern/pres_hash.pdf}
