@@ -117,22 +117,22 @@ and expanse_term env : term_ast -> term_ast =
 	end
 	| _ -> id
 	  
-and process_term_expr env : Parsing_ast.term_expr -> Term_ast.term_ast list  = function
+and process_term_expr env = function
   | PTermLet (ident, term_expr) ->
-    failwith "Cannot declare global variables in declarations"
+    let open Symbols in
+    let rewritten_term, env = process_term_expr env term_expr in
+    rewritten_term, {env with globals = System_map.add ident (List.hd rewritten_term) env.globals}
   | PTermRewrite (term_expr, strategy) ->
-    let rewritten_subterm = process_term_expr env term_expr in
+    let rewritten_subterm, env = process_term_expr env term_expr in
     (* Printf.printf "%s with %s \n"
       (Term_ast.string_of_term  rewritten_subterm)
       (Strategy_ast.string_of_strategy strategy); *)
     let rewritten_terms = process_term env strategy rewritten_subterm in
-    rewritten_terms
+    rewritten_terms, env
   | PTerm (term) ->
     let term = expanse_term env term in
     run_term_type_check env term; 
-    [term]
-
-(* todo : add process_rule + process_directive + process_kind + .. *)
+    [term], env
 
 and evaluate_structure_item env =
   let open Rewriting_ast in
@@ -142,11 +142,7 @@ and evaluate_structure_item env =
   | PDecl rewriting_decl ->
     (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl env rewriting_decl
-  | PTermExpr (PTermLet (ident, expr)) ->
-    let open Symbols in
-    let rewritten_term = process_term_expr env expr in
-    {env with globals = System_map.add ident (List.hd rewritten_term) env.globals}
-  | PTermExpr term -> ignore (process_term_expr env term); env
+  | PTermExpr term -> snd (process_term_expr env term)
   | PFile_include fname -> process_file env fname
 
 and run_type_check env ast =
@@ -253,7 +249,7 @@ and match_term_cmd env term_expr pattern =
                   pattern with
           | Some _ -> "The term matches the pattern."
           | None -> "The term doesn't match the pattern." in
-        print_endline res) @@ process_term_expr env term_expr
+        print_endline res) @@ fst (process_term_expr env term_expr)
   with Rewriting_system_error.RewritingSystemError _ ->
     print_system_error "Pattern ill-formed\n"
 
@@ -264,7 +260,7 @@ and term_type_cmd env term_expr =
     @@ type_of_typed_term
     @@ check_type_of_term env
     @@ construct_ast_checked env term)
-    (process_term_expr env term_expr)
+    (fst (process_term_expr env term_expr))
 
 and term_match_type_cmd env term_expr type_binders arg_types =
   if List.length arg_types <> 1 then
@@ -291,7 +287,7 @@ and term_match_type_cmd env term_expr type_binders arg_types =
                          (error_msg code info))
       | e -> print_unknown_exc e (sprintf "type checking of the term %s\n"
                                     (Pretty.(string_of pp_term term))) in
-    List.iter check_term_type (process_term_expr env term_expr)
+    List.iter check_term_type (fst (process_term_expr env term_expr))
 
 
 and term_to_dot_cmd env term_expr filename =
@@ -305,15 +301,15 @@ and term_to_dot_cmd env term_expr filename =
     ignore @@ List.fold_left (fun n term ->
         let term = Term_checker.construct_ast_checked env term in
         dot (create_term term) (sprintf "%s%d%s" filename n ext);
-        n+1) 0 @@ process_term_expr env term_expr
+        n+1) 0 @@ fst (process_term_expr env term_expr)
 
 and term_test_cmd env = function
   | TMustPass (InPredicate(t1, t2))
   | TMustPass (EqualPredicate(t1, t2)) ->
   begin
     try
-      let rt1s = process_term_expr env t1 in
-      let rt2s = List.flatten @@ List.map (process_term_expr env) t2 in
+      let rt1s = fst (process_term_expr env t1) in
+      let rt2s = List.flatten @@ List.map (fun x -> fst (process_term_expr env x)) t2 in
       if (equal_terms rt1s rt2s) then
         rewritten_success rt1s rt2s
       else
@@ -329,7 +325,7 @@ and term_test_cmd env = function
   end
   | TMustFail (term, e) ->
     try
-      let rt = flatten_string_of_terms @@ process_term_expr env term in
+      let rt = flatten_string_of_terms @@ fst (process_term_expr env term) in
       print_failure (
         sprintf "Should have failed with %s but passed with %s.\n"
           (string_of_error e) rt)
