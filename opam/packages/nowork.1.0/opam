@@ -1,7 +1,7 @@
 opam-version: "1"
 maintainer: "nowork-client@googlegroups.com"
 build: [
-  [ "./configure.sh" "--data" share ]
+  [ "./configure.sh" "--opam" ]
   [ make "-k" ]
   [ make "install" ]
 ]
