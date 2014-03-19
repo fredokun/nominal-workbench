@@ -45,6 +45,7 @@
       ; ":test", TEST
       ; ":match", MATCH
       ; ":type", CTYPE
+      ; ":dot", DOT
       ]
 
   let directive_option_table = Hashtbl.create 16

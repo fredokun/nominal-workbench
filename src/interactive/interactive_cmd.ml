@@ -232,6 +232,16 @@ let term_match_type eval_term term_expr system type_binders arg_types =
                                       (Pretty.(string_of pp_term term))))
       (eval_term term_expr)
 
+let dot_of_expr eval_term term_expr filename system =
+  let open Term_ast_hashconsed in
+  let filename = try Filename.chop_extension filename
+    with _ -> filename in
+  let ext = ".dot" in
+  ignore @@ List.fold_left (fun n term ->
+        let term = Term_checker.construct_ast_checked system term in
+        dot (create_term term) (sprintf "%s%d%s" filename n ext);
+        n+1) 0 @@ eval_term term_expr
+
 let eval_interactive_cmd process_term_expr eval_system system = function
 | LoadTest(filename, expectation) ->
   launch_test (eval_system system) (RewritingTest(filename, expectation));
@@ -245,5 +255,8 @@ let eval_interactive_cmd process_term_expr eval_system system = function
   system
 | TermMatchType (term_expr, type_binders, arg_types) ->
   term_match_type (process_term_expr system) term_expr system type_binders arg_types;
+  system
+| TermToDot (term_expr, filename) ->
+  dot_of_expr (process_term_expr system) term_expr filename system;
   system
 | Quit -> exit 0
