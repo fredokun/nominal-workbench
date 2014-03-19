@@ -38,7 +38,6 @@ let list =
   ; "--no-repl", Set no_repl, "Read files and then exit without launching the top-level."
   ; "--debug", Set debug, "Launch nowork in debug mode, the exception backtrace is reported."
   ; "--reset-system", Set reset_system, "Start interpreting each file with an empty system instead of populating it"
-  ; "--load-system-file", String (fun _ -> print_endline "'load-system' todo"), "Load the given file as the initial system to used"
   ; "--no-warning", Set no_warning, "Do not print the warnings."
   ]
 

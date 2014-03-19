@@ -8,6 +8,8 @@
 \usepackage[american]{babel}
 \usepackage[T1]{fontenc}
 
+\usepackage{hyperref}
+
 \title{NoWork\\
 User manual}
 \author{NoWork development team\\[2em]}
@@ -27,11 +29,48 @@ Brief presentation of rewriting system in general.
 
 \subsection{Getting started}
 %% Vincent
-How do we install it (with opam or from source), which program do I need to launch and where is it?
+To install this program, you will need to get \emph{Opam}, the OCaml package-manager.
+It can be downloaded at \url{http://opam.ocaml.org/doc/Quick_Install.html}
 
-\section{\texttt{nowork --help}}
+Once Opam is ready to use, you can have two possibilities. 
+
+Either directly clone the project from github and install it :
+\begin{verbatim}
+# git clone https://github.com/ptal/nominal-workbench/
+# cd nominal-workbench
+# ./configure && make
+\end{verbatim}
+
+Or add the repository to your \emph{Opam} package list :
+\begin{verbatim}
+# opam repo add nowork git://github.com/pcouderc/nowork-repository
+# opam install nowork
+\end{verbatim}
+
+There is a light emacs environment available in the \emph{data}
+directory. Please refer to the emacs manual to install it in emacs.
+
+\section{NoWork executable}
 %% Vincent
-Presentation of the nowork executable and the options.
+
+The NoWork executable usage is : \texttt{nowork [options] <rules
+  files>}.  A Read-Eval-Print-Loop (REPL) is launched if no arguments
+are given. If \texttt{.nw} files are given the program will evaluate
+each files sequentially and result in a REPL that contains an initial
+environment based on the definitions found in the files.
+
+The current options are :
+\begin{itemize}
+\item -{}-version -- Print version and exits
+\item -{}-vnum -- Print version number and exits
+\item -I <dir\_path> -- Include the given directory
+\item -v -- Print more informations
+\item -{}-no-repl -- Doesn't start a toplevel
+\item -{}-debug -- Launch nowork in debug mode, the exception backtrace is reported
+\item -{}-reset-system -- Doesn't keep the environment between each evaluated files
+\item -{}-no-warning -- Doesn't print the warnings.
+\item -{}-help -- Display the list of options
+\end{itemize}
 
 \section{System language}
 %% Matthieu
@@ -173,7 +212,63 @@ Systems (CCS), for example.
 
 \section{Interactive language}
 %% Vincent
-Presentation of the interactive language (:command).
+
+We have at our disposition a toplevel interface that allows the user
+to directly manipulate the system by introducing new rules, strategies
+or terms. With this, the user is capable of interacting with the
+system in a step-by-step manner. This can be use for some quick-hacks
+or tests through a system that we would want to test or quickly-adding
+some features to it.
+
+This Read-Eval-Print-Loop (REPL) also contains a set of directives
+that are useful for testing or debugging. A directive starts with a
+column (:). The list can be quickly found by submitting a \emph{:help}
+directive into the REPL.
+
+We will proceed to the exhaustive description of every directive
+present in NoWork.
+
+\begin{itemize}
+  \item :help -- Displays the help
+  \item :exit -- Exits the REPL
+  \item :dot <term> <"filename"> -- Outputs the hash-consed version of
+    a term into a dot file graph
+  \item :type <term> -- Displays the type of the term
+\end{itemize}
+
+There are also three more directives that requires some detailing.
+
+\subsection{Testing directives}
+
+First, we have the \emph{:test} directive. The syntax is : \emph{:test
+  <term> <predicate> <result>}. This directive checks that the term
+satisfies the predicate with the given result. The term denomination
+is the same as the one given in the language description.
+
+The predicates are : 
+\begin{itemize}
+\item \texttt{-{}-equals} -- Tests that the given term equals the resulting term.
+\item \texttt{-{}-failwith} -- Checks that the given term fails with the
+  given exception. They can be found in the \emph{data/error}
+  directory of the project. More information about this to be found in
+  the developper manual.
+\end{itemize}
+
+The second directives is \emph{:load-test <"filename"> [-{}-failwith
+  <result>]}. It works very closely to the \emph{:test} directive but
+takes a file instead of a term.
+
+The last one checks that the given term matches either the given type
+or the pattern structure. The syntax is : \emph{:match <term> -{}-with
+  <pattern>} or \emph{:match <term> -{}-with-type <type>}.
+
+Examples : 
+\begin{verbatim}
+:match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+       --with App(?T, ?T) 
+
+:match Successor(Zero) --with-type Int
+\end{verbatim}
 
 \section{Example}
 %% Roven
