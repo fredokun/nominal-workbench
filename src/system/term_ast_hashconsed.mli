@@ -61,5 +61,6 @@ val string_of_hterm : hterm -> string
 (** [pretty_print ht] prints [ht] without its names *)
 val pretty_print : hterm -> unit
 
-(** [sort_terms hl] sorts [hl] by the hash value of its elements. *)
-val sort_hashed_terms : hterm list -> hterm list
+(** [sort_terms hl] sorts [hl] by the hash value of its elements. The elements
+    with the same hashed value are put in the same bucket. *)
+val sort_hashed_terms : hterm list -> hterm list list

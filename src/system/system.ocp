@@ -7,6 +7,6 @@ end
 begin library "term_system"
   sort = true
   files = [ "term_ast.mli" "term_ast.ml" "term_checker.mli" "term_checker.ml"
-  	    "term_ast_typed.ml" "term_ast_hashconsed.ml" "pretty.ml"]
+  	    "term_ast_typed.ml" "term_ast_hashconsed.ml" "pretty.ml" "terms_predicate.ml"]
   requires = [ "error" "rewriting_system" ]
 end

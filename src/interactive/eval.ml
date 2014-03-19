@@ -54,13 +54,6 @@ let equal_terms t1s t2s =
   with
   | Invalid_argument _ -> false
 
-(* let make_hash_sorted_term_list env terms =
-  let make_hash_consed_term term =
-    let checked_term = Term_checker.construct_ast_checked env term in
-    Term_ast_hashconsed.create_term checked_term in
-  let hashed_terms = List.map make_hash_consed_term terms in
-  List.sort sort_hashed_terms hashed_terms *)
-
 let rec process_file env fname =
 
   let fpath =
@@ -314,7 +307,7 @@ and term_test_cmd env = function
     try
       let rt1s = process_term_expr env t1 in
       let rt2s = List.flatten @@ List.map (process_term_expr env) t2 in
-      if (equal_terms rt1s rt2s) then
+      if (Terms_predicate.term_equality env rt1s rt2s) then
         rewritten_success rt1s rt2s
       else
         rewritten_failure_unexpected rt1s rt2s
@@ -357,3 +350,4 @@ and term_test_cmd env = function
             (string_of_error (Error(domain_name, string_of_error_code code))) ^
           string_of_msg @@ error_msg code msg))
     | e -> print_unknown_exc e "term rewriting"
+
