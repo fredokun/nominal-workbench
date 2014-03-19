@@ -247,7 +247,10 @@ is the same as the one given in the language description.
 
 The predicates are : 
 \begin{itemize}
-\item \texttt{-{}-equals} -- Tests that the given term equals the resulting term.
+\item \texttt{-{}-equal} -- Tests that the given term equals the resulting term.
+\item \texttt{-{}-in} -- Tests that the given term or one of the term
+  reduction (if rewritted) equals the resulting term or any of the
+  term reduction (also if rewritted).
 \item \texttt{-{}-failwith} -- Checks that the given term fails with the
   given exception. They can be found in the \emph{data/error}
   directory of the project. More information about this to be found in
