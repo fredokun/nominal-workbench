@@ -3,8 +3,8 @@ open Symbols
 open Rewriting_ast
 open Strategy_ast
 
-  
-let pp_separated sep f fmt = 
+
+let pp_separated sep f fmt =
   let rec loop = function
   | [] -> ()
   | [e] -> fprintf fmt "%a" f e
@@ -20,30 +20,30 @@ let pp_kind = pp_separated " -> " pp_kind_type
 
 
 let pp_type_name fmt tn = fprintf fmt "%s" tn
-  
+
 
 let rec pp_type_application fmt = function
   | TypeApplication (tname, tapps) -> fprintf fmt "%s [%a]" tname
       (pp_separated ", " pp_type_application) tapps
   | TypeName tname -> pp_type_name fmt tname
 
-      
-let pp_operator_arg fmt = function
-  | OpTypeArg tapp -> pp_type_application fmt tapp  
-  | OpBinderArg tname -> pp_type_name fmt tname 
 
-  
+let pp_operator_arg fmt = function
+  | OpTypeArg tapp -> pp_type_application fmt tapp
+  | OpBinderArg tname -> pp_type_name fmt tname
+
+
 let pp_type_binders fmt binders =
   match binders with [] -> () | binders ->
     fprintf fmt " forall(%a)." (pp_separated ", " pp_type_name) binders
-  
+
 
 let pp_operator fmt op =
   let binders, args, result = op in
   fprintf fmt "%a%a -> %a" pp_type_binders binders
     (pp_separated " * " pp_operator_arg) args pp_type_application result
 
-  
+
 let rec pp_pattern fmt = function
   | POperator (name, patterns) ->
       fprintf fmt "%s (%a)" name (pp_separated ", " pp_pattern) patterns
@@ -53,7 +53,7 @@ let rec pp_pattern fmt = function
 
 
 let rec pp_effect fmt = function
-  | EOperator (name, effects) -> 
+  | EOperator (name, effects) ->
       fprintf fmt "%s (%a)" name (pp_separated ", " pp_effect) effects
   | EPlaceholder s -> fprintf fmt "%s" s
   | EConstant s -> fprintf fmt "%s" s
@@ -90,7 +90,7 @@ let rec pp_strategy fmt = function
 let pp_strategy_def fmt (params, s) =
   fprintf fmt " (%a) %a"
     (pp_separated ", " (fun fmt s -> fprintf fmt "%s" s)) params pp_strategy s
-    
+
 
 let pp_rewriting_desc name fmt desc =
   match desc with
@@ -105,7 +105,7 @@ let pp_rewriting_decl fmt rd = fprintf fmt "%a"
   (pp_rewriting_desc rd.name) rd.desc
 
 
-let rec pp_term fmt t = 
+let rec pp_term fmt t =
   let open Term_ast in
   let {name=name;desc=desc;_} = t in
   match desc with
@@ -115,7 +115,7 @@ let rec pp_term fmt t =
       (pp_separated ", " pp_term) term_list
 
 
-      
+
 let pp_system fmt sys =
   let print f l = System_map.iter
     (fun k (_, d) -> fprintf fmt "%a@." (pp_rewriting_desc k) (f d)) l in
