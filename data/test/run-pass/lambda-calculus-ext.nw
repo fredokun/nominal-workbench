@@ -89,8 +89,8 @@ strategy Dummy :
 :test rewrite Lambda(x, Var(x)) with Try([dummy-replace]) --equal Var(x)
 
 :test rewrite App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
-  with SubstAll --equal App(Lambda(x, Var(x)), Lambda(x, Var(x)))
+  with SubstAll --equal App(Lambda(x, Var(x)), Lambda(y, Var(y)))
 
 :test rewrite App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
   with Dummy
-  --equal Lambda(x, Var(x))
+  --equal Lambda(y, Var(y))
