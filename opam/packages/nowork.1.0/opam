@@ -1,7 +1,7 @@
 opam-version: "1"
-maintainer: "pierrickcouderc@gmail.com"
+maintainer: "nowork-client@googlegroups.com"
 build: [
-  [ "./configure.sh" ]
+  [ "./configure.sh" "--data" share ]
   [ make "-k" ]
   [ make "install" ]
 ]
@@ -11,5 +11,3 @@ remove: [
 ]
 
 depends: [ "ocp-build" "xml-light" ]
-
-share: [ "data/test" ]
