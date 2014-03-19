@@ -84,10 +84,10 @@ let rec construct_ast_checked_rec
           DBinder (Some term.info, term.name)
         else
           DVar (Some term.info, term.name)
-      with 
+      with
       | TermSystemError (UnknownSymbol, _) ->
         DVar (Some term.info, term.name)
-    end      
+    end
   | Term(terms) ->
     (* Format.printf "Term: %s@." term.name; *)
     begin
@@ -212,7 +212,7 @@ and unify_types tb1 tb2 t1 t2 =
   | TypeName(tn1) ->
     begin
       match genericity tb1 t1 with
-      | Gen -> 
+      | Gen ->
         (* print_endline "ici 1"; *)
         let inst = BndTypApp (tb2, t2) in
         let r = BndTypApp (TBinders_map.add tn1 inst tb1, t1) in
@@ -255,7 +255,7 @@ and unify_types tb1 tb2 t1 t2 =
             (* print_endline "begin 1"; *)
             let (new_tbs, new_apps) =
               (* List.map2 (unify_types tb1 tb2) tapps1 tapps2 in *)
-              List.fold_left2 
+              List.fold_left2
                 (fun (tbs, apps) tapp1 tapp2 ->
                   let BndTypApp (new_tbs, new_app) = unify_types tbs tb2 tapp1 tapp2 in
                   (new_tbs, new_app :: apps))
@@ -327,8 +327,8 @@ and check_type_of_term system term_ast =
     let (_, (type_binders, const_type)) = lookup_const system ident in
     let gen_binders = binders_to_TBinds type_binders in
     (TypedConst (BndTypApp (gen_binders, const_type)))
-  | DBinder _ -> failwith("you should not be here")
-  | DVar _ -> failwith("you should not be here")
+  | DBinder _ -> TypedBinder (TypeName "A") (* hack, normaly you should not be here *)
+  | DVar _ -> TypedBinder (TypeName "A") (* hack, normaly you should not be here *)
   | DTerm (info, ident, sub_terms) ->
     (* Format.printf "check_type: %s@." ident; *)
     (* raise (Invalid_argument (string_of_term term_dag)); *)
