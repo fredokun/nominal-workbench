@@ -1,0 +1,56 @@
+\begin{frame}{Typage - Bases}
+
+\begin{itemize}
+\item Pas de symbole inconnu
+\smallskip
+\item Arités des applications correctes (kinds, opérateurs)
+\smallskip
+\item On ne peut pas appliquer un type générique
+\smallskip
+\item Pas d'atom dans un kind \emph{flèche} %à reformuler
+\smallskip
+\item Binders de kind atom
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Typage des règles}
+
+Tous les \emph{placeholders} de l'effet apparaissent dans le pattern
+\medskip
+
+On veut parcourir le pattern puis l'effet avec un environnement comprenant :
+\smallskip
+
+\begin{itemize}
+\item les types des \emph{placeholders}
+\item les instanciations de types génériques
+\end{itemize}
+\bigskip
+
+\textit{Exemple :}
+\linebreak
+\texttt{operator O : forall(A). A * A -> A}
+\linebreak
+\texttt{rule [r] : O(C1, C2) => C1}
+
+\end{frame}
+
+\begin{frame}{Typage - Unification}
+
+\textbf{Problème :} gérer les types génériques lors du parcours en profondeur d'un terme
+\medskip
+
+\textit{Exemple :}\linebreak
+\texttt{operator O : forall(A). A * B -> A}\linebreak
+\texttt{rule [r] : O(O(C1,C2), C2) => C1}% avec type(C1) != type (C2)
+\medskip
+
+\textbf{Idée :} 
+\begin{itemize}
+\item l'environnement pour les types génériques n'est valable que pour un niveau
+\item notion d'équivalence entre types (\textit{forall(A).A $\approx$ forall(B).B})
+\item renommage de type
+\end{itemize}
+
+\end{frame}
