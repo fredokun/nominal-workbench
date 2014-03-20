@@ -1,0 +1,98 @@
+
+\begin{frame}{}
+\begin{itemize}
+\item Pas de contrôles sur l'application des règles
+\item Besoin d'une solution générique et expressive
+\pause
+\item \vspace{0.4cm} Solution : langage de stratégie
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Une stratégie}
+Une stratégie est une fonction : $ terms * stratégies -> terms $
+
+\begin{itemize}
+\item alteration des terms en fonction d'autre stratégies
+\item definition d'un nombre minimal de stratégies de bases
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Stratégies de bases}
+
+{\fontsize{7}{7}
+
+\begin{center}
+    \begin{tabular}{ | l | p{6cm}|}
+    \hline
+    id() & identité \\ \hline
+    fail() & toujours en erreur \\ \hline
+    test(s) & identité si s reussi \\ \hline
+    not(s) & identité si s ne reussi pas \\ \hline
+    all(s) & applique s à tout les sous termes \\ \hline
+    some(s) & applique s au maximum de sous termes \\ \hline
+    one(s) & applique s à au moins un sous terme  \\ \hline
+    s1 ; s2 & séquence de s1 puis s2 \\ \hline
+    s1 +> s2 & application s1 ou s2 \\ \hline
+    s1 + s2 & choix non-dét. : s1 et s2 en parallele \\ \hline 
+    proj(n, s) & applique s au nième sous terme \\ \hline
+    [r] & applique une règle r \\ \hline
+    x & applique la stratégie dans x \\ \hline
+    \end{tabular}
+\end{center}
+}
+\end{frame}
+
+\begin{frame}[fragile]{Stratégies par l'utilisateur}
+\begin{verbatim}
+strategy Topdown(s) :
+  s ; all(Topdown(s))
+
+strategy Bottomup(s) :
+  all(Bottomup(s)) ; s
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Stratégies par l'utilistaur}
+\begin{verbatim}
+strategy Any(s) :
+  test(s) +> one(Any(s))
+
+# Any([some_rule])
+
+strategy While(p, s):
+  (test(p) ; s ; While(p, s)) +> id()
+
+# si on a : rule [match] :  Foo(?x) -> Foo(?x)
+
+# While(Any([match]), Do_thing)
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]{Stratégie de lambda-calcule}
+
+\begin{verbatim}
+# the main strategy : 
+# - remove all pending substitutions
+# - if it's an app ready for beta reduce, apply beta 
+#  reduction then loop
+# - if it's an app, reduce the right and left then loop
+# - if it's a value do nothing
+#
+strategy ReduceAll :
+    SubstAll ;
+    (IsAppLambdaValue ; [beta]; ReduceAll) +>
+    (IsApp ; Left(ReduceAll) ; 
+      Right(ReduceAll) ; ReduceAll) +>
+    (IsValue ; id())
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}{}
+\begin{itemize}
+\item système satisfaisant
+\item contrôle fin de l'application des règles
+\item bonne expréssivité
+\end{itemize}
+\end{frame}
