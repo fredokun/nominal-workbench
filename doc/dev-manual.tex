@@ -1,0 +1,65 @@
+% Distributed under the MIT License.
+% (See accompanying file LICENSE.txt)
+% (C) Copyright NoWork team
+
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[american]{babel}
+\usepackage[T1]{fontenc}
+
+\title{NoWork\\
+Developer manual}
+\author{NoWork development team\\[2em]}
+\date\today
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+%% Pierre
+Briefly present the project and say which preliminaries document the dev should have read first (wiki, user-manual, coding-style,...).
+
+\section{Installing and hack on NoWork}
+%% Matthieu
+How to install and begin to develop with NoWork.
+
+\section{Architecture}
+%% Mathieu
+Present the directory layout and the different component of the system.
+
+\section{Top-level}
+%% Vincent
+Present the top-level and coding specificities.
+
+\section{Parsing and data representation}
+
+\subsection{System representation}
+%% Rémy
+Which transformation of the representation of the system occurred and why?
+
+\subsection{Term representation}
+%% Pierrick Matthieu
+Which transformation of term occurred and why?
+
+\subsubsection{Hash-consing}
+%% Pierrick
+\input{dev_hashconsing.tex}
+
+\section{Type-checking}
+%% Ma(t.)hieu
+
+\section{Algorithms}
+
+\subsection{Pattern-matching}
+%% Pierre
+
+\subsection{Rewriting}
+%% Roven
+
+\section{Rational}
+%% Everybody
+Important decision that we made such as : Why have we split the language in an interactive and "normal" mode? Why do we have only one parser/lexer (instead of one for system and one for term).
+
+
+\end{document}

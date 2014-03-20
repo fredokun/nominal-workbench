@@ -1,0 +1,13 @@
+opam-version: "1"
+maintainer: "nowork-client@googlegroups.com"
+build: [
+  [ "./configure.sh" "--opam" ]
+  [ make "-k" ]
+  [ make "install" ]
+]
+
+remove: [
+  ["ocp-build" "-uninstall" "nowork"]
+]
+
+depends: [ "ocp-build" "xml-light" ]

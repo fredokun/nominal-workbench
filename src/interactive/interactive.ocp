@@ -1,0 +1,12 @@
+begin library "interactive"
+  sort = true
+  files = [
+    "util.ml"
+    "config.mli" "config.ml"
+    "eval.ml"
+    "display_test.ml"
+    "toploop.mli" "toploop.ml"
+    "main.ml"
+  ]
+  requires = [ "algorithms" "rewriting_system_parser" "rewriting_system" "str" ]
+end

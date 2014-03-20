@@ -1,0 +1,123 @@
+% Distributed under the MIT License.
+% (See accompanying file LICENSE.txt)
+% (C) Copyright Vincent Botbol
+% (C) Copyright Yohan Bismuth
+% (C) Copyright Pierre Talbot <ptalbot@hyc.io>
+
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[american]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+
+\title{Nominal Workbench\\
+Methodology}
+\author{NoWork development team\\[2em]}
+\date\today
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+In this document, we will describe the methodology that we apply for
+the development of the project Nominal Workbench. This description
+will follow four main axis which are:
+\begin{itemize}
+\item Agile methodology.
+\item The tools used.
+\item The interactions with the client.
+\item The interactions in the team.
+\end{itemize}
+
+\section{Agile methodology}
+
+In this project, we chose to apply an agile methodology for an
+efficient development. We had two options in mind, which were Scrum or
+Extreme Programming.
+
+We finally decided to choose the Scrum methodology for many reasons:
+first of all, the development in Scrum can be done by each developer
+independently. In Extreme Programming, dev team has to be in a single
+room and sometimes has to work by pair of developers. Moreover,
+the interaction with the client is simpler with Scrum. The client has
+to talk mainly with the customer relations manager to follow the
+evolution of the project while, in Extreme Programming, he has to
+interact with every developer to stay aware.
+
+Meetings take place weekly in order to answer those three questions:
+\begin{itemize}
+\item What have I done ?
+\item What is my next work ?
+\item What difficulties have been encountered ?
+\end{itemize}
+
+We had to adapt the Scrum methodology to match with our schedule and
+our disponibility. Therefore, we defined the Sprints duration to be of
+one week instead of a month.
+
+\section{Tools}
+
+All along this project, we will use some tools to improve our
+efficiency.
+
+\subsection{Rallydev}
+
+\href{http://rally1.rallydev.com/}{Rallydev} is a Scrum platform on which we can add, describe and edit
+user stories. We can also assign a developer with a task and see the
+progression of the development. A ``story'' can be either defined, in
+progress, completed or accepted.
+
+\subsection{Git}
+
+Git is a distributed revision control and source code management system. We decided to use the web-based hosting service: \href{http://github.com/}{GitHub}. This choice was motivated by the fact that both the client and the development team were already familiar with this kind of repository system.
+
+GitHub also provides the possibility to create Wiki pages and to easily report issues thus enhancing the communication between the team members.
+
+The project repository is forked from the client's one and will be asked to be pulled upstream after each ``sprint'' iteration.
+
+\subsection{Building system}
+
+There were several building systems we could use. We decided that
+classical Makefile would not suffice as the scalability was difficult
+to maintain as the project would grow. After consideration, we finally
+decided to use \emph{ocp-build} which allows the project to be
+well-organized, to spend less time resolving dependencies issues and
+to have an easy way for everyone to include the new tests and
+libraries without a deep knowledge about the building system.
+
+\section{Client interactions}
+
+Once every two weeks, or on demand, the client will be able to discuss with some of the team members. A deliverable will be pushed on the git repository of the client at least 3 days before each meeting. During these meetings, a full report of the advancement will be presented to the client. Afterwards, the client reacts if any concern is raised about the work achieved.
+
+If necessary, there will be also a discussion about development
+issues. It may be about technological choices or implementation
+decisions.
+
+We will conclude the meeting with an overview of the future work that
+will be done until the next one. The client will then be able to
+request any new features he'd like to add into the project.
+
+If there is an urging matter between two meeting, such as a bug
+related issue or an important feature to quickly add then the project
+manager will adapt the current sprint and include the new stories with
+a suitable priority. Such an event may be signaled either by a mail
+or directly on GitHub depending on the client preferences.
+
+\section{Team interactions}
+
+The team members will interact between them with the help of:
+
+\begin{itemize}
+\item Weekly Scrum meeting to close the current sprint and open a new one. We'll discuss the difficulties of the previous iteration and our next move.
+\item A Google group to discuss specific technical points, so anyone can give its opinion.
+\item An IRC channel if a discussion request more interactions.
+\item The Wiki is a place to write down tutorials and give pointers to relevant documentation.
+\item The GitHub repository will help to communicate about the code but also to centralize the issues, thanks to the bugs tracker.
+\item The detailed commit messages in the repository so anyone can read about the last modifications of the project.
+\end{itemize}
+
+However, the best interaction we can have is to discuss face-to-face and so the university will be a good place for this.
+
+\end{document}

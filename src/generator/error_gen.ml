@@ -64,7 +64,6 @@ let ml_from_conf filename =
   let filename_no_ext = replace_first (regexp "\\([a-zA-Z_]+\\).conf") "\\1" filename in
   filename_no_ext ^ ".ml"
 
-
 let make_errors error_dir output_dir = 
   if not(Sys.is_directory error_dir) then
     printf "%s is not a directory.\n" error_dir

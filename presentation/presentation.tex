@@ -1,0 +1,122 @@
+\documentclass[xcolor=dvipsnames]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{url}
+\usepackage{lmodern}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{textcomp} 
+\usepackage{hyperref}
+%% \usepackage{subcaption}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{color}
+ 
+\setbeamertemplate{footline}{\hspace*{.5cm}\scriptsize{\insertauthor\hspace*{50pt} \hfill\insertframenumber\hspace*{.5cm}}}
+
+
+\setbeamertemplate{section in toc}{%
+\textcolor{MidnightBlue}{$\blacktriangleright$ \inserttocsection}
+}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>{}
+    \tableofcontents[currentsection,hideothersubsections,sections={1-5}]
+  \end{frame}
+} 
+
+\usecolortheme{seahorse}
+\usecolortheme{rose}
+\useoutertheme{infolines}
+
+\usecolortheme[named=SkyBlue]{structure}
+\setbeamercolor{block title}{fg=MidnightBlue}
+
+\title[Nominal Workbench]{Nominal Workbench\\Système de Réécriture Nominale}
+
+\author[\'Equipe NoWork]{Rémy B. Yohan B. Vincent B. Mathieu C. Pierrick C. Matthieu D. Roven G. I\~nigo M. Pierre T.}
+
+\institute[UPMC]{Université Pierre et Marie Curie}
+
+\date{Jeudi 20 mars 2014}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+%% Recette
+
+%% présentation générale du système de réécriture / architecture
+%% Rémy
+\section{Introduction}
+\input{introduction.tex}
+
+%% syntaxe/langage du bouzin
+%% Matthieu
+\section{Langage}
+\input{langage.tex}
+
+%% type-checking
+%% Mathieu Matthieu
+\section{Typage}
+\input{type-checking.tex}
+
+%% pattern-matching / hash-consing
+%% Pierrick
+\section{Pattern Matching}
+\input{pattern_matching.tex}
+
+%% réécriture / stratégie
+%% Roven
+\section{Stratégies de réécriture}
+\input{reecriture.tex}
+
+%% utilisation du bouzin
+%% Vincent
+\section{Mode Interactif}
+\input{interactif.tex}
+
+%% démo
+%% Pierre Roven
+\section{Démonstration}
+
+\begin{frame}
+\begin{center}
+\huge{Démonstration}
+\end{center}
+\end{frame}
+
+%% Bilan
+
+%% Pierre Inigo
+\section{Bilan}
+\input{bilan.tex}
+
+\begin{frame}
+\frametitle{Conclusion}
+\begin{itemize}
+\item Système de réécriture fonctionnel ;
+\item Sur des exemples complexes comme CCS ;
+\item Documenté ;
+\item Testé.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Questions}
+\begin{center}
+\Large{Merci de votre attention !}
+\end{center}
+\begin{figure}[p]
+  \centering
+  \includegraphics[scale=0.6]{imports/question.jpeg}
+\end{figure}
+\end{frame}
+
+\end{document}

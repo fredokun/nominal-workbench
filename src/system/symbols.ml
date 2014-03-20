@@ -4,6 +4,7 @@
 *)
 
 open Rewriting_ast
+open Strategy_ast
 open Rewriting_system_error
 open Utils
 
@@ -15,14 +16,29 @@ type system = {
   kinds :  (info * kind) System_map.t;
   constants : (info * constant) System_map.t;
   operators : (info * operator) System_map.t;
-  rules :(info * rule) System_map.t
+  rules :(info * rule) System_map.t;
+  strategies : (info * strategy_def) System_map.t;
+  globals : Term_ast.term_ast System_map.t;
 }
+
+let builtin_strategies m = 
+  let dummy_info = Lexing.dummy_pos in
+  let add_def (name, params, body) =
+    System_map.add name (dummy_info, (params, body))
+  in
+  m |> add_def try_def
+    |> add_def repeat_def
+    |> add_def topdown_def
+    |> add_def bottomup_def
+
 
 let empty_system = {
   kinds = System_map.empty;
   constants = System_map.empty;
   operators = System_map.empty;
-  rules = System_map.empty
+  rules = System_map.empty;
+  strategies = builtin_strategies System_map.empty;
+  globals = System_map.empty;
 }
 
 (* Error utilities *)
@@ -74,17 +90,27 @@ let add_rule redeclaration_policy sys id (info, value) =
   else
     {sys with rules = System_map.add id (info, value) sys.rules}
 
+let add_strategy redeclaration_policy sys id (info, value) =
+  if System_map.mem id sys.strategies then
+    begin
+      redeclaration_policy "strategy" id info; sys
+    end
+  else
+    {sys with strategies = System_map.add id (info, value) sys.strategies}
+
 let add_symbol_impl redeclaration_policy system 
     {name=name; info = info; desc=desc} =
   match desc with
-  | DKind k ->
-    add_kind redeclaration_policy system name (info, k)
-  | DConstant c ->
-    add_constant redeclaration_policy system name (info, c)
-  | DOperator op ->
-    add_operator redeclaration_policy system name (info, op)
-  | DRule r ->
-    add_rule redeclaration_policy system name (info, r)
+    | DKind k ->
+      add_kind redeclaration_policy system name (info, k)
+    | DConstant c ->
+      add_constant redeclaration_policy system name (info, c)
+    | DOperator op ->
+      add_operator redeclaration_policy system name (info, op)
+    | DRule r ->
+      add_rule redeclaration_policy system name (info, r)
+    | DStrategy s ->
+      add_strategy redeclaration_policy system name (info, s)
 
 (*let add_symbol_impl redeclaration_policy system (name, info, desc) =
   let aux (map : (info * 'a) System_map.t) symbol_category value : (info * 'a) System_map.t =
@@ -127,9 +153,11 @@ let lookup_kind sys = lookup sys.kinds "kind"
 let lookup_const sys = lookup sys.constants "const"
 let lookup_op sys = lookup sys.operators "operator"
 let lookup_rule sys = lookup sys.rules "rule"
+let lookup_strategy sys = lookup sys.strategies "strategy"
 
 let exists map id = System_map.mem id map
 let is_kind sys = exists sys.kinds
 let is_const sys = exists sys.constants
 let is_op sys = exists sys.operators
 let is_rule sys = exists sys.rules
+let is_strategy sys = exists sys.strategies

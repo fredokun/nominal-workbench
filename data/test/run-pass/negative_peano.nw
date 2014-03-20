@@ -1,4 +1,4 @@
-open data/test/run-pass/simple_peano.nw
+open "data/test/run-pass/simple_peano.nw"
 
 operator Predecessor : Nat -> Nat
 

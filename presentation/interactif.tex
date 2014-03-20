@@ -1,0 +1,68 @@
+\begin{frame}{Toplevel}
+
+\begin{block}{Mode interactif}
+Permet à l'utilisateur de manipuler directement le système en rajoutant règles,
+stratégies ou encore la réduction directe de terme.
+\end{block}
+
+\begin{block}{Directives}
+\begin{itemize}
+\item Effectuer des tests sur une expression selon plusieurs modalités
+\item Afficher le type d'un terme
+\item Exporter la représentation d'un terme \emph{hash-consé} vers un graphe
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+\begin{frame}[fragile]{Tests}
+
+\begin{block}{Tester les termes}
+\begin{verbatim} 
+:test <terme> <predicat> <resultat> 
+\end{verbatim}
+\end{block}
+
+Tester l'addition dans le système de réécriture des axiomes de Peano :
+\begin{verbatim}
+:test rewrite Add(Successor(Zero), Successor(Zero)) 
+      with BottomupAll --equal Successor(Successor(Zero))
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]{Test d'une erreur}
+
+Nous pouvons également tester l'échec d'un test par une erreur pré-définie :
+\medskip
+
+\begin{verbatim}
+:test Successor(Zero, Zero) 
+      --failwith TermSystemError.WrongTermArity
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]{Test alpha-conversion}
+  On peut aussi tester la correspondance d'un terme à un type ou à un
+  pattern.
+
+\begin{block}{Alpha-conversion dans le lambda-calcul}
+\begin{verbatim}
+:match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+       --with App(?T, ?T) 
+\end{verbatim}
+\end{block}
+
+\end{frame}
+
+\begin{frame}{Directives utilitaires}
+
+  \begin{itemize}
+  \item \texttt{:type <t>} -- Permet d'afficher le type du terme t
+  \bigskip
+
+  \item \texttt{:dot <t> <fichier>} -- Crée un graphe ``dot'' de la version \emph{hash-consé} du term t
+  \end{itemize}
+
+\end{frame}

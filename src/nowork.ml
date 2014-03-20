@@ -3,4 +3,5 @@
    (C) Copyright Vincent Botbol
 *)
 
-let () = Main.main (fun _ -> ())
+let () = Main.main
+  (fun system -> Toploop.loop Format.std_formatter system)

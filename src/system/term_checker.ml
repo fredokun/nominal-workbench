@@ -4,21 +4,46 @@
 *)
 
 open Term_ast
-open Term_ast_dag
+open Term_ast_typed
 open Symbols
 open Rewriting_ast
 open Term_system_error
+open Rewriting_system_error
 open Map
+open Utils
+open Lexing
 
-module Var_map = Map.Make(String)
+let lookup_op sys op =
+  try
+    Symbols.lookup_op sys op
+  with
+    | RewritingSystemError (_, desc) ->
+      raise (TermSystemError (UnknownSymbol, desc))
 
-type binder_env = (term_dag ref) Var_map.t
+let lookup_rule sys rule =
+  try
+    Symbols.lookup_rule sys rule
+  with
+    | RewritingSystemError (_, desc) ->
+      raise (TermSystemError (UnknownSymbol, desc))
 
-let empty_binder_env = Var_map.empty
+let lookup_kind sys kind =
+  try
+    Symbols.lookup_kind sys kind
+  with
+    | RewritingSystemError (_, desc) ->
+      raise (TermSystemError (UnknownSymbol, desc))
+
+let lookup_const sys const =
+  try
+    Symbols.lookup_const sys const
+  with
+    | RewritingSystemError (_, desc) ->
+      raise (TermSystemError (UnknownSymbol, desc))
 
 (* Return the list of binder positions in the operator op_name *)
 let binders_pos_in_op system op_name =
-  let (_,op) = Symbols.lookup_op system op_name in
+  let (_,op) = lookup_op system op_name in
   let (_,args,_) = op in
   let rec give_pos l n = function
     | [] -> l
@@ -27,171 +52,277 @@ let binders_pos_in_op system op_name =
   in
   give_pos [] 0 args
 
-
-(* Check if a term is well defined and construct term_ast_dag from a term_ast
-   Return a couple term_ast_dag * binder_env
-   It's an auxiliary function *)
-let rec construct_ast_dag_rec system curr_op binders term pos_in_op =
-  match term with
-    | Const(ident) ->
+let rec construct_ast_checked_rec
+    system curr_op pos_in_op (term : Term_ast.term_ast) =
+  match term.desc with
+    | Const ->
       begin
-	ignore (Symbols.lookup_const system ident);
-	(DConst ident,binders)
+        try
+          ignore (lookup_op system term.name);
+          raise (TermSystemError (WrongTermArity, term.name))
+        with
+          | TermSystemError (UnknownSymbol, desc) ->
+            ignore (lookup_const system term.name);
+            DConst (Some term.info, term.name)
       end
-    | Var(ident) when Var_map.mem ident binders -> (* We already know this var *)
-      let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
-      if at_binder_pos then
-      (* A new binder, that owerwrite a previous one *)
-	let new_binder = DBinder(ident,ref []) in
-	let new_binders = Var_map.add ident (ref new_binder) binders in
-	(new_binder, new_binders)
-      else
-      (* A new bounded variable *)
-	begin
-	  let (sons,father) =
-	    match !(Var_map.find ident binders) with
-	      | DBinder(_,sons) as father -> (sons,father)
-	      | _ -> assert false
-	  in
-	  let new_var = DVar(ident, Some(ref father)) in
-	  sons := (ref new_var) :: (!sons);
-	  (new_var,binders)
-	end
-    | Var(ident) -> (* We don't know this var *)
-      let at_binder_pos = List.mem pos_in_op (binders_pos_in_op system curr_op) in
-      if at_binder_pos then
-      (* A new binder *)
-	let new_binder = DBinder(ident, ref []) in
-	(new_binder, Var_map.add ident (ref new_binder) binders)
-      else
-      (* A new free variable *)
-	let new_var = DVar(ident, None) in
-	(new_var, binders)
-    | Term(ident,terms) ->
-      let (_,new_binders,terms_well_formed) =
-	List.fold_left
-	  (construct_sub_term system ident)
-	  (0,binders,[])
-	  terms
-      in (DTerm(ident,List.rev terms_well_formed),binders)
-and construct_sub_term = fun system ident ->
-  fun (pos,binds,l) sub_term ->
-    let (sub_term_wf,new_binds) =
-      construct_ast_dag_rec system ident binds sub_term pos in
-    (pos+1,new_binds,sub_term_wf::l)
+    | Var ->
+      begin
+        try
+          let at_binder_pos =
+            List.mem pos_in_op (binders_pos_in_op system curr_op)
+          in
+          if at_binder_pos then
+            DBinder (Some term.info, term.name)
+          else
+            DVar (Some term.info, term.name)
+        with
+          | TermSystemError (UnknownSymbol, _) ->
+            DVar (Some term.info, term.name)
+      end
+    | Term(terms) ->
+      begin
+        let (_,(_,args,_)) = lookup_op system term.name in
+        if List.length args != List.length terms then
+          raise (TermSystemError(WrongTermArity, Pretty.(string_of pp_term term)))
+        else
+          DTerm (Some term.info, term.name, construct_sub_term_checked system term.name terms)
+      end
 
-(* Check a term_ast and construct the new term_ast_dag associated *)
-let construct_term_dag system term =
-  construct_ast_dag_rec system "" empty_binder_env term 0
+and construct_sub_term_checked system curr_op terms =
+  List.rev ( snd (
+    List.fold_left
+      (fun (n,l) sub_term ->
+        ((n+1),
+         (construct_ast_checked_rec system curr_op n sub_term)::l))
+      (0,[])
+      terms))
 
-(**)
+and construct_ast_checked system term =
+  construct_ast_checked_rec system "" 0 term
 
-module TBinders_map = Map.Make(String)
-
-let put_binders_into_map tbinds =
+let binders_to_TBinds tbinds =
   let map = TBinders_map.empty in
-  List.map (fun x -> TBinders_map.add x x map) tbinds
+  List.fold_left
+    (fun map x ->
+      TBinders_map.add x (BndTypApp (TBinders_map.empty, (TypeName x))) map)
+    map
+    tbinds
 
-let rec type_to_string t =
+let rec genericity tb t =
   match t with
-    | TypeName(s) -> s
-    | TypeApplication(g,a) ->
-      let parameters = (List.fold_left
-			  (fun s t ->  (type_to_string t) ^ s)
-			  ""
-			  a) in
-      g ^ "<" ^ parameters ^ ">"
-
-let type_clash_error t1 t2 =
-  let s1 = (type_to_string t1) in
-  let s2 = (type_to_string t2) in
-  raise (TermSystemError(TypeClash, s1 ^ " and " ^ s2))
-
-(* let compare_typed_term_and_type type_binders typed_term typ = *)
-(*   match typed_term with *)
-(*     | TypedConst(tapp) -> *)
-
-let rec unify_types type_binders t1 t2 =
-  match (t1,t2) with
-    | (TypeName(tn1),TypeName(tn2)) ->
-      if (tn1 = tn2) then
-	(t1,type_binders)
+    | TypeName tn ->
+      if (TBinders_map.mem tn tb) then
+        let BndTypApp (tb_map, t_map) = TBinders_map.find tn tb in
+        if t_map = t then
+          if TBinders_map.is_empty tb_map then
+            Gen
+          else
+            Inst (BndTypApp (tb_map, t_map))
+        else
+          Inst (BndTypApp (tb_map, t_map))
       else
-	if (TBinders_map.mem tn1 type_binders) then
-	  let t1_map = TBinders_map.find tn1 type_binders in
-	  if (TBinders_map.mem tn2 type_binders) then
-	    let t2_map = TBinders_map.find tn2 type_binders in
-	    if t1_map = tn1 then
-	      if t2_map = tn2 then (* t1 and t2 generics *)
-		(TypeName(t1_map), type_binders)
-	      else (* t1 generic *)
-		(TypeName(t2_map), TBinders_map.add tn1 t2_map type_binders) (* unification *)
-	    else (* no one generic *)
-	      if t1_map = t2_map then
-		(TypeName(t1_map), type_binders)
-	      else
-		type_clash_error t1 t2
-	  else
-	    if t1_map = tn1 then (* t1 generic *)
-	      (t2, TBinders_map.add tn1 tn2 type_binders) (* unification *)
-	    else
-	      type_clash_error t1 t2
-	else
-	  type_clash_error t1 t2
-    | (TypeApplication(tn1,tb1),TypeApplication(tn2,tb2)) when tn1 = tn2 ->
-      let (tb,new_type_binders) = unify_types_list type_binders tb1 tb2 in
-      (TypeApplication(tn1,tb),new_type_binders)
-    | _ -> type_clash_error t1 t2
-and unify_types_list type_binders l1 l2 =
-  match (l1,l2) with
-    | ([], []) -> ([],type_binders)
-    | (t1::q1, t2::q2) -> let (t, new_binders) = unify_types type_binders t1 t2 in
-			  let (q, final_binders) = unify_types_list new_binders q1 q2 in
-			  (t::q, final_binders)
-    | _ -> raise (TermSystemError(WrongTermArity, "todo"))
+        Simple
+    | _ -> Inst (BndTypApp (tb, t))
 
-(* let rec term_check_types system term = *)
-(*   let TermAstDag(info,term_dag) = term in *)
-(*   match term_dag with *)
-(*     | DConst(ident) -> *)
-(*       let (_,Constant(type_binders,const_type)) = lookup_const system ident in *)
-(*       let gen_binders = binders_to_TBinds type_binders in *)
-(*       (\*TODO*\) *)
-(*     | DBinder(ident,_) -> (\* TODO *\) *)
-(*     | DVar(ident,_) -> (\* TODO *\) *)
-(*     | DTerm(ident,sub_terms) -> *)
-(*       let (_,Operator(type_binders,args,res)) = lookup_op system ident in *)
-(*       let gen_binders = put_binders_into_map type_binders in *)
-(* 	List.map2 *)
-(* 	(\* begin *\) *)
-(* 	(fun term arg -> *)
-(* 	  match arg with *)
-(* 	    | OpTypeArg(t_app) -> *)
-(* 	      begin *)
-(* 		let term_typ = term_check_types system term in *)
-(* 		match t_app with *)
-(* 		  | TypeName(t_name) ->  (\* TODO comparison *\) *)
-(* 		  | TypeApplication(typ, app) -> (\* TODO comparison *\) *)
-(* 	    | OpBinderArg(name) -> *)
-(* 	      begin *)
-(* 		match term with *)
-(* 		  | DBinder(ident,_) -> TypedBinder ident *)
-(* 		  | _ -> Term_system_error (BinderClash, pos_to_string info) *)
-(* 	      end *)
-(* 	) *)
-(* 	(\* end *\) *)
-(* 	sub_terms *)
-(* 	args *)
-(* forall term in subterms :
-     if term is TypeApplication position :
-       if you know instanciation of the type binder :
-         check with it
-       else :
-         if you get generic type :
-           use it
-           recheck precedent term
-         else :
-           continue
-     else :
-       check type
-*)
+let subst_bnd_typ_app bndtypapp =
+  let rec subst_rec fresh_name =
+    function BndTypApp (bnd, t) ->
+      match genericity bnd t with
+        | Gen ->
+          (TypeName (String.make 1 (char_of_int fresh_name)), fresh_name + 1)
+        | Simple -> (t, fresh_name)
+        | Inst (BndTypApp (bnd_subst, t_subst)) ->
+          begin
+            match t_subst with
+              | TypeName tn ->
+                if TBinders_map.mem tn bnd_subst then
+                  subst_rec fresh_name (TBinders_map.find tn bnd_subst)
+                else
+                  (t_subst, fresh_name)
+              | TypeApplication (tn, tapps) ->
+                let (tapps_subst, fresh) =
+                  List.fold_left
+                    (fun (tapp, fresh) t ->
+                      let (new_t, new_fresh) =
+                        subst_rec fresh (BndTypApp (bnd_subst, t))
+                      in
+                      (new_t::tapp, new_fresh))
+                    ([],fresh_name)
+                    tapps
+                in
+                (TypeApplication (tn, List.rev tapps_subst), fresh)
+          end
+  in
+  fst (subst_rec (int_of_char 'A') bndtypapp)
+
+let type_clash_error ?(pos=Lexing.dummy_pos) t1 t2 =
+  let s1 = Pretty.(string_of pp_type_application (subst_bnd_typ_app t1)) in
+  let s2 = Pretty.(string_of pp_type_application (subst_bnd_typ_app t2)) in
+  raise (TermSystemError(TypeClash, s1 ^ " and " ^ s2 ^
+    " at position " ^ (Utils.pos_to_string pos)))
+
+let type_of_typed_term term =
+  match term with
+    | TypedBinder t -> t
+    | TypedVar t -> t
+    | TypedConst t -> subst_bnd_typ_app t
+    | TypedTerm t -> subst_bnd_typ_app t
+
+let rec merge_tbs_option k tb1_op tb2_op =
+  match (tb1_op, tb2_op) with
+    | (None, None) -> None
+    | (Some t1, None) -> Some t1
+    | (None, Some t2) -> Some t2
+    | (Some (BndTypApp (tb1, t1) as b1), Some (BndTypApp (tb2, t2) as b2)) ->
+      Some (unify_types
+              (TBinders_map.add k b1 TBinders_map.empty)
+              (TBinders_map.add k b2 TBinders_map.empty)
+              t1 t2)
+
+and merge_tbs tb1 tb2 =
+  TBinders_map.merge merge_tbs_option tb1 tb2
+
+and unify_types ?(pos=Lexing.dummy_pos) tb1 tb2 t1 t2 =
+  match t1 with
+    | TypeName(tn1) ->
+      begin
+        match genericity tb1 t1 with
+          | Gen ->
+            let inst = BndTypApp (tb2, t2) in
+            let r = BndTypApp (TBinders_map.add tn1 inst tb1, t1) in
+            r
+          | Inst (BndTypApp (tb, t)) ->
+            begin
+              match genericity tb2 t2 with
+                | Inst (BndTypApp (tbi2, ti2)) ->
+                  unify_types tb tbi2 t ti2
+                | _ -> unify_types tb2 tb1 t2 t1
+            end
+          | Simple ->
+            begin
+              match genericity tb2 t2 with
+                | Gen -> BndTypApp (tb1, t1)
+                | Inst (BndTypApp (tb, t)) ->
+                  begin
+                    match t2 with
+                      | TypeName tn2 when TBinders_map.mem tn2 tb2->
+                        let BndTypApp (_, to_test) =
+                          TBinders_map.find tn2 tb2
+                        in
+                        if t1 = to_test then
+                          BndTypApp (tb2, t1)
+                        else
+                          type_clash_error (BndTypApp (tb1,t1)) (BndTypApp (tb2,t2))
+                      | _ ->
+                        type_clash_error (BndTypApp (tb1,t1)) (BndTypApp (tb2,t2))
+                  end
+                | Simple ->
+                  if t1 = t2 then
+                    BndTypApp (tb1, t1)
+                  else
+                    type_clash_error (BndTypApp (tb1,t1)) (BndTypApp (tb2,t2))
+            end
+      end
+    | TypeApplication (tn1, tapps1) ->
+      begin
+        match t2 with
+          | TypeApplication (tn2, tapps2) ->
+            if tn1 = tn2 then
+              try
+                let (new_tbs, new_apps) =
+                  List.fold_left2
+                    (fun (tbs, apps) tapp1 tapp2 ->
+                      let BndTypApp (new_tbs, new_app) =
+                        unify_types tbs tb2 tapp1 tapp2
+                      in
+                      (new_tbs, new_app :: apps))
+                    (tb1,[]) tapps1 tapps2
+                in
+                let r = BndTypApp (new_tbs, TypeApplication(tn1, new_apps)) in
+                r
+              with
+                | Invalid_argument _ ->
+                  type_clash_error (BndTypApp (tb1,t1)) (BndTypApp (tb2,t2))
+            else
+              type_clash_error (BndTypApp (tb1,t1)) (BndTypApp (tb2,t2))
+          | _ -> unify_types tb2 tb1 t2 t1
+      end
+
+let rec unify_term_and_type system gen_binders term arg =
+  match term with
+    | DBinder _ ->
+      begin
+        match arg with
+          | OpBinderArg t -> TypedBinder (TypeName t)
+          | t ->
+            let err = "a Binder and " ^ (Pretty.(string_of pp_operator_arg t)) in
+            raise (TermSystemError (TypeClash, err))
+      end
+    | DVar _ ->
+      begin
+        match arg with
+          | OpTypeArg t -> TypedVar t
+          | t ->
+            let err = "a Var and " ^ (Pretty.(string_of pp_operator_arg t)) in
+            raise (TermSystemError (TypeClash, err))
+      end
+    | DConst (info, ident) ->
+      let (_,(type_binders,const_type)) = lookup_const system ident in
+      let const_tbinders = binders_to_TBinds type_binders in
+      begin
+        match arg with
+          | OpTypeArg arg_type ->
+            let typ = unify_types gen_binders const_tbinders arg_type const_type
+            in
+            TypedConst typ
+          | t ->
+            let err =
+              Pretty.(string_of pp_type_application
+                        (subst_bnd_typ_app
+                           (BndTypApp (const_tbinders, const_type)))) ^
+                " and " ^
+                (Pretty.(string_of pp_operator_arg t))
+            in
+            raise (TermSystemError (TypeClash, err))
+      end
+    | DTerm (info, _, _) ->
+      begin
+        match arg with
+          | OpTypeArg arg_type ->
+            begin
+              match check_type_of_term system term with
+                | TypedTerm (BndTypApp (binds,typ)) ->
+                  TypedTerm (unify_types gen_binders binds arg_type typ)
+                | _ -> assert false
+            end
+          | _ -> raise (TermSystemError (TypeClash, "a Binder and a Term"))
+      end
+
+and check_type_of_term system term_ast =
+  match term_ast with
+    | DConst (info, ident) ->
+      let (_, (type_binders, const_type)) = lookup_const system ident in
+      let gen_binders = binders_to_TBinds type_binders in
+      (TypedConst (BndTypApp (gen_binders, const_type)))
+    | DBinder _ -> TypedBinder (TypeName "A")
+    (* hack, normaly you should not be here *)
+    | DVar _ -> TypedBinder (TypeName "A")
+    (* hack, normaly you should not be here *)
+    | DTerm (info, ident, sub_terms) ->
+      let (_,(type_binders,args,res)) = lookup_op system ident in
+      let gen_binders = binders_to_TBinds type_binders in
+      let new_binders =
+        List.fold_left2
+          (fun gen_binders term arg ->
+            let sub_term = unify_term_and_type system gen_binders term arg in
+            match sub_term with
+              | TypedVar _ -> gen_binders
+              | TypedBinder _ -> gen_binders
+              | TypedConst (BndTypApp (bnd,_)) ->
+                bnd
+              | TypedTerm (BndTypApp (bnd,_)) -> bnd)
+          gen_binders
+          sub_terms
+          args
+      in
+      TypedTerm (BndTypApp (new_binders, res))

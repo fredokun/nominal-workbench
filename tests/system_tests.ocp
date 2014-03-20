@@ -1,0 +1,9 @@
+begin program "system_test_prog"
+    files = [ "test_hashconsing.ml" ]
+    requires = [ "term_system" ]
+end
+
+begin test "system_test"
+    files = [ "test_hashconsing.ml" ]
+    requires = [ "term_system" ]
+end

@@ -1,5 +1,0 @@
-begin library "rewriting_system_parser"
-    sort = true
-    files = [ "lexer.mll" "parser.mly" "include.ml" "parser_include.ml" "parsetree.mli" ]
-    requires = [ "rewriting_system" "term_system" ]
-end

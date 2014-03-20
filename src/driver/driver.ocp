@@ -1,9 +1,0 @@
-begin library "driver"
-  sort = true
-  files = [ "config.mli" "config.ml" 
-  	    "eval.ml" 
-	    "toploop.mli" "toploop.ml"
-	    "main.ml"
-	  ]
-  requires = [ "algorithms" "rewriting_system_parser" ]
-end
