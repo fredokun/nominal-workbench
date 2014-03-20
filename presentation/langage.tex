@@ -1,0 +1,71 @@
+\begin{frame}{Description d'un système de réécriture}
+  \begin{block}{Description}
+    La description d'un système se fait par des déclarations de 4
+    sortes différentes :
+    \begin{itemize}
+    \item \verb?kind?
+    \item \verb?constant?
+    \item \verb?operator?
+    \item \verb?rule?
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Kind}
+
+  Le mot-clé \verb?kind? pour décrire les types manipulés par le
+  système de réécriture.
+\begin{verbatim}
+  kind Integer : type
+  kind List : type -> type
+  kind Couple : type -> type -> type
+  kind Var : atom
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Constant}
+  \begin{itemize}
+  \item élément de base du langage
+  \item typé avec les types du langage décrit (\verb?kind?)
+  \end{itemize}
+
+\begin{verbatim}
+  kind Integer : type
+  kind Bool : type
+  kind List : type -> type
+  kind Couple : type -> type -> type
+
+  #generics
+  constant Nil : forall(A).List<A>
+  constant NilAssoc : forall(A,B).List<Couple<A,B>>
+
+  #instatiated
+  constant IntNil : List<Integer>
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Operator}
+  Déclarations similaires aux déclarations de constantes.
+\begin{verbatim}
+  operator Cons : forall(A).A * List<A> -> List<A>
+  operator Hd : forall(A).List<A> -> A
+  operator Tl : forall(A).List<A> -> List<A>
+
+  # Hd(Tl(Cons(False, Cons(True, Nil))))
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Rule}
+  \begin{itemize}
+  \item L'ordre d'application des règles est définit par les stratégies
+  \item Généricité structurelle (\emph{placeholders})
+  \end{itemize}
+
+  \begin{verbatim}
+    rule [hd]:
+      Hd(Cons(?x, ?y)) => ?x
+
+    rule [tl]:
+      Tl(Cons(?x, ?y)) => ?y
+  \end{verbatim}
+\end{frame}
