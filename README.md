@@ -29,6 +29,13 @@ make uninstall
 make clean
 ```
 
+Installing via OPAM
+-------------------
+
+opam repo add nowork git://github.com/pcouderc/nowork-repository
+opam install nowork
+
+
 Informations
 ------------
 
