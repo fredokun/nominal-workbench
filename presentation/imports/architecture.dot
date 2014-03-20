@@ -1,11 +1,10 @@
 digraph architecture {
      edge [color=blue];	
 		 Main -> Toploop;
-		 Main -> Parser;
-		 Main -> Rewriting;
-		 Main -> Type_checking;
-     Toploop -> Parser;
-     Toploop -> Rewriting;
+		 Main -> Eval;
+		 Toploop -> Eval;
+     Eval -> Parser;
+     Eval -> Rewriting;
 		 Rewriting -> Matching;
-		 Toploop -> Type_checking;
+		 Eval -> Type_checking;
 }
