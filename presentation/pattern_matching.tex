@@ -1,44 +1,44 @@
 
 \begin{frame}
 
-\'Elément principal de la réécriture nominal : pattern matching. Indique si un
-terme est de la forme d'un \emph{pattern} (motif) donné, et en extrait des informations
+\begin{block}{Pattern matching}
+Sélectionne une règle de réécriture à partir de la forme d'un terme.
+\end{block}
 
 \bigskip
 
-Deux types de pattern matching : 
+\begin{block}{Types de pattern matching}
 \begin{itemize}
-\item Linéaire. 
-\item Non linéaire. 
+\item Linéaire : \texttt{App(?x, ?y)}
+\item Non linéaire : \texttt{App(?x, ?x)}
 \end{itemize}
+\end{block}
 
 \end{frame}
 
 \subsection{Pattern matching linéaire}
 
-
 \begin{frame}
 \frametitle{Exemple de pattern matching}
 
-Prenons ce terme :
-\texttt{Lambda(x, Var(x))}. 
+Soit le terme \texttt{Lambda(x, Var(x))}
 \begin{itemize} 
 
-  \item matche \texttt{Lambda(\_, \_)}.
+  \item match \texttt{Lambda(\_, \_)}.
   \item mais pas \texttt{Var(\_)}.
 
 \end{itemize}
 
 \bigskip
 
-Extraction de sous-termes :
-
+\begin{block}{Extraction de sous-termes}
 \texttt{Lambda(?x, \_)} retourne le sous-terme correspondant à \emph{?x}.
+\end{block}
 
 \end{frame}
 
 \begin{frame}
-\frametitle{Concrètement}
+\frametitle{Simulation}
 
 Exemple du déroulement du pattern-matching:
 \begin{itemize}
@@ -97,45 +97,40 @@ Par exemple avec \texttt{Lambda(?x, Var(?x))} :
 \begin{frame}
 \frametitle{Non linéarité avec les termes}
 
-Non linéarité : possiblité d'extraire plusieurs fois le même motif modulo
-alpha-conversion.
+\begin{block}{Non linéarité}
+Possibilité d'extraire plusieurs fois le même motif modulo alpha-conversion.
 \begin{itemize}
 \item Atomes : possible dans l'algorithme linéaire.
 \item Termes : nécessite la capacité de raisonner sur la structure du terme.
 \end{itemize}
+\end{block}
 
-\bigskip
+\pause
 
-Exemple :
+\begin{block}{Exemple}
 \begin{itemize}
-\item Terme : \texttt{App(Lambda(x, Var(x)), Lambda(y, Var(y)))} matche 
+\item Terme : \texttt{App(Lambda(x, Var(x)), Lambda(y, Var(y)))} match
 \item Pattern : \texttt{App(?X, ?X)}.
-\end{itemize} 
+\end{itemize}
+\end{block}
 
 \medskip
 
-Possible puisque le Lambda de droite n'est qu'un renommage du
-Lambda de gauche.
+Possible puisque le Lambda de droite n'est qu'un renommage du Lambda de gauche.
 
 \end{frame}
 
 \begin{frame}
 \frametitle{Solution : hashconsing}
 
-Une solution élégante permet de régler ce problème : le hashconsing. 
-
-Principe du hashconsing : ne pas allouer deux fois deux structures
-identiques. 
-
-\medskip
-
-$\Rightarrow$ Deux termes structurellement identiques seront
-le même objet alloué en mémoire.
-
-\bigskip
-
-Le hashconsing des termes fait abstraction des noms de binders et de variables
+\begin{block}{Principe du hashconsing}
+\begin{itemize}
+\item Ne pas allouer deux fois deux structures identiques.
+\item Deux termes structurellement identiques partagent l'allocation en mémoire.
+\item Abstraction des noms de binders et de variables
 liées.
+\end{itemize}
+\end{block}
 
 \end{frame}
 

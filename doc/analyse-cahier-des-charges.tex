@@ -11,6 +11,11 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{hyperref}
+\usepackage{lmodern}
+\usepackage{listings}
+\usepackage{textcomp} 
+\usepackage{hyperref}
+\usepackage{verbatim}
 
 \title{NoWork\\
 Analyse du cahier des charges}
@@ -127,12 +132,10 @@ Le livrable est constitué :
 Le tous sera livré via une \textit{pull-request} dans le dépôt officiel Github (\url{https://github.com/fredokun/nominal-workbench}).
 
 
-\section{Functionalités}
+\section{Cas d'utilisation}
 
-La liste de functionalites est montre dans le diagram de cas
-d'utilisation de la figure~\ref{use-cases}. A continuation vous
-pouvais trouver une description de chacun des cas d'utilitation avec
-des examples:
+La liste des fonctionnalités interactives est montrée dans le diagramme de cas
+d'utilisation à la figure~\ref{use-cases}. La suite présente plus en détails les différents cas d'utilisation.
 
 \begin{figure}[h!]
   \centering
@@ -144,11 +147,10 @@ des examples:
 \begin{description}
 
 \item[Help:]
-Montre une liste de command disponible avec une description des chacun
-des options.
+Affiche la liste des commandes disponibles suivie de la description des options.
 
 \begin{minipage}{\textwidth}
-Result:
+Résultat de la commande \verb=:help= :
 \begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
 Available commands :
         :help            -- Displays this help
@@ -161,19 +163,17 @@ Available commands :
         :quit            -- Exits the REPL
         :exit            -- Exits the REPL
         :q               -- Exits the REPL
-More detailled informations may be found in the user-documentation
+More detailled informations may be found in the user documentation
 \end{lstlisting}
 \end{minipage}
 
 \item[Load-test:]
-Permet de charger un fichier de text l'executer et verifier le resultat que on
-doit s'attendre. Le test passe si le resultat de l'execution
-correspond avec le resultat attendu. \\
+Permet de charger un fichier texte, de l'exécuter et de vérifier que le résultat est celui attendu. L'utilisateur peut s'assurer qu'un fichier est syntaxiquement correct et que les tests écrits dans ce fichier passent.
 
 \begin{minipage}{\textwidth}
-Example :
+Exemple :
 \begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
-  # :load-test "data/test/run-fail/typecheck_unification2.nw" --failwith RewritingSystemError.TypeClash ;;
+> :load-test "data/test/run-fail/typecheck_unification2.nw" --failwith RewritingSystemError.TypeClash ;;
     Filename: data/test/run-fail/typecheck_unification2.nw
     [ passed ]  Failure with RewritingSystemError.TypeClash as expected.
         Info: Type clash between A and K2.
@@ -181,52 +181,51 @@ Example :
 \end{minipage}
 
 \item[Test:]
-Permet de tester une terme ecrit dans la ligne des commandes.\\
+Permet de tester que l'ensemble des termes renvoyé par une réécriture est égal ou inclus dans le deuxième argument du prédicat.\\
 
  \begin{minipage}{\textwidth}
-Example :
+Exemple :
 \begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
-  # :test  --failwith RewritingSystemError.TypeClash ;;
+> :test rewrite Add(Zero,Successor(Zero)) with Bottomup --equal Successor(Zero)
   Terms : Lambda (x, Var (x)) rewrote into :Lambda (x, Var (x))
 [ passed ]  Terms have been correctly rewritten in : Lambda (x, Var (x));;
 \end{lstlisting}
 \end{minipage}
 
 \item[Type:]
-Permet d'obtenir le type de une terme ecrit dans la ligne des commandes.\\
+Permet d'obtenir le type d'un terme.\\
 
 \begin{minipage}{\textwidth}
-Example :
+Exemple :
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
-  # :type Lambda(x, Var(x));;
+> :type Lambda(x, Var(x));;
    Term
 \end{lstlisting}
 \end{minipage}
 
 \item[Dot:]
-Permet de generer un fichier dot avec la representation hash-conse
-d'un term. \\
+Permet de générer un fichier dot avec la représentation \textit{hash-consé} d'un terme. \\
 
 \begin{minipage}{\textwidth}
-Example :
+Exemple :
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
-  # :dot Lambda(x, Var(x)) "lambda.dot" ;;
+> :dot Lambda(x, Var(x)) "lambda.dot" ;;
 \end{lstlisting}
 \end{minipage}
 
 \item[Match:]
-Permet de voir si une term match un pattern donne. \\
+Permet de voir si une terme match un pattern donné. \\
 
 \begin{minipage}{\textwidth}
-Example :
+Exemple :
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
-  # :match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+> :match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
        --with App(?T, ?T)
 \end{lstlisting}
 \end{minipage}
 
 \item[Quit:]
-Arrete le program.
+Arrête le programme.
 
 \end{description}
 
