@@ -25,7 +25,7 @@
 \AtBeginSection[]
 {
   \begin{frame}<beamer>{}
-    \tableofcontents[currentsection,hideothersubsections]
+    \tableofcontents[currentsection,hideothersubsections,sections={1-5}]
   \end{frame}
 } 
 
@@ -85,13 +85,38 @@
 %% démo
 %% Pierre Roven
 \section{Démonstration}
-\input{demo.tex}
 
+\begin{frame}
+\begin{center}
+\huge{Démonstration}
+\end{center}
+\end{frame}
 
 %% Bilan
 
 %% Pierre Inigo
 \section{Bilan}
 \input{bilan.tex}
+
+\begin{frame}
+\frametitle{Conclusion}
+\begin{itemize}
+\item Système de réécriture fonctionnel ;
+\item Sur des exemples complexes comme CCS ;
+\item Documenté ;
+\item Testé.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Questions}
+\begin{center}
+\Large{Merci de votre attention !}
+\end{center}
+\begin{figure}[p]
+  \centering
+  \includegraphics[scale=0.6]{imports/question.jpeg}
+\end{figure}
+\end{frame}
 
 \end{document}
