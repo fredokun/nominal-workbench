@@ -173,7 +173,7 @@ Permet de charger un fichier texte, de l'exécuter et de vérifier que le résul
 \begin{minipage}{\textwidth}
 Exemple :
 \begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
-  # :load-test "data/test/run-fail/typecheck_unification2.nw" --failwith RewritingSystemError.TypeClash ;;
+> :load-test "data/test/run-fail/typecheck_unification2.nw" --failwith RewritingSystemError.TypeClash ;;
     Filename: data/test/run-fail/typecheck_unification2.nw
     [ passed ]  Failure with RewritingSystemError.TypeClash as expected.
         Info: Type clash between A and K2.
@@ -186,7 +186,7 @@ Permet de tester que l'ensemble des termes renvoyé par une réécriture est ég
  \begin{minipage}{\textwidth}
 Exemple :
 \begin{lstlisting}[breaklines=true,basicstyle=\ttfamily\footnotesize]
-  :test rewrite Add(Zero,Successor(Zero)) with Bottomup --equal Successor(Zero)
+> :test rewrite Add(Zero,Successor(Zero)) with Bottomup --equal Successor(Zero)
   Terms : Lambda (x, Var (x)) rewrote into :Lambda (x, Var (x))
 [ passed ]  Terms have been correctly rewritten in : Lambda (x, Var (x));;
 \end{lstlisting}
@@ -198,7 +198,7 @@ Permet d'obtenir le type d'un terme.\\
 \begin{minipage}{\textwidth}
 Exemple :
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
-  :type Lambda(x, Var(x));;
+> :type Lambda(x, Var(x));;
    Term
 \end{lstlisting}
 \end{minipage}
@@ -209,7 +209,7 @@ Permet de générer un fichier dot avec la représentation \textit{hash-consé} 
 \begin{minipage}{\textwidth}
 Exemple :
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
-  # :dot Lambda(x, Var(x)) "lambda.dot" ;;
+> :dot Lambda(x, Var(x)) "lambda.dot" ;;
 \end{lstlisting}
 \end{minipage}
 
@@ -219,7 +219,7 @@ Permet de voir si une terme match un pattern donné. \\
 \begin{minipage}{\textwidth}
 Exemple :
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
-:match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+> :match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
        --with App(?T, ?T)
 \end{lstlisting}
 \end{minipage}
