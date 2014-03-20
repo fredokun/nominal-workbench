@@ -1,4 +1,4 @@
-share : [ "data/test/run-pass/lambda-calculus-ext.nw"
+share : [ "data/test/run-pass/lambda-calculus.nw"
           "data/test/run-pass/ccs.nw"
           "data/nowork.el"
         ]

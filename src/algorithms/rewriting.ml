@@ -1,3 +1,7 @@
+(* Distributed under the MIT License.
+  (See accompanying file LICENSE.txt)
+  (C) Copyright NoWork team
+*)
 
 open Rewriting_ast
 open Rewriting_error

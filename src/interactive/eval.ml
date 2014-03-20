@@ -3,15 +3,11 @@
    (C) Copyright NoWork Team *)
 
 open Parsing_ast
+open Term_ast
 open Printf
 open Display_test
 
 (* TODO : mli !! *)
-
-module Term_env = Map.Make(String)
-
-(* Todo : virer la ref global *)
-let term_env = ref Term_env.empty
 
 let directive_usage =
   String.concat "\n\t"
@@ -42,27 +38,7 @@ let find_file fname =
 
 let system_name filename = (Filename.chop_extension (Filename.basename filename))
 
-(* Only a textual equality test. *)
-let equal_term t1 t2 =
-  (strip_ws t1) = (strip_ws t2)
-
-let equal_terms t1s t2s =
-  let t1s_str = string_of_terms t1s in
-  let t2s_str = string_of_terms t2s in
-  try
-    List.for_all2 equal_term t1s_str t2s_str
-  with
-  | Invalid_argument _ -> false
-
-(* let make_hash_sorted_term_list env terms =
-  let make_hash_consed_term term =
-    let checked_term = Term_checker.construct_ast_checked env term in
-    Term_ast_hashconsed.create_term checked_term in
-  let hashed_terms = List.map make_hash_consed_term terms in
-  List.sort sort_hashed_terms hashed_terms *)
-
 let rec process_file env fname =
-
   let fpath =
     if Filename.is_implicit fname then
       find_file fname
@@ -89,54 +65,46 @@ let rec process_file env fname =
       env
   end
 
-and subst_vars env =
-  let open Term_ast in
-      fun term ->
-      match term.desc with
-      | Term (tlist) -> create_term_info term.name (Term (List.map (subst_vars env) tlist)) term.info
-      | Var ->
-      begin
-        try
-          Term_env.find term.name !term_env
-        with
-        | Not_found -> term
-      end
-      | _ -> term
-
 and run_term_type_check env term =
   let open Term_checker in
   let ast_checked = construct_ast_checked env term in
   ignore (check_type_of_term env ast_checked)
-  (* let ast_typed = check_type_of_term env ast_checked in *)
-  (* print_endline Pretty.(string_of pp_type_application (type_of_typed_term ast_typed)) *)
 
-and process_term env strategy ts  : Term_ast.term_ast list =
+and process_term env strategy ts : Term_ast.term_ast list =
   let nts = Rewriting.rewrite_rec strategy env ts in
-  Printf.printf "Terms : %s rewrote into :%s\n%!"
-    (String.concat "; " @@ List.map Pretty.(string_of pp_term) ts)
-    (String.concat "; " @@ List.map Pretty.(string_of pp_term) nts);
+  if not !Config.no_warning then begin
+    Printf.printf "Terms : %s rewrote into :%s\n%!"
+      (String.concat "; " @@ List.map Pretty.(string_of pp_term) ts)
+      (String.concat "; " @@ List.map Pretty.(string_of pp_term) nts)
+  end;
   nts
-(*  with
-  | _ ->
-    Printf.eprintf "Unhandled Term error : %s\n%!" (string_of_term t);
-    t
-*)
 
-and process_term_expr env : Parsing_ast.term_expr -> Term_ast.term_ast list  = function
+and expanse_term env : term_ast -> term_ast = 
+    function {name=n; desc=d; info=info} as id ->
+      match d with
+	| Term l -> {id with desc = Term (List.map (expanse_term env) l)}
+	(* We only allows lower ident globals *)
+	| Var when n.[0] >= 'a' && n.[0] <= 'z' -> begin
+	  try
+	    Symbols.System_map.find n env.Symbols.globals
+	  with
+	    | Not_found -> id
+	end
+	| _ -> id
+	  
+and process_term_expr env = function
   | PTermLet (ident, term_expr) ->
-    let rewritten_term = process_term_expr env term_expr in
-(*    term_env := Term_env.add ident rewritten_term !term_env; *)
-    rewritten_term
+    let open Symbols in
+    let rewritten_term, env = process_term_expr env term_expr in
+    rewritten_term, {env with globals = System_map.add ident (List.hd rewritten_term) env.globals}
   | PTermRewrite (term_expr, strategy) ->
-    let rewritten_subterm = process_term_expr env term_expr in
-    (* Printf.printf "%s with %s \n"
-      (Term_ast.string_of_term  rewritten_subterm)
-      (Strategy_ast.string_of_strategy strategy); *)
+    let rewritten_subterm, env = process_term_expr env term_expr in
     let rewritten_terms = process_term env strategy rewritten_subterm in
-    rewritten_terms
-  | PTerm (term) -> run_term_type_check env term; [term]
-
-(* todo : add process_rule + process_directive + process_kind + .. *)
+    rewritten_terms, env
+  | PTerm (term) ->
+    let term = expanse_term env term in
+    run_term_type_check env term; 
+    [term], env
 
 and evaluate_structure_item env =
   let open Rewriting_ast in
@@ -144,9 +112,8 @@ and evaluate_structure_item env =
   function
   | PInteractiveCmd cmd -> eval_interactive_cmd env cmd
   | PDecl rewriting_decl ->
-    (* ast to modify (shouldn't put a list) *)
     Symbols.enter_decl env rewriting_decl
-  | PTermExpr term -> ignore (process_term_expr env term); env
+  | PTermExpr term -> snd (process_term_expr env term)
   | PFile_include fname -> process_file env fname
 
 and run_type_check env ast =
@@ -189,6 +156,7 @@ and load_test_cmd env (RewritingTest(filename, _) as test) =
         print_system_error (sprintf "%s: is a directory" filename)
       else
         let f = open_in filename in
+        Printf.printf "%s" (string_of_filename filename);
         test_rewriting_system env f test;
         close_in f
     with
@@ -224,24 +192,22 @@ and check_expectation filename expectation result domain =
   | MustPass, Failed(e, msg) ->
     print_failure (
       sprintf "Failure with error %s.\n" (string_of_error e) ^
-      string_of_test_info filename msg)
+      string_of_msg msg)
   | MustFail(e), Passed ->
     print_failure (
-      sprintf "Should have failed with %s.\n" (string_of_error e) ^
-      string_of_filename filename)
+      sprintf "Should have failed with %s.\n" (string_of_error e))
   | MustFail(expected), Failed(e, msg) when not ( equal_error expected e ) ->
       print_failure (sprintf "Expected error %s but failed with %s.\n"
         (string_of_error expected)
         (string_of_error e) ^
-        string_of_test_info filename msg)
+        string_of_msg msg)
   | MustFail(_), Failed(e, msg) ->
       print_success (
         sprintf "Failure with %s as expected.\n" (string_of_error e) ^
-        string_of_test_info filename msg)
+        string_of_msg msg)
   | MustPass, Passed ->
       print_success (
-        sprintf "%s passed.\n" (system_name filename) ^
-        string_of_filename filename)
+        sprintf "%s passed.\n" (system_name filename))
 
 and match_term_cmd env term_expr pattern =
   try
@@ -253,7 +219,7 @@ and match_term_cmd env term_expr pattern =
                   pattern with
           | Some _ -> "The term matches the pattern."
           | None -> "The term doesn't match the pattern." in
-        print_endline res) @@ process_term_expr env term_expr
+        print_endline res) @@ fst (process_term_expr env term_expr)
   with Rewriting_system_error.RewritingSystemError _ ->
     print_system_error "Pattern ill-formed\n"
 
@@ -264,7 +230,7 @@ and term_type_cmd env term_expr =
     @@ type_of_typed_term
     @@ check_type_of_term env
     @@ construct_ast_checked env term)
-    (process_term_expr env term_expr)
+    (fst (process_term_expr env term_expr))
 
 and term_match_type_cmd env term_expr type_binders arg_types =
   if List.length arg_types <> 1 then
@@ -291,7 +257,7 @@ and term_match_type_cmd env term_expr type_binders arg_types =
                          (error_msg code info))
       | e -> print_unknown_exc e (sprintf "type checking of the term %s\n"
                                     (Pretty.(string_of pp_term term))) in
-    List.iter check_term_type (process_term_expr env term_expr)
+    List.iter check_term_type (fst (process_term_expr env term_expr))
 
 
 and term_to_dot_cmd env term_expr filename =
@@ -305,16 +271,15 @@ and term_to_dot_cmd env term_expr filename =
     ignore @@ List.fold_left (fun n term ->
         let term = Term_checker.construct_ast_checked env term in
         dot (create_term term) (sprintf "%s%d%s" filename n ext);
-        n+1) 0 @@ process_term_expr env term_expr
+        n+1) 0 @@ fst (process_term_expr env term_expr)
 
-and term_test_cmd env = function
-  | TMustPass (InPredicate(t1, t2))
-  | TMustPass (EqualPredicate(t1, t2)) ->
-  begin
+and term_test_predicate env t t' predicate =
+  begin 
     try
-      let rt1s = process_term_expr env t1 in
-      let rt2s = List.flatten @@ List.map (process_term_expr env) t2 in
-      if (equal_terms rt1s rt2s) then
+      let rt1s, _ = process_term_expr env t in
+      let rt2s', _ = Util.list_foldmap process_term_expr env t' in
+      let rt2s = List.flatten rt2s' in
+      if (predicate env rt1s rt2s) then
         rewritten_success rt1s rt2s
       else
         rewritten_failure_unexpected rt1s rt2s
@@ -327,9 +292,15 @@ and term_test_cmd env = function
             (string_of_msg (error_msg code msg)))
     | e -> print_unknown_exc e "term rewriting"
   end
+
+and term_test_cmd env = function
+  | TMustPass (InPredicate(t1, t2)) -> 
+    term_test_predicate env t1 t2 Terms_predicate.term_equality
+  | TMustPass (EqualPredicate(t1, t2)) ->
+    term_test_predicate env t1 t2 Terms_predicate.term_inclusion
   | TMustFail (term, e) ->
     try
-      let rt = flatten_string_of_terms @@ process_term_expr env term in
+      let rt = flatten_string_of_terms @@ fst (process_term_expr env term) in
       print_failure (
         sprintf "Should have failed with %s but passed with %s.\n"
           (string_of_error e) rt)
@@ -357,3 +328,4 @@ and term_test_cmd env = function
             (string_of_error (Error(domain_name, string_of_error_code code))) ^
           string_of_msg @@ error_msg code msg))
     | e -> print_unknown_exc e "term rewriting"
+

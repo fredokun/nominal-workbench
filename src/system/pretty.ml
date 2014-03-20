@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+  (See accompanying file LICENSE.txt)
+  (C) Copyright NoWork team
+*)
+
 open Format
 open Symbols
 open Rewriting_ast

@@ -9,6 +9,13 @@
 \usepackage[T1]{fontenc}
 \usepackage{color}
 
+\usepackage{hyperref}
+\usepackage{float}
+
+\floatstyle{ruled}
+\newfloat{program}{thp}{lop}
+\floatname{program}{Program}
+
 \title{NoWork\\
 User manual}
 \author{NoWork development team\\[2em]}
@@ -20,7 +27,13 @@ User manual}
 
 \section{Introduction}
 %% Pierre
-What is NoWork and why is it interesting with regards to other rewriting system?
+NoWork is a tool that allows to define languages as a set of
+rewriting and term construction rules. The main goal of NoWork
+is the experimentation with the principles of programming languages
+specially with respect to the rewriting rules that define them.
+NoWork is in that sense similar to the Maude system. However NoWork
+incorporates the concept of strategy to define the way the
+evaluation of the rules is performed over the structure of terms.
 
 \subsection{Rewriting system}
 %% Rémy
@@ -46,11 +59,48 @@ the term \texttt{Sub(Add(0))} rewrites in \texttt{0}.
 
 \subsection{Getting started}
 %% Vincent
-How do we install it (with opam or from source), which program do I need to launch and where is it?
+To install this program, you will need to get \emph{Opam}, the OCaml package-manager.
+It can be downloaded at \url{http://opam.ocaml.org/doc/Quick_Install.html}
 
-\section{\texttt{nowork --help}}
+Once Opam is ready to use, you have two possibilities. 
+
+Either clone the project directly from github and install it :
+\begin{verbatim}
+# git clone https://github.com/ptal/nominal-workbench/
+# cd nominal-workbench
+# ./configure && make
+\end{verbatim}
+
+Or add the repository to your \emph{Opam} package list :
+\begin{verbatim}
+# opam repo add nowork git://github.com/pcouderc/nowork-repository
+# opam install nowork
+\end{verbatim}
+
+There is a light emacs environment available in the \emph{data}
+directory. Please refer to the emacs manual to install it in emacs.
+
+\section{NoWork executable}
 %% Vincent
-Presentation of the nowork executable and the options.
+
+The command to execute NoWork is : \texttt{nowork [options] <rules
+  files>}.  A Read-Eval-Print-Loop (REPL) is launched if no argument
+is given. If \texttt{.nw} files are given the program will evaluate
+each file sequentially and result in a REPL that contains an initial
+environment based on the definitions found in the files.
+
+The current options are :
+\begin{itemize}
+\item -{}-version -- Print version and exits
+\item -{}-vnum -- Print version number and exits
+\item -I <dir\_path> -- Include the given directory
+\item -v -- Print more informations
+\item -{}-no-repl -- Doesn't start a toplevel
+\item -{}-debug -- Launch nowork in debug mode, the exception backtrace is reported
+\item -{}-reset-system -- Doesn't keep the environment between each evaluated files
+\item -{}-no-warning -- Doesn't print the warnings.
+\item -{}-help -- Display the list of options
+\end{itemize}
 
 \section{System language}
 %% Matthieu
@@ -87,11 +137,11 @@ kind Var : atom
 
 \subsection{Constant}
 Now that we can define types, we have to define the terms of a given type.
-To define a term, we should first define constant of the rewriting
+To define a term, we should first define the constants of the rewriting
 system.\\
-Defining a constant is made by using the \verb?constant? keyword followed
+Defining a constant can be done by using the \verb?constant? keyword followed
 by the name and the type. Be careful, the constant
-type is the type of the constant for the rewriting system thus it must
+type is the type of the constant for the rewriting system so it must
 be defined using \verb?kind? declarations. For example :
 
 \begin{verbatim}
@@ -100,9 +150,9 @@ kind Integer : type
 constant Zero : Integer
 \end{verbatim}
 
-To use parametrized type, we have to decide the abstraction it can be
+To use a parameterized type, we have to decide the abstraction it can be
 either a generic type or a \verb?kind?.\\
-To introduce a genericity, we should use the \verb?forall?
+To introduce genericity, we should use the \verb?forall?
 construction. Otherwise, to instantiate a type we should put the type
 between angle brackets. For instance :
 
@@ -190,17 +240,375 @@ Systems (CCS), for example.
 \section{Strategy language}
 %% Roven
 
+A basic evaluation like top-down or bottom-up will suffice for rather simple
+languages like peano numbers but nothing more complicated can be defined.
+Indeed for languages with avanced semantics such as lambda-calculus or CCS, we 
+will need a fine grained system that control precisely the way the system 
+executes the rules. For this task, we have defined a whole set of strategy 
+combinators usable with a strategy language.
+
+\subsection{A strategy}
+A strategy is essentially a function that takes a set of terms, optionally other
+strategies and will output a set of rewritten terms. In case of faillure, the 
+resulting set will be empty and the program will signal it by an error.
+
+Nowork contains a set of base strategies that can be combined to form more
+complicated user defined stategies.
+
+\subsection{Syntax}
+The strategy language is a set of binary operators \verb|*> ;|, base strategies 
+\verb|ident(args)|, user defined strategies \verb|Ident(args)| and rule 
+application \verb|[rule]| combined into strategy definitions.\\
+
+A user strategy can be defined in a nowork file with the following syntax~:
+\begin{verbatim}
+strategy <definition_name> : 
+  <strategy combinations>
+\end{verbatim}
+
+Some examples : 
+
+\begin{verbatim}
+# parameter less strategy
+strategy Name : 
+  base() ; other() +> base()
+
+# strategy with two parameters
+strategy Two(x, y) :
+  some_base(x) ; (Name +> y)
+
+# recursive strategy call
+strategy Loop(x) :
+  x +> Loop(x)
+
+# infinite rule application
+strategy Infinite :
+  Name ; Loop([rule])
+\end{verbatim}
+
+\subsection{Base strategies}
+The following table summarize the base strategies available in nowork and their
+associated semantic :\\
+
+\begin{center}
+    \begin{tabular}{ | l | p{6cm} | p{4cm} |}
+    \hline
+    Strategy & Semantic on every term in input & When it fails \\ \hline
+    id() & return the term unchanged & never \\ \hline
+    fail() & & always \\ \hline
+    test(s) & return the term unchanged & when s fails \\ \hline
+    not(s) & return the term unchanged & when s succeeds \\ \hline
+    all(s) & applies s to all subterms, does nothing on constant & when one 
+    application fails \\ \hline
+    some(s) & try to apply s on the most subterms & when none succeed or on constant 
+    \\ \hline
+    one(s) & try to apply s on one subterm & when none succeed or on constant 
+    \\ \hline
+    s1 ; s2 & applies s1 then s2 using the result of s1 & when s1 or s2 fails 
+    \\ \hline
+    s1 +> s2 & applies s1 or s2 if s1 fails & when s1 and s2 fail \\ \hline
+    s1 + s2 & applies s1 and s2 in parallel on the current term 
+      (resulting in a set of new terms) & when s1 and s2 fail \\ \hline 
+    proj(n, s) & applies s on the nth subterm &
+      when this application fails \\ \hline
+    [r] & applies the rule r on the term & when the rule application fails \\ \hline
+    x (a variable) & applies the strategy s contained in x & when s fails \\ \hline
+    \end{tabular}
+\end{center}
+\subsection{Examples}
+In this section we will explore some examples of useful strategies defined with our
+language.
+
+\subsubsection*{Top-down and bottom-up}
+We can defined those simple strategies in term of our base strategies.
+
+\begin{verbatim}
+strategy Topdown(s) :
+  s ; all(Topdown(s))
+
+strategy Bottomup(s) :
+  all(Bottomup(s)) ; s
+\end{verbatim}
+
+\subsubsection*{Try}
+A stategy that try to apply a strategy on a set of term and return the set unchanged
+in case of faillure.
+
+\begin{verbatim}
+strategy Try(s) :
+  s +> id() 
+\end{verbatim}
+
+
+\subsubsection*{Any}
+A strategy that test if a strategy \verb|s| is applicable on any of the subterms,
+returning the set of term unchanged in case of success or failling otherwise.
+
+\begin{verbatim}
+strategy Any(s) :
+  test(s) +> one(Any(s))
+\end{verbatim}
+
+We can then for instance test if a rule if applicable on any subterms with
+\verb|Any([some_rule])|.
+
+\subsubsection*{While}
+As a more advanced strategy, we can define a while construct, executing some strategy \verb|s| while a strategy \verb|p| succeed.
+
+\begin{verbatim}
+strategy While(p, s):
+  (test(p) ; s ; While(p, s)) +> id()
+\end{verbatim}
+
+
 \section{Interactive language}
 %% Vincent
-Presentation of the interactive language (:command).
+
+We have at our disposition a toplevel interface that allows the user
+to directly manipulate the system by introducing new rules, strategies
+or terms. With this, the user is capable of interacting with the
+system in a step-by-step manner. This can be use for some quick-hacks
+or tests through a system that we would want to test or quickly-adding
+some features to it.
+
+This Read-Eval-Print-Loop (REPL) also contains a set of directives
+that are useful for testing or debugging. A directive starts with a
+colon (:). The list can be quickly found by typing the \emph{:help}
+directive into the REPL.
+
+We will proceed to the exhaustive description of every directive
+present in NoWork.
+
+\begin{itemize}
+  \item :help -- Displays the help
+  \item :exit -- Exits the REPL
+  \item :dot <term> <"filename"> -- Outputs the hash-consed version of
+    a term into a dot file graph
+  \item :type <term> -- Displays the type of the term
+\end{itemize}
+
+There are also three more directives that requires some detailing.
+
+\subsection{Testing directives}
+
+First, we have the \emph{:test} directive. The syntax is : \emph{:test
+  <term> <predicate> <result>}. This directive checks that the term
+satisfies the predicate with the given result. The term denomination
+is the same as the one given in the language description.
+
+The predicates are : 
+\begin{itemize}
+\item \texttt{-{}-equals} -- Tests that the given term equals the resulting term.
+\item \texttt{-{}-failwith} -- Checks that the given term fails with the
+  given exception. They can be found in the \emph{data/error}
+  directory of the project. More information about this to be found in
+  the developper manual.
+\end{itemize}
+
+The second directive is \emph{:load-test <"filename"> [-{}-failwith
+  <result>]}. It works very closely to the \emph{:test} directive but
+takes a file instead of a term.
+
+The last one checks that the given term matches either the given type
+or the pattern structure. The syntax is : \emph{:match <term> -{}-with
+  <pattern>} or \emph{:match <term> -{}-with-type <type>}.
+
+Examples : 
+\begin{verbatim}
+:match App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+       --with App(?T, ?T) 
+
+:match Successor(Zero) --with-type Int
+\end{verbatim}
+
 
 \section{Example}
-%% Roven
-Present full program.
+Using all the constructs described above, we are able to fully encode simple 
+lambda-calculus with call-by-value semantic and CCS without nu binders\footnote{nu 
+binders are excluded for simplicity purpose but could be encoded without any 
+complication.}.
 
-\subsection{lambda Calculus}
+\subsection*{Lambda Calculus}
+{\fontsize{8}{8}
+\begin{verbatim}
+kind Term : type
+kind Variable : atom
 
-\subsection{CCS}
+operator Var : Variable -> Term
+operator App : Term * Term -> Term
+operator Lambda : [Variable]. Term -> Term
+operator Subst : [Variable]. Term * Term -> Term
 
+rule [beta] :
+  App(Lambda(?x, ?T), ?U)  => Subst(?x, ?T, ?U)
+
+rule [subst-var] :
+  Subst(?x, ?T, Var(?x)) => ?T
+
+rule [subst-nvar] :
+  Subst(?x, ?T, Var(?y)) => Var(?y)
+
+rule [app] :
+  Subst(?x, ?T, App(?M, ?N)) => App(Subst(?x, ?T, ?M), Subst(?x, ?T, ?N))
+
+rule [lambda] :
+  Subst(?x, ?T, Lambda(?y, ?U)) => Lambda(?y, Subst(?x, ?T, ?U))
+
+
+# extra rules for strategies
+# essentially identity rules for existence test
+
+rule [is-subst] :
+  Subst(?U, ?V, ?W) => Subst(?U, ?V, ?W)
+
+rule [is-lambda] :
+  Lambda(?x, ?T) => Lambda(?x, ?T)
+
+rule [is-left-app] : 
+  App(App(?x, ?y), ?U) => App(App(?x, ?y), ?U)
+
+rule [is-right-lambda] :
+  App(?x, Lambda(?y, ?U)) => App(?x, Lambda(?y, ?U))
+
+rule [is-app-lambda-lambda] :
+  App(Lambda(?x, ?Y), Lambda(?z, ?U)) => App(Lambda(?x, ?Y), Lambda(?z, ?U))
+
+rule [is-app] :
+  App(?U, ?V) => App(?U, ?V)
+
+# strategies
+
+strategy IsValue :
+  test([is-lambda])
+
+strategy IsRightValue :
+  test([is-right-lambda])
+
+strategy IsLeftApp :
+  test([is-left-app])
+
+strategy IsApp :
+  test([is-app])
+
+strategy IsAppLambdaValue :
+  test([is-app-lambda-lambda])
+
+strategy Left(s) : proj(0, s)
+strategy Right(s) : proj(1, s)
+
+strategy Any(s) : 
+  s +> one(Any(s))
+
+strategy While(p, s) :
+  (test(p) ; s ; While(p, s)) +> id()
+
+strategy TrySubst :
+  [subst-var] +> [subst-nvar] +> [lambda] +> id()
+
+strategy SubstAll :
+  While(Any([is-subst]), Bottomup(TrySubst))
+
+# the main strategy : 
+# - remove all pending substitutions
+# - if it's an app ready for beta reduce, apply beta reduction then loop
+# - if it's an app, reduce the right and left then loop
+# - if it's a value do nothing
+
+strategy ReduceAll :
+    SubstAll ;
+    (IsAppLambdaValue ; [beta]; ReduceAll) +>
+    (IsApp ; Left(ReduceAll) ; Right(ReduceAll) ; ReduceAll) +>
+    (IsValue ; id())
+    
+:test rewrite 
+  App(
+    App(Lambda(x, Var(x)), Lambda(u, Var(u))), 
+    App(Lambda(z, Var(z)), Lambda(y, Var(y))))
+  with Dummy
+  --equal Lambda(y, Var(y))
+\end{verbatim}
+}
+\subsection*{CCS}
+{\fontsize{8}{8}
+\begin{verbatim}
+kind Action : type
+kind ActionName : atom
+
+kind Process : type
+
+constant Zero : Process
+constant Tau : Action
+
+operator In : ActionName -> Action
+operator Out : ActionName -> Action
+
+operator Prefix : Action * Process -> Process
+operator Sum : Process * Process -> Process
+operator Par : Process * Process -> Process
+
+rule [choice-left] :
+  Sum(?X, ?Y) => ?X
+
+rule [choice-right] :
+  Sum(?X, ?Y) => ?Y
+
+rule [par-left] :
+  Par(Prefix(?X, ?Y), ?Z) => Prefix(?X, Par(?Y, ?Z))
+
+rule [par-right] :
+  Par(?X, Prefix(?Y, ?Z)) => Prefix(?Y, Par(?X, ?Z))
+
+rule [par-zero-right] :
+  Par(?X, Zero) => ?X
+
+rule [par-zero-left] :
+  Par(Zero, ?X) => ?X
+
+# matching rules for strategies
+
+rule [match-par] :
+  Par(?X, ?Y) => Par(?X, ?Y)
+
+rule [match-sum] :
+  Sum(?X, ?Y) => Sum(?X, ?Y)
+
+# strategies
+
+strategy Any(s) : 
+  s +> one(Any(s))
+
+strategy While(p, s) :
+  (test(p) ; s ; While(p, s)) +> id()
+
+strategy Choice :
+  [choice-left] + [choice-right]
+
+strategy Par : 
+  [par-left] + [par-right]
+
+# main strategy:
+# while there is still Par or Sum do
+#   apply bottomup rules : 
+#      choice (right + left), par (right + left), par zero (right + left)
+
+strategy BottomupRules :
+  While(Any([match-par] +> [match-sum]),
+    Bottomup(
+      Choice +>
+      Par +>
+      [par-zero-right] +>
+      [par-zero-left] +>
+      id()
+    )
+  )
+  
+:test rewrite Par(Prefix(In(c), Prefix(In(a), Zero)), Prefix(In(b), Zero)) 
+  with BottomupRules 
+  --equal 
+    Prefix(In(c), Prefix(In(a), Prefix(In(b), Zero))) ;
+    Prefix(In(c), Prefix(In(b), Prefix(In(a), Zero))) ;
+    Prefix(In(b), Prefix(In(c), Prefix(In(a), Zero)))
+          
+\end{verbatim}
 
 \end{document}

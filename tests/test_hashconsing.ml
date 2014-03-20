@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+  (See accompanying file LICENSE.txt)
+  (C) Copyright NoWork team
+*)
+
 open Term_ast_typed
 open Term_checker
 open Term_ast_hashconsed

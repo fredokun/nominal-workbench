@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+  (See accompanying file LICENSE.txt)
+  (C) Copyright NoWork team
+*)
+
 val pp_separated :
   string ->
   (Format.formatter -> 'a -> unit) ->

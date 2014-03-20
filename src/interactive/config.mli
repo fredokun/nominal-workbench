@@ -16,9 +16,12 @@ val get_path : unit -> string list
 (** Suffix to rules files *)
 val rule_suffix : string
 
-(* If True, do not launch the REPL after having evaluated the files. *)
+(* If true, do not launch the REPL after having evaluated the files. *)
 (** Is the toplevel enabled *)
 val no_repl : bool ref
+
+(* If true, the warnings will be silently ignored and not printed. *)
+val no_warning : bool ref
 
 (* If True, the mode debug is activated. *)
 (** Is debug mode enabled *)

@@ -6,6 +6,11 @@
 open Printf
 open Parsing_ast
 
+let red_color = "\x1b[0;31m"
+let green_color = "\x1b[0;32m"
+let cyan_color = "\x1b[0;36m"
+let reset_color = "\x1b[0m"
+
 (* Test framework. *)
 type result =
   | Passed
@@ -23,19 +28,10 @@ let strip_ws str =
   Str.global_replace (Str.regexp " +") "" str
 
 let string_of_filename filename =
-  sprintf "    Filename: %s\n" filename
+  sprintf "\n    %sFilename:%s %s\n" cyan_color reset_color filename
 
 let string_of_msg msg =
-  sprintf "    Message: %s\n" msg
-
-let string_of_test_info filename msg =
-  string_of_filename filename ^ string_of_msg msg
-
-
-let red_color = "\x1b[0;31m"
-let green_color = "\x1b[0;32m"
-let cyan_color = "\x1b[0;36m"
-let reset_color = "\x1b[0m"
+  sprintf "    %sInfo:%s %s\n" cyan_color reset_color msg
 
 let print_result_line message color status =
   printf "%s%s%s  %s" color status reset_color message
@@ -67,6 +63,7 @@ let string_of_terms ts =
 
 let flatten_string_of_terms ts =
   String.concat "; " @@ string_of_terms ts
+
 let rewritten_success t1 t2 =
   print_success (sprintf "Terms have been correctly rewritten in : %s\n%!"
     (flatten_string_of_terms t1)) (* FIXME : find a way to write the original expr *)

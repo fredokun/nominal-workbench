@@ -9,7 +9,9 @@ open Rewriting_system_error
 open Symbols
 open Utils
 
+(*******************)
 (* Error utilities *)
+(*******************)
 
 let raise_wrong_arity msg =
   raise (RewritingSystemError (
@@ -19,12 +21,12 @@ let raise_wrong_arity msg =
 let raise_unbound_symbol pos id =
   raise (RewritingSystemError (
     UnboundSymbol,
-    Printf.sprintf "%s at %s." id (pos_to_string pos)))
+    Printf.sprintf "%s at %s" id (pos_to_string pos)))
 
 let raise_type_clash t1 t2 =
   raise (RewritingSystemError (
     TypeClash,
-    Printf.sprintf "%s and %s." (type_to_string t1) (type_to_string t2)))
+    Printf.sprintf "%s and %s" (type_to_string t1) (type_to_string t2)))
 
 let raise_wrong_binder_kind id =
   raise (RewritingSystemError (
@@ -51,16 +53,14 @@ let raise_illegal_kind id pos =
     IllegalKind,
     Printf.sprintf "Illegal kind %s %s" id (pos_to_string pos)))
 
-let my_raise msg =
-  Printf.printf "%s\n" msg;
-  raise (RewritingSystemError (
-    ToDoExn,
-    msg))
 
 
-(*
-  Well-form checking
-*)
+
+
+(**********************)
+(* Well-form checking *)
+(**********************)
+
 
 let kind_well_formed id pos = function
   | [Atom] -> ()
@@ -81,7 +81,6 @@ let rec type_well_formed sys tb ta =
     if List.mem id tb then
       raise_illegal_type_app ta;
     let (pos, kind_types) = lookup_kind sys id in
-    (* TO CHECK : empty kind_types : is it possible ? *)
     if (List.length kind_types - 1 = List.length args) then
       List.iter (type_well_formed sys tb) args
     else
@@ -146,34 +145,13 @@ let decl_well_formed sys = function
   | _ -> ()
 
 
-(* Kind checking *)
-
-(*let rec last = function
-  | [x] -> x
-  | x :: xs -> last xs
-  | [] -> assert false*)
-
-let is_atom = function
-  | [Atom] -> true
-  | _ -> false
-
-(*let rec kind_of_type sys tb env ta =
-  match ta with
-  | TypeName id when List.mem id tb ->
-    if List.mem_assoc id env then
-      kind_of_type sys tb env (List.assoc id env)
-    else
-      my_raise "Type_checking.kind_of_type : need kind Any"
-  | TypeName id ->
-    snd (lookup_kind sys id)
-  | TypeApplication (id, _) ->
-    let (_, kind_types) = lookup_kind sys id in
-    [last kind_types]*)
 
 
-	
-(* Type checking *)
-      
+
+(*********************)
+(* Constant checking *)
+(*********************)
+
 let check_param_type env param_name ta =
   if List.mem_assoc param_name env then
     if List.assoc param_name env = ta then
@@ -192,33 +170,20 @@ let is_atom sys tb = function
 let check_type sys (tb, ta) =
   let rec loop = function
     | TypeApplication (_, args) -> List.iter loop args
-    | ta ->
-      if is_atom sys tb ta then my_raise "vazi c'est quoi cet atom ?"
+    | ta -> ()
   in
   match ta with
   | TypeName id when not (List.mem id tb) -> ()
   | _ -> loop ta
 
-
-(* Constant checking *)
-
 let check_const = check_type
 
-(* Operator checking *)
 
-let check_op_arg sys tb op_arg =
-  match op_arg with
-  | OpTypeArg ta -> check_type sys (tb, ta)
-  | OpBinderArg id ->
-    let (_, k) = lookup_kind sys id in
-    if not (k = [Atom]) then raise_wrong_binder_kind id
 
-let check_op sys = function
-  | tb, op_args, op_res ->
-    List.iter (check_op_arg sys tb) op_args;
-    check_type sys (tb, op_res)
+(************************)
+(* Type checking engine *)
+(************************)
 
-(* Pattern checking *)
 
 let rec subst_type_param param new_ty ta =
   match ta with
@@ -312,6 +277,26 @@ let rec unify_types tb1 tb2 env ta1 ta2 =
   | _ ->
     raise_type_clash ta1 ta2
 
+(*********************)
+(* Operator checking *)
+(*********************)
+
+let check_op_arg sys tb op_arg =
+  match op_arg with
+  | OpTypeArg ta -> check_type sys (tb, ta)
+  | OpBinderArg id ->
+    let (_, k) = lookup_kind sys id in
+    if not (k = [Atom]) then raise_wrong_binder_kind id
+
+let check_op sys = function
+  | tb, op_args, op_res ->
+    List.iter (check_op_arg sys tb) op_args;
+    check_type sys (tb, op_res)
+
+
+(********************)
+(* Pattern checking *)
+(********************)
 
 let rec type_check_pat sys tb ((param_env, ph_env) as typing_env) pat ta =
   match pat with
@@ -339,12 +324,7 @@ and check_pat_op_arg sys tb typing_env pat op_arg =
   | OpTypeArg t ->
     type_check_pat sys tb typing_env pat t
   | OpBinderArg tname ->
-    begin match pat with
-    | PPlaceholder _ ->
-      type_check_pat sys tb typing_env pat (TypeName tname)
-    | _ ->
-      raise_wrong_binder_kind tname
-    end
+    type_check_pat sys tb typing_env pat (TypeName tname)
 
 let type_of_pat sys pat =
   match pat with
@@ -360,22 +340,6 @@ let type_of_pat sys pat =
     let (param_env, ph_env) = List.fold_left2 (check_pat_op_arg sys tb) ([], []) patl args in
     (ph_env, subst_type_params sys tb param_env res)
 
-module SSet = Set.Make(String)
-let tb_of_type (tb, ta) =
-  let rec loop set = function
-  | TypeName id ->
-    if List.mem id tb then
-      SSet.add id set
-    else
-      set
-  | TypeApplication (_, args) ->
-    List.fold_left (fun acc ta -> loop acc ta) set args
-  in
-  loop SSet.empty ta
-
-let clean_type (tb, ta) =
-  let binders = SSet.elements (tb_of_type (tb, ta)) in
-  (binders, ta)
 
 let check_pattern sys pat =
   match pat with
@@ -388,8 +352,9 @@ let check_pattern sys pat =
     ph_env
 
 
-
+(*******************)
 (* Effect checking *)
+(*******************)
 
 let rec type_check_eff sys tb ((param_env, ph_env) as typing_env) eff ta =
   match eff with
@@ -416,12 +381,7 @@ and check_eff_op_arg sys tb typing_env eff op_arg =
   | OpTypeArg t ->
     type_check_eff sys tb typing_env eff t
   | OpBinderArg tname ->
-    begin match eff with
-    | EPlaceholder _ ->
-      type_check_eff sys tb typing_env eff (TypeName tname)
-    | _ ->
-      raise_wrong_binder_kind tname
-    end
+    type_check_eff sys tb typing_env eff (TypeName tname)
 
 let type_of_effect sys ph_env eff =
   match eff with
@@ -445,7 +405,11 @@ let check_effect sys env eff =
     let (_,  (tb, args, _)) = lookup_op sys id in
     ignore (List.fold_left2 (check_eff_op_arg sys tb) ([], []) effl args)
 
+
+(*****************)
 (* Rule checking *)
+(*****************)
+
 let check_rule sys (pattern, effect) =
   let env = check_pattern sys pattern in
   check_effect sys env effect
@@ -459,12 +423,12 @@ let check_typing sys decl =
   in
     type_check decl.desc
 
-(* Checking interface *)
+
+(***************)
+(* Entry point *)
+(***************)
+
 let check_decl sys decl =
   decl_well_formed sys decl;
   check_typing sys decl
-
-
-
-(* Rule typing *)
 

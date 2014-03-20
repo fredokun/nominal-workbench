@@ -1,1 +1,96 @@
 kind Term : type
+kind Variable : atom
+
+operator Var : Variable -> Term
+operator App : Term * Term -> Term
+operator Lambda : [Variable]. Term -> Term
+operator Subst : [Variable]. Term * Term -> Term
+
+rule [beta] :
+  App(Lambda(?x, ?T), ?U)  => Subst(?x, ?T, ?U)
+
+rule [subst-var] :
+  Subst(?x, ?T, Var(?x)) => ?T
+
+rule [subst-nvar] :
+  Subst(?x, ?T, Var(?y)) => Var(?y)
+
+rule [app] :
+  Subst(?x, ?T, App(?M, ?N)) => App(Subst(?x, ?T, ?M), Subst(?x, ?T, ?N))
+
+rule [lambda] :
+  Subst(?x, ?T, Lambda(?y, ?U)) => Lambda(?y, Subst(?x, ?T, ?U))
+
+
+# extra rules for strategies
+
+rule [dummy-replace] :
+  Lambda(?x, ?Y) => Var(?x)
+
+rule [is-subst] :
+  Subst(?U, ?V, ?W) => Subst(?U, ?V, ?W)
+
+rule [is-lambda] :
+  Lambda(?x, ?T) => Lambda(?x, ?T)
+
+rule [is-left-app] : 
+  App(App(?x, ?y), ?U) => App(App(?x, ?y), ?U)
+
+rule [is-right-lambda] :
+  App(?x, Lambda(?y, ?U)) => App(?x, Lambda(?y, ?U))
+
+rule [is-app-lambda-lambda] :
+  App(Lambda(?x, ?Y), Lambda(?z, ?U)) => App(Lambda(?x, ?Y), Lambda(?z, ?U))
+
+rule [is-app] :
+  App(?U, ?V) => App(?U, ?V)
+
+strategy IsValue :
+  test([is-lambda])
+
+strategy IsRightValue :
+  test([is-right-lambda])
+
+strategy IsLeftApp :
+  test([is-left-app])
+
+strategy IsApp :
+  test([is-app])
+
+strategy IsAppLambdaValue :
+  test([is-app-lambda-lambda])
+
+strategy Left(s) : proj(0, s)
+strategy Right(s) : proj(1, s)
+
+strategy Any(s) : 
+  s +> one(Any(s))
+
+strategy Test(p, s, b) : 
+  test(p) ; s ; b
+
+strategy While(p, s) :
+  (test(p) ; s ; While(p, s)) +> id()
+
+strategy TrySubst :
+  [subst-var] +> [subst-nvar] +> [lambda] +> id()
+
+strategy SubstAll :
+  While(Any([is-subst]), Bottomup(TrySubst))
+
+strategy Dummy :
+    SubstAll ;
+    (IsAppLambdaValue ; [beta]; Dummy) +>
+    (IsApp ; Left(x) ; Right(Dummy)) +>
+    id()
+    
+:test rewrite Lambda(x, Var(x)) with id() --equal Lambda(x, Var(x))
+
+:test rewrite Lambda(x, Var(x)) with Try([dummy-replace]) --equal Var(x)
+
+:test rewrite App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+  with SubstAll --equal App(Lambda(x, Var(x)), Lambda(y, Var(y)))
+
+:test rewrite App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
+  with Dummy
+  --equal Lambda(y, Var(y))
