@@ -1,3 +1,8 @@
+(* Distributed under the MIT License.
+  (See accompanying file LICENSE.txt)
+  (C) Copyright NoWork team
+*)
+
 type strategy = 
   | SId
   | SFail

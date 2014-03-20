@@ -63,6 +63,7 @@ let string_of_terms ts =
 
 let flatten_string_of_terms ts =
   String.concat "; " @@ string_of_terms ts
+
 let rewritten_success t1 t2 =
   print_success (sprintf "Terms have been correctly rewritten in : %s\n%!"
     (flatten_string_of_terms t1)) (* FIXME : find a way to write the original expr *)
