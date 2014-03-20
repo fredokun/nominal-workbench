@@ -38,9 +38,9 @@ Brief presentation of rewriting system in general.
 To install this program, you will need to get \emph{Opam}, the OCaml package-manager.
 It can be downloaded at \url{http://opam.ocaml.org/doc/Quick_Install.html}
 
-Once Opam is ready to use, you can have two possibilities. 
+Once Opam is ready to use, you have two possibilities. 
 
-Either directly clone the project from github and install it :
+Either clone the project directly from github and install it :
 \begin{verbatim}
 # git clone https://github.com/ptal/nominal-workbench/
 # cd nominal-workbench
@@ -59,10 +59,10 @@ directory. Please refer to the emacs manual to install it in emacs.
 \section{NoWork executable}
 %% Vincent
 
-The NoWork executable usage is : \texttt{nowork [options] <rules
-  files>}.  A Read-Eval-Print-Loop (REPL) is launched if no arguments
-are given. If \texttt{.nw} files are given the program will evaluate
-each files sequentially and result in a REPL that contains an initial
+The command to execute NoWork is : \texttt{nowork [options] <rules
+  files>}.  A Read-Eval-Print-Loop (REPL) is launched if no argument
+is given. If \texttt{.nw} files are given the program will evaluate
+each file sequentially and result in a REPL that contains an initial
 environment based on the definitions found in the files.
 
 The current options are :
@@ -113,11 +113,11 @@ kind Var : atom
 
 \subsection{Constant}
 Now that we can define types, we have to define the terms of a given type.
-To define a term, we should first define constant of the rewriting
+To define a term, we should first define the constants of the rewriting
 system.\\
-Defining a constant is made by using the \verb?constant? keyword followed
+Defining a constant can be done by using the \verb?constant? keyword followed
 by the name and the type. Be careful, the constant
-type is the type of the constant for the rewriting system thus it must
+type is the type of the constant for the rewriting system so it must
 be defined using \verb?kind? declarations. For example :
 
 \begin{verbatim}
@@ -126,9 +126,9 @@ kind Integer : type
 constant Zero : Integer
 \end{verbatim}
 
-To use parametrized type, we have to decide the abstraction it can be
+To use a parameterized type, we have to decide the abstraction it can be
 either a generic type or a \verb?kind?.\\
-To introduce a genericity, we should use the \verb?forall?
+To introduce genericity, we should use the \verb?forall?
 construction. Otherwise, to instantiate a type we should put the type
 between angle brackets. For instance :
 
@@ -228,7 +228,7 @@ some features to it.
 
 This Read-Eval-Print-Loop (REPL) also contains a set of directives
 that are useful for testing or debugging. A directive starts with a
-column (:). The list can be quickly found by submitting a \emph{:help}
+colon (:). The list can be quickly found by typing the \emph{:help}
 directive into the REPL.
 
 We will proceed to the exhaustive description of every directive
@@ -260,7 +260,7 @@ The predicates are :
   the developper manual.
 \end{itemize}
 
-The second directives is \emph{:load-test <"filename"> [-{}-failwith
+The second directive is \emph{:load-test <"filename"> [-{}-failwith
   <result>]}. It works very closely to the \emph{:test} directive but
 takes a file instead of a term.
 
