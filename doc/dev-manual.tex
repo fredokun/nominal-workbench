@@ -17,47 +17,62 @@ Developer manual}
 \maketitle
 
 \section{Introduction}
-%% Pierre
-Briefly present the project and say which preliminaries document the dev should have read first (wiki, user-manual, coding-style,...).
+
+This document presents to developers NoWork, a nominal rewriting workbench. Anyone interested by the mechanisms of NoWork or rewriting system in general might find interests in this document. It is also essential if you want to modify this project. We expect that you first read the user manual and played a bit with the interpreter. If you intend to modify this project and provide a pull-request, you can read the coding style document.
+\newline
+
+The section \ref{install} prepares you to hack on NoWork by installing everything needed, we next give an overview of the global architecture in section \ref{architecture}. The modules presented are further described in the following sections, the top-level is presented in section \ref{top-level}. The data structures encoding the language are presented in section \ref{data-system} and we highlight the different representation occurring during the system processing. The section \ref{data-term} shows different term structure and more particularly, explains how the hash-consing is working and why it is important in this project. The typing phase is described in section \ref{typechecking} and is followed by the algorithms section. The algorithm selecting pattern in rules in presented in the section \ref{pattern-matching}, the rules selected are then applied to a term with a specific strategy, the section \ref{rewriting} is dedicated to the rewriting algorithm. This document concludes with a rational in section \ref{rational} discussing the different high-level choices and why we make these choices.
 
 \section{Installing and hack on NoWork}
+\label{install}
 %% Matthieu
 How to install and begin to develop with NoWork.
 
 \section{Architecture}
+\label{architecture}
 %% Mathieu
 Present the directory layout and the different component of the system.
 
 \section{Top-level}
+\label{top-level}
 %% Vincent
 Present the top-level and coding specificities.
 
 \section{Parsing and data representation}
+\label{data}
 
 \subsection{System representation}
+\label{data-system}
 %% Rémy
 Which transformation of the representation of the system occurred and why?
 
 \subsection{Term representation}
+\label{data-term}
 %% Pierrick Matthieu
 Which transformation of term occurred and why?
 
 \subsubsection{Hash-consing}
+\label{data-term-hash-consing}
 %% Pierrick
 \input{dev_hashconsing.tex}
 
 \section{Type-checking}
+\label{typechecking}
 %% Ma(t.)hieu
 
 \section{Algorithms}
+\label{algorithms}
 
 \subsection{Pattern-matching}
+\label{pattern-matching}
 %% Pierre
 
 \subsection{Rewriting}
+\label{rewriting}
 %% Roven
 
 \section{Rational}
+\label{rational}
 %% Everybody
 Important decision that we made such as : Why have we split the language in an interactive and "normal" mode? Why do we have only one parser/lexer (instead of one for system and one for term).
 
