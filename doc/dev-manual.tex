@@ -9,6 +9,7 @@
 \usepackage[american]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{listings}
+\usepackage{dirtree}
 
 \lstset{language=ML}
 
@@ -30,7 +31,41 @@ How to install and begin to develop with NoWork.
 
 \section{Architecture}
 %% Mathieu
-Present the directory layout and the different component of the system.
+
+Here comes a simplified description of the directory layout :
+\bigskip
+
+\dirtree{%
+.1 /.
+.2 doc.
+.2 data.
+.3 error.
+.3 test.
+.4 run-pass.
+.4 run-fail.
+.2 src.
+.3 algorithms.
+.3 auto\_gen.
+.3 generator.
+.3 interactive.
+.3 parser.
+.3 system.
+}
+\bigskip
+
+And now a more precise description of these directories :
+
+\begin{itemize}
+
+\item \emph{doc} : obviously contains documentation files (user manual, developper manual, coding style, ...)
+\item \emph{data/error} : custom exceptions declaration in \emph{*.conf} files (need to be declared here to be used in tests)
+\item \emph{data/test} : functional tests framework, test files are added in either \emph{run-fail} or \emph{run-pass}, and test expectations in \emph{test.nw}
+\item \emph{src/algorithms} : general algorithms that don't rely on one particular system such as matching and rewriting
+\item \emph{src/generator} : generated errors system
+\item \emph{src/interactive} : top-level system
+\item \emph{src/system} : contains the different AST representations, type checking modules (\emph{type\_checking} and \emph{term\_checker}), and symbol tables
+
+\end{itemize}
 
 \section{Top-level}
 %% Vincent
