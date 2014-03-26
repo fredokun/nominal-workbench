@@ -7,6 +7,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage[american]{babel}
 \usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{graphicx}
 
 \title{NoWork\\
 Developer manual}
@@ -21,7 +23,7 @@ Developer manual}
 This document presents to developers NoWork, a nominal rewriting workbench. Anyone interested by the mechanisms of NoWork or rewriting system in general might find interests in this document. It is also essential if you want to modify this project. We expect that you first read the user manual and played a bit with the interpreter. If you intend to modify this project and provide a pull-request, you can read the coding style document.
 \newline
 
-The section \ref{install} prepares you to hack on NoWork by installing everything needed, we next give an overview of the global architecture in section \ref{architecture}. The modules presented are further described in the following sections, the top-level is presented in section \ref{top-level}. The data structures encoding the language are presented in section \ref{data-system} and we highlight the different representation occurring during the system processing. The section \ref{data-term} shows different term structure and more particularly, explains how the hash-consing is working and why it is important in this project. The typing phase is described in section \ref{typechecking} and is followed by the algorithms section. The algorithm selecting pattern in rules in presented in the section \ref{pattern-matching}, the rules selected are then applied to a term with a specific strategy, the section \ref{rewriting} is dedicated to the rewriting algorithm. This document concludes with a rational in section \ref{rational} discussing the different high-level choices and why we make these choices.
+The section \ref{install} prepares you to hack on NoWork by installing everything needed, we next give an overview of the global architecture in section \ref{architecture}. The modules presented are further described in the following sections, the top-level is presented in section \ref{top-level}. The data structures encoding the language are presented in section \ref{data-system} and we highlight the different representation occurring during the system processing. The section \ref{data-term} shows different term structure and more particularly, explains how the hash-consing is working and why it is important in this project. The typing phase is described in section \ref{typechecking} and is followed by the algorithms section. The algorithm selecting a rule via its pattern is presented in the section \ref{pattern-matching}, the matching rules are then applied to a term with a specific strategy, the section \ref{rewriting} is dedicated to the rewriting algorithm. This document concludes with a rational in section \ref{rational} discussing the different high-level choices and why we make these choices.
 
 \section{Installing and hack on NoWork}
 \label{install}
@@ -65,7 +67,35 @@ Which transformation of term occurred and why?
 
 \subsection{Pattern-matching}
 \label{pattern-matching}
-%% Pierre
+
+The pattern matching algorithm returns a set of couple of placeholders and sub-terms regarding a pattern and a term. It is implemented in the files \texttt{src/algorithms/matching.\{ml,mli\}} and is well-commented. Consider the following extract of the Peano rewriting system:
+\begin{lstlisting}
+rule [add-l] :
+  Add(Successor(?u), ?v) => Successor(Add(?u, ?v))
+
+rule [add-r] :
+  Add(?u, Successor(?v)) => Successor(Add(?u, ?v))
+
+rule [div-same] :
+  Div(?u, ?u) => Successor(Zero)
+\end{lstlisting}
+
+We simulate the pattern matching algorithm with the pattern of the rule \texttt{add-l} and the term \texttt{Add(Successor(Zero), Zero)} in figure \ref{peano-example}.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.6, angle=270]{example-peano.pdf}
+  \caption{Pattern matching on Peano term}
+  \label{peano-example}
+\end{figure}
+
+The algorithm returns a type \texttt{map option}, if the term doesn't match the pattern, it returns \texttt{None}, otherwise it returns the bindings between the placeholders and sub-terms.
+\newline
+
+The algorithm is rather simple as it just travels at the same time the AST of the pattern and term. A problem appears in presence of non-linear pattern such as in the rule \texttt{div-same} because there are two identical placeholders. Comparing two terms modulo alpha-conversion have a bad complexity (it depends on the term length and on the number of binders). For this purpose, we firstly hash-consed our term as explained in section \ref{data-term-hash-consing} and we use it whenever we have to compare two sub-terms sharing a same placeholder. This have a constant complexity. We still need to go through the initial term since the hash-consed representation erased any notion of name and is useless to compare constant name and operators with patterns.
+\newline
+
+Eventually, a new lead to explore could be to hash-consed the pattern so we could compare the constant and operator names too and we would not need names anymore and so the initial term. If this idea seems interesting because it'd reduce code, it impacts the rewriting algorithm since the placeholders would be mapped with hash-consed terms (which is not currently supported by the rewriting algorithm).
 
 \subsection{Rewriting}
 \label{rewriting}

@@ -40,7 +40,7 @@ However, there is still one problem with this method, and this is solved by the
 \texttt{HVar of int}. This is basically a de Bruijn index, which is mandatory
 unfortunately. For example, imagine the following term 
 \texttt{Lambda(x, Lambda(y, App(App(Var(y), Var(y)), App(Var(x), Var(y)))))}.
-Without using de Bruijn, by using for example juste HVar (that would be
+Without using de Bruijn, by using for example just HVar (that would be
 hashconsed once), the following pattern would match: 
 \texttt{Lambda(?x, Lambda(?y, App(?T, ?T)))} because this would extract the vars
 out of their context and they would became identical. Using the de Bruijn
