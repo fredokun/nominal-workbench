@@ -178,9 +178,6 @@ The algorithm returns a type \texttt{map option}, if the term doesn't match the 
 \newline
 
 The algorithm is rather simple as it just travels at the same time the AST of the pattern and term. A problem appears in presence of non-linear pattern such as in the rule \texttt{div-same} because there are two identical placeholders. Comparing two terms modulo alpha-conversion have a bad complexity (it depends on the term length and on the number of binders). For this purpose, we firstly hash-consed our term as explained in section \ref{data-term-hash-consing} and we use it whenever we have to compare two sub-terms sharing a same placeholder. This have a constant complexity. We still need to go through the initial term since the hash-consed representation erased any notion of name and is useless to compare constant name and operators with patterns.
-\newline
-
-Eventually, a new lead to explore could be to hash-consed the pattern so we could compare the constant and operator names too and we would not need names anymore and so the initial term. If this idea seems interesting because it'd reduce code, it impacts the rewriting algorithm since the placeholders would be mapped with hash-consed terms (which is not currently supported by the rewriting algorithm).
 
 \subsection{Rewriting}
 \label{rewriting}
