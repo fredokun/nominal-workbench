@@ -1,3 +1,4 @@
+
 % Distributed under the MIT License.
 % (See accompanying file LICENSE.txt)
 % (C) Copyright NoWork team
@@ -9,6 +10,9 @@
 \usepackage[T1]{fontenc}
 \usepackage{listings}
 \usepackage{graphicx}
+\usepackage{dirtree}
+
+\lstset{language=Caml}
 
 \title{NoWork\\
 Developer manual}
@@ -33,7 +37,41 @@ How to install and begin to develop with NoWork.
 \section{Architecture}
 \label{architecture}
 %% Mathieu
-Present the directory layout and the different component of the system.
+
+Here comes a simplified description of the directory layout :
+\bigskip
+
+\dirtree{%
+.1 /.
+.2 doc.
+.2 data.
+.3 error.
+.3 test.
+.4 run-pass.
+.4 run-fail.
+.2 src.
+.3 algorithms.
+.3 auto\_gen.
+.3 generator.
+.3 interactive.
+.3 parser.
+.3 system.
+}
+\bigskip
+
+And now a more precise description of these directories :
+
+\begin{itemize}
+
+\item \emph{doc} : obviously contains documentation files (user manual, developper manual, coding style, ...)
+\item \emph{data/error} : custom exceptions declaration in \emph{*.conf} files (need to be declared here to be used in tests)
+\item \emph{data/test} : functional tests framework, test files are added in either \emph{run-fail} or \emph{run-pass}, and test expectations in \emph{test.nw}
+\item \emph{src/algorithms} : general algorithms that don't rely on one particular system such as matching and rewriting
+\item \emph{src/generator} : generated errors system
+\item \emph{src/interactive} : top-level system
+\item \emph{src/system} : contains the different AST representations, type checking modules (\emph{type\_checking} and \emph{term\_checker}), and symbol tables
+
+\end{itemize}
 
 \section{Top-level}
 \label{top-level}
@@ -51,7 +89,54 @@ Which transformation of the representation of the system occurred and why?
 \subsection{Term representation}
 \label{data-term}
 %% Pierrick Matthieu
-Which transformation of term occurred and why?
+During the process between the parsing and the rewriting of a term, the
+structure reprensenting the term is transformed step by step.
+
+\subsubsection{From parsing to semantic-checking}
+Parsed terms are transformed in the following \verb?term_ast? :
+\begin{lstlisting}
+  type info = Lexing.position
+
+  type ident = string
+
+  type term_desc =
+  | Const
+  | Term of term_ast list
+  | Var
+
+  and term_ast =
+  {
+    name : string;
+    info : info;
+    desc : term_desc;
+  }
+\end{lstlisting}
+
+This AST is used only to keep position (in the original file) and structure
+informations.
+But it is made using only grammatical informations, so it can be
+semantically incoherent. That is why it will be transformed during the
+type-checking.
+
+\subsubsection{From semantic-checking to type-checking}
+The second transformation take a \verb?term_ast? and use semantic informations
+contained in the rewriting system to check the semantic of the AST (term
+arity and well definition of each symbol)  then
+construct an AST with that additional informations (differentiation between
+bounded atoms and atom's binders). Now, the term is ready to be type-checked.
+\\
+N.B. : This AST is called \verb?term_ast_with_binders? (because of his
+author's lack of inspiration) in the \verb?term_ast_typed.ml?.
+It constructed by \verb?construc_ast_checked? in \verb?term_checker.ml?
+
+\subsubsection{From type-checking to hash-consing}
+At the end, the type-checking, processed on the precedent AST, gives a
+typed AST keeping only structure and type informations of the original AST.
+It is made by \verb?check_type_of_term?.
+\\
+A term passing all of the steps is considered as wel formed and typed, then
+the user can manipulate and particulary rewrite it. In order to have an
+efficient rewriting the AST must be transformed a last time.
 
 \subsubsection{Hash-consing}
 \label{data-term-hash-consing}
