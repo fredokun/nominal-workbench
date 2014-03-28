@@ -76,7 +76,31 @@ And now a more precise description of these directories :
 \section{Top-level}
 \label{top-level}
 %% Vincent
-Present the top-level and coding specificities.
+
+The top-level interface is classically designed. First, we parse the
+given phrase. Then, we evaluate it, eventually modifying the current
+system. Outputting the result if any and finally give back the hand to
+the user. 
+
+\bigskip
+To add new directives, the process is simple. First, you will need to
+add a new directive in the concerned table in the lexer :
+\verb?src/parser/lexer.mll?. Then, add the corresponding grammar rule
+in the parser : \verb?src/parser/parser.mly?\footnote{Please consult
+  the official ocamllex and ocamlyacc documentation if difficulties
+  are encountered hacking into those files}. You will also need to add
+a new branch in the \verb?interactive_ast? OCaml sum type in
+\verb?src/parser/parsing_ast.ml? (and its \verb?.mli? interface). Now,
+we need to evaluate this directive. To achieve that, we have to add a
+match-case in the \verb?eval_interactive_cmd? located
+\verb?src/interactive/eval.ml?. It's recommanded to add a quick how-to
+description of the newly implemented command in the usage at the
+beginning of the last file. 
+
+The current implementation uses prettifying functions to gracefully
+display the resulting expressions. It relies on the \verb?Format?
+standard OCaml library. The file containing these functions is :
+\verb?src/system/pretty.ml?
 
 \section{Parsing and data representation}
 \label{data}
@@ -84,7 +108,8 @@ Present the top-level and coding specificities.
 \subsection{System representation}
 \label{data-system}
 %% Rémy
-Which transformation of the representation of the system occurred and why?
+Which transformation of the representation of the system occurred and
+why?
 
 \subsection{Term representation}
 \label{data-term}
