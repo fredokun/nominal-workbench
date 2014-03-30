@@ -198,7 +198,7 @@ We simulate the pattern matching algorithm with the pattern of the rule \texttt{
   \caption{Pattern matching on Peano term}
   \label{peano-example}
 \end{figure}
-
+g
 The algorithm returns a type \texttt{map option}, if the term doesn't match the pattern, it returns \texttt{None}, otherwise it returns the bindings between the placeholders and sub-terms.
 \newline
 
@@ -207,6 +207,68 @@ The algorithm is rather simple as it just travels at the same time the AST of th
 \subsection{Rewriting}
 \label{rewriting}
 %% Roven
+The module rewriting contains all the algorithms needed to rewrite a term. There
+are essentially two main operations, the basic rule rewriting and all the base
+strategies functions. \\
+
+The rule rewriting  function is rather simple, it will just call the matching module.
+On success, it will call a function given in parameter with the resulting 
+placeholders. On failure it wiil call another function. This architecture was coined
+by a team member before the introduction of strategies, now this function is
+called only in the rule base strategy and the success function is simply the 
+substition and the failure function is simply returning the empty set.\\
+
+Since the core of rewriting are the strategies, there architecture will be detailled
+in the following subsection.
+
+\subsection{Strategies}
+The strategies are a rather independent addition to the whole program. Their AST is 
+defined in the Strategy\_ast module, filled in the parser and the only module 
+depending on them is Eval. 
+
+\subsubsection*{AST}
+The body of a strategy can be thought as just one big expression combining strategy
+calls and operators. Therefore only one type was necessary to describe the AST, 
+however, because of the stable nature the base strategies, all of them are 
+hardcoded in the AST. For instance \verb|test(id())| will be directly translated into
+\verb|STest(SId())|. This simplifies the base strategies checks because it is the 
+OCaml compiler that does all the work.
+
+\subsubsection*{Parsing}
+The syntax was designed to blend easily with the rest the rewriting system. 
+Strategies are therefore defined with the colon notation using capitalized 
+identifiers. They can have strategy parameters but, similarly to constant, 
+strategies without parameters don't have parenthethis. \\
+
+The whole strategy body language is divided in four main categories :
+\begin{itemize}
+\item base strategies : an uncapitalized identifier and parameters
+\item user defined strategies : a capitalized identifier and optional parameters
+\item 3 binary operators : \verb|+|, \verb|+>|, \verb|;|
+\item specific forms : rule call \verb|[rule_name]| or \verb|rule(name_name)|,
+strategy projection application \verb|proj(1, strat)| and variables (uncapitalized 
+identifier).
+\end{itemize}
+
+It must be noted that base strategies without parameters (e.g. id() or fail()) keep
+their parenthethese, this avoid any ambiguity with the variables. 
+
+Base strategies are checked at parse-time for their existence and their parameters
+arity.
+
+\subsubsection*{Algorithm}
+Each base strategies hold their own semantic in black box that takes terms and 
+strategies as input and outputs terms. Thus the application of strategies is 
+a big pattern matching over base strategies that apply their respective semantic
+on input terms, passing the results to the top of the AST.
+
+\subsubsection*{Future work}
+In the current implementation, a list is used to group terms in input and ouput of 
+strategies. There was a plan to switch to sets but the time did not allowed it. 
+With this implementation, equivalent redundant terms are suppressed with the 
+Term\_predicate module at eval time. A future work would be to actually move
+this filtering into a Term\_set module that would be used for strategies 
+intput/output.
 
 \section{Rational}
 \label{rational}
