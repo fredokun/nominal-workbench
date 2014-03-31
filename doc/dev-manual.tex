@@ -108,8 +108,18 @@ standard OCaml library. The file containing these functions is :
 \subsection{System representation}
 \label{data-system}
 %% Rémy
-Which transformation of the representation of the system occurred and
-why?
+
+There are severals AST which form the core data of the system. The
+first one is the tree extracted from the parsing which is the parsing
+AST.
+
+Then the term expressions in this tree are transformed to
+term_ast. This one is both typed and hashconsed to respectively
+\texttt{term_ast_typed} and \texttt{term_ast_hashconsed} (the second
+one depending of the first one).
+
+The strategy AST is created from the strategy definitions in the
+parsing AST.
 
 \subsection{Term representation}
 \label{data-term}
