@@ -72,6 +72,10 @@ strategy BottomupRules :
   with BottomupRules
   --equal Prefix(In(a), Zero) ; Prefix(In(b), Zero)
 
+# c!, a!, 0 || b!, 0
+
+# c!, a!, b ;  c!, b!, a! ;  b!, c!, a!
+
 :test rewrite Par(Prefix(In(c), Prefix(In(a), Zero)), Prefix(In(b), Zero)) 
   with BottomupRules 
   --equal 

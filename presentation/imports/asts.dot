@@ -5,7 +5,7 @@ digraph asts {
 										label="term expressions"];
 				Term_ast -> Term_ast_typed [color=red, style=dotted
 										label="typing"]
-				Term_ast -> Term_ast_hashconsed [color=red, style=dotted
+				Term_ast_typed -> Term_ast_hashconsed [color=red, style=dotted
 										label="hashconsing"]
 
 }

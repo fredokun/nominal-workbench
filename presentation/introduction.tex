@@ -7,36 +7,37 @@
 
 \begin{frame}{Introduction}
 
-  \begin{block}{Rewriting system}
+  \begin{block}{Système de Réécriture}
 
-    A method to modelize, in general, the operations of replacing
-    subterms in a term by others.\\
+    Une méthode pour modéliser de façon générale les opérations de
+    remplacement de sous-termes par d'autres.
     ~\\
 
-    \emph{ie. reduction step of a language semantic, propositionnal
-      logic De Morgan's laws, Peano's arithmetic}
+    \emph{ie. etape de réduction pour la semantique d'un language,
+      Lois de De Morgan en logique propositionnelle, arithmétique de Peano}
     
   \end{block}
 
   
 \end{frame}
 
-\begin{frame}{Rewriting system}
+\begin{frame}{Système de Réécriture}
 
   \begin{block}{Definition}
     
     \begin{itemize}
-      \item a set of terms 
-      \item a set of rules (term * term)
+      \item un ensemble de termes 
+      \item un ensemble de règles (terme * terme)
     \end{itemize}
 
   \end{block}
 
-  Rewrite a term : applying rules according to a predefined
-  \textcolor{red}{strategy} on a given term by \textcolor{blue}{matching} and \textcolor{blue}{replacing} its subterms.
+  réécrire un terme : appliquer les règles conformément à une
+  \textcolor{red}{stratégie} prédéfinie sur un term donné en
+  \emph{matchant} et en replaçant ses sous-termes.
 
   ~\\
-  For instance : \\
+  Par exemple : \\
   Rule : \texttt{Sub(Add(X))} $\rightarrow$ \texttt{X}\\
   ~\\
   \textcolor{blue}{\texttt{Sub(Add(0))}} $ \rightarrow $ \textcolor{blue}{\texttt{0}}
@@ -44,16 +45,16 @@
 \end{frame}
 
 
-\begin{frame}{Non-Linear Nominal Rewriting}
+\begin{frame}{Réécriture Nominale Non Linéaire}
   
-  \begin{block}{Nominal}
-    There is a distinction between atoms (variables of the language)
-    and placeholders/meta-variables (the suterm to replace).
+  \begin{block}{Nominale}
+    Il existe une distinction entre atomes (variables du langage) et
+    méta-variables/placeholders (sous-termes à remplacer).
   \end{block}
 
-  \begin{block}{Non-Linear}
-    Two instances of the same placeholder
-    can appear in the left-hand side of the rule. 
+  \begin{block}{Non-Linéaire}
+    Deux instances d'une même méta-variable peuvent apparaître dans la
+    partie gauche de la règle.
   \end{block}
   
 \end{frame}
@@ -62,22 +63,24 @@
 
 \begin{frame}{\textcolor{red}{No}minal \textcolor{red}{Work}bench}
 
-  The only rewriting workbench implementing : \\
-  \textcolor{blue}{non-linear pattern matching} + \textcolor{blue}{nominal rewriting}
+  L'unique atelier de réécriture qui implante :
+  \textcolor{blue}{reconnaissance de motif non-linéaire} +
+  \textcolor{blue}{réécriture nominale}
 
-  \begin{block}{Features}
+  \begin{block}{Fonctionnalités}
   \begin{itemize}
-    \item \textcolor{red}{A simple language} for rewriting systems
-    \item Write complexe \textcolor{red}{strategies} with an
-      expressful language
-    \item Run rewriting operations on terms in an \textcolor{red}{interactive top-loop}
+    \item Définissez des systèmes de réécriture dans \textcolor{red}{un langage simple}
+    \item Ecrivez des \textcolor{red}{strategies}
+      complexes de façon expressive
+    \item Executez des opérations de réécriture sur des termes dans un
+      \textcolor{red}{interprèteur intéractif}. 
   \end{itemize}
   \end{block}
   
 \end{frame}
 
 
-\begin{frame}{Architecture}
+\begin{frame}{Architecture des modules (simplifiée)}
 
 \begin{figure}[h]
 \begin{center}
@@ -88,7 +91,7 @@
 \end{frame}
 
 
-\begin{frame}{Abstract Syntax Trees Architecture}
+\begin{frame}{Arbres de syntaxe abstraite}
 
 \begin{figure}[h]
 \begin{center}

@@ -78,11 +78,11 @@ strategy TrySubst :
 strategy SubstAll :
   While(Any([is-subst]), Bottomup(TrySubst))
 
-strategy Dummy :
+strategy ReduceAll :
     SubstAll ;
-    (IsAppLambdaValue ; [beta]; Dummy) +>
-    (IsApp ; Left(x) ; Right(Dummy)) +>
-    id()
+    (IsAppLambdaValue ; [beta]; ReduceAll) +>
+    (IsApp ; Left(x) ; Right(ReduceAll) ; ReduceAll) +>
+    (IsValue +> id())
     
 :test rewrite Lambda(x, Var(x)) with id() --equal Lambda(x, Var(x))
 
@@ -92,5 +92,5 @@ strategy Dummy :
   with SubstAll --equal App(Lambda(x, Var(x)), Lambda(y, Var(y)))
 
 :test rewrite App(Lambda(x, Var(x)), Lambda(y, Var(y))) 
-  with Dummy
+  with ReduceAll
   --equal Lambda(y, Var(y))
